@@ -24,3 +24,10 @@ type state = {
   bag : bag;
   players : player list;
 }
+
+(* [init_state j] is the initial state of the game *)
+val init_state : Trie.dictionary -> state
+
+(* [do' c st] is [st'] if doing command [c] in state [st] results
+ * in a new state [st']. *)
+val do' : Command.command -> state -> state
