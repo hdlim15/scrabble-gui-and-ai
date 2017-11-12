@@ -11,8 +11,6 @@ type cell = {
 
 type board = (cell list) list
 
-type score = int
-
 type bag = letter list
 
 type player = {
@@ -21,4 +19,8 @@ type player = {
   letters : letter list;
 }
 
-type state = board * (player list)
+type state = {
+  board : board;
+  bag : bag;
+  players : player list;
+}
