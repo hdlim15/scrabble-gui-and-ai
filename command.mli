@@ -15,6 +15,7 @@ type command =
   | MyTiles (* show my tiles *)
   | BagTiles (* number of tiles left in the bag *)
   | Hint (* give a hint to the player *)
+  | AddWord of letter list (* adds word to dictionary *)
   | Quit (* quit teh game *)
 
 (* [parse str] is the command that represents player input [str]. *)
