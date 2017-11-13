@@ -19,4 +19,3 @@ type command =
 
 (* [parse str] is the command that represents player input [str]. *)
 val parse : string -> command
-
