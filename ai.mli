@@ -1,7 +1,7 @@
 open State
 open Command
 
-type ai
+type difficulty
 
 val eval_move : State.state -> Command.move -> int
 

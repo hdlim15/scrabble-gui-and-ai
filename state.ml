@@ -17,7 +17,7 @@ type board = (cell list) list
 
 type bag = letter list
 
-type player_type = Human | AI of ai
+type player_type = Human | AI of difficulty
 
 type player = {
   name : string;
