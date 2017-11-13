@@ -1,5 +1,0 @@
-val eval_move : State.state -> State.move -> int
-
-type AI = Easy | Hard
-
-val best_move : State.state -> State.move
