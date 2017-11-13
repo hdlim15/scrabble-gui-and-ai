@@ -1,4 +1,7 @@
 open OUnit2
+open Test_trie
+open Test_state
+open Test_command
 
 let suite = "Scrabble test suite" >:::
   Test_trie.tests @ Test_command.tests @ Test_state.tests @ Test_ai.tests
