@@ -1,3 +1,5 @@
+type AI = Easy | Hard
+
 val eval_move : State.state -> int
 
 val best_move : State.state -> State.move
