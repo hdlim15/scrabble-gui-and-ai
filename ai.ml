@@ -1,7 +1,7 @@
 open State
-open Command 
+open Command
 
-type ai = Easy | Hard
+type difficulty = Easy | Hard
 
 let eval_move st mv =
   failwith "todo"
