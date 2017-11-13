@@ -1,8 +1,6 @@
 open State
 open Command
 
-type difficulty = Easy | Hard
-
 let eval_move st mv =
   failwith "todo"
 

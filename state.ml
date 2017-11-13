@@ -17,6 +17,8 @@ type board = (cell list) list
 
 type bag = letter list
 
+type difficulty = Easy | Hard
+
 type player_type = Human | AI of difficulty
 
 type player = {
