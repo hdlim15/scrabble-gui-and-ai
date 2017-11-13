@@ -40,6 +40,7 @@ type state = {
   board : board;
   bag : bag;
   players : player list;
+  added_words : string list;
 }
 
 (* [init_state j] is the initial state of the game *)

@@ -31,6 +31,7 @@ type state = {
   board : board;
   bag : bag;
   players : player list;
+  added_words : string list;
 }
 
 let init_state dict =
