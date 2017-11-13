@@ -1,4 +1,3 @@
-open State
 open Command
 
 let eval_move st mv =

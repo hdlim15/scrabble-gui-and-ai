@@ -1,6 +1,5 @@
 open Trie
 open Command
-open Ai
 
 type coordinate = int * int
 
