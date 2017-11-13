@@ -4,7 +4,7 @@ type move = {
     word : string;
     coordinate : coordinate;
     is_horizontal : bool;
-  }
+}
 
 (* [command] represents a command input by a player. *)
 type command =
@@ -19,4 +19,3 @@ type command =
 
 (* [parse str] is the command that represents player input [str]. *)
 val parse : string -> command
-
