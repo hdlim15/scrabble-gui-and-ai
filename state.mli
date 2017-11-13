@@ -14,7 +14,7 @@ type bag = char list
 type player = {
   name : string;
   score: int;
-  letters : string;
+  letters : char list;
   is_human : bool;
 }
 
