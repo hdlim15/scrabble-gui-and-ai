@@ -17,6 +17,7 @@ type command =
   | BagTiles (* number of tiles left in the bag *)
   | Hint (* give a hint to the player *)
   | AddWord of string (* adds word to dictionary *)
+  | Help
   | Quit (* quit teh game *)
 
 let parse str =
