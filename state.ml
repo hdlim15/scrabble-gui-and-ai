@@ -1,5 +1,6 @@
 open Trie
 open Command
+open AI
 
 type coordinate = int * int
 
@@ -16,11 +17,13 @@ type board = (cell list) list
 
 type bag = letter list
 
+type player_type = Human | AI of ai
+
 type player = {
   name : string;
   score: int;
   letters : letter list;
-  is_human : bool;
+  player_type : player_type;
 }
 
 type state = {
