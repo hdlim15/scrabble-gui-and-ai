@@ -18,6 +18,7 @@ type player = {
   name : string;
   score: int;
   letters : char list;
+  is_human : bool;
 }
 
 type state = {
