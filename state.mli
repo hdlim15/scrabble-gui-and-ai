@@ -21,7 +21,6 @@ type state = {
   board : board;
   bag : bag;
   players : player list;
-  dictionary : Trie.dictionary;
 }
 
 (* [init_state j] is the initial state of the game *)

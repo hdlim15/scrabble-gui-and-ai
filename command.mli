@@ -1,10 +1,10 @@
 type coordinate = int * int
 
 type move = {
-    word : string;
-    coordinate : coordinate;
-    is_horizontal : bool;
-  }
+  word : string;
+  coordinate : coordinate;
+  is_horizontal : bool;
+}
 
 (* [command] represents a command input by a player. *)
 type command =

@@ -1,3 +1,3 @@
-val eval_move : State.state -> int
+val eval_move : State.state -> State.move -> int
 
 val best_move : State.state -> State.move
