@@ -27,7 +27,6 @@ type state = {
   board : board;
   bag : bag;
   players : player list;
-  dictionary : Trie.dictionary;
 }
 
 let init_state dict =
