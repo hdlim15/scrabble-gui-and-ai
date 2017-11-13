@@ -3,16 +3,18 @@ open Command
 
 type coordinate = int * int
 
+type letter = char
+
 type cell = {
   coordinate : coordinate;
-  letter : char;
+  letter : letter;
   letter_multiplier : int;
   word_multiplier : int;
 }
 
 type board = (cell list) list
 
-type bag = char list
+type bag = letter list
 
 type difficulty = Easy | Hard
 
@@ -21,7 +23,7 @@ type player_type = Human | AI of difficulty
 type player = {
   name : string;
   score: int;
-  letters : char list;
+  letters : letter list;
   player_type : player_type;
 }
 
