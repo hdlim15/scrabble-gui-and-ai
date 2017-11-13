@@ -9,7 +9,7 @@ type cell = {
 
 type board = (cell list) list
 
-type bag = string
+type bag = char list
 
 type player = {
   name : string;
