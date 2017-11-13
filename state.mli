@@ -18,12 +18,8 @@ type cell = {
 (* [board] represents the game board. *)
 type board = (cell list) list
 
-<<<<<<< HEAD
 (* [bag] represents the letter tiles not currently in play. *)
-type bag = char list
-=======
 type bag = letter list
->>>>>>> db4d8d1299c7fcacd61805a1d5a2d2546bf81d3c
 
 (* [difficulty] represents the difficulty of the AI. *)
 type difficulty = Easy | Hard
