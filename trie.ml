@@ -1,5 +1,3 @@
-type letter = char
-
 type dictionary = unit
 
 let insert lst dict =

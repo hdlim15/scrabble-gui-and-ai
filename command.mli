@@ -1,5 +1,7 @@
+(* [coordinate] represents the coordinate of a board cell *)
 type coordinate = int * int
 
+(* [move] represents a move when a word is played on the board *)
 type move = {
   word : string;
   coordinate : coordinate;
@@ -15,7 +17,8 @@ type command =
   | BagTiles (* number of tiles left in the bag *)
   | Hint (* give a hint to the player *)
   | AddWord of string (* adds word to dictionary *)
-  | Quit (* quit teh game *)
+  | Help (* tells the user what commands they can use to play the game *)
+  | Quit (* quit the game *)
 
 (* [parse str] is the command that represents player input [str]. *)
 val parse : string -> command

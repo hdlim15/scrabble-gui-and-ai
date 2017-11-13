@@ -1,5 +1,5 @@
+(* The type of the dictionary, which will be implemented later as a trie *)
 type dictionary = unit
-
 
 (* [insert w dict] is [dict] with [w] appended as a valid word in [dict] *)
 val insert : string -> dictionary -> dictionary

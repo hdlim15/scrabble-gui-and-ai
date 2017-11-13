@@ -1,8 +1,10 @@
 open Trie
 open Command
 
+(* [coordinate] represents the coordinate of a board cell *)
 type coordinate = int * int
 
+(* [cell] represents a cell of the board. *)
 type cell = {
   coordinate : coordinate;
   letter : char;
@@ -10,14 +12,19 @@ type cell = {
   word_multiplier : int;
 }
 
+(* [board] represents the game board. *)
 type board = (cell list) list
 
+(* [bag] represents the letter tiles not currently in play. *)
 type bag = char list
 
+(* [difficulty] represents the difficulty of the AI. *)
 type difficulty = Easy | Hard
 
+(* [player_type] represents a human player or an AI of a specific difficulty. *)
 type player_type = Human | AI of difficulty
 
+(* [player] represents a player and their associated information. *)
 type player = {
   name : string;
   score: int;
@@ -25,6 +32,7 @@ type player = {
   player_type : player_type;
 }
 
+(* [state] represents all the information relevant to the state of a game. *)
 type state = {
   board : board;
   bag : bag;
