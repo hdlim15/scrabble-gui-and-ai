@@ -1,22 +1,20 @@
 type coordinate = int * int
 
-type letter = char
-
 type cell = {
   coordinate : coordinate;
-  letter : letter;
+  letter : char;
   letter_multiplier : int;
   word_multiplier : int;
 }
 
 type board = (cell list) list
 
-type bag = letter list
+type bag = string
 
 type player = {
   name : string;
   score: int;
-  letters : letter list;
+  letters : string;
 }
 
 type state = {
