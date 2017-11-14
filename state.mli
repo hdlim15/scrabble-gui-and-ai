@@ -1,5 +1,4 @@
 open Trie
-open Command
 
 (* [coordinate] represents the coordinate of a board cell *)
 type coordinate = int * int

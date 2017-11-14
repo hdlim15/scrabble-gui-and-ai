@@ -1,5 +1,4 @@
 open Trie
-open Command
 
 type coordinate = int * int
 
