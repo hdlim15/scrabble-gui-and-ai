@@ -1,5 +1,4 @@
 open Trie
-open Command
 
 (* [coordinate] represents the coordinate of a board cell *)
 type coordinate = int * int
@@ -41,6 +40,7 @@ type state = {
   bag : bag;
   players : player list;
   added_words : string list;
+  current_player : player;
 }
 
 (* [init_state j] is the initial state of the game *)
