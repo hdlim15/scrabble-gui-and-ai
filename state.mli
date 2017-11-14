@@ -4,7 +4,7 @@ open Command
 (* [coordinate] represents the coordinate of a board cell *)
 type coordinate = int * int
 
-(* [letter] represents a char. *)
+(* [letter] represents a scrabble letter as a char, with an associated score value. *)
 type letter = (char * int)
 
 (* [cell] represents a cell of the board. *)
