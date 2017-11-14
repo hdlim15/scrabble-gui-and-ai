@@ -37,5 +37,8 @@ type state = {
 let init_state dict =
   failwith "todo"
 
+let point_moves m =
+  failwith "todo"
+
 let do' cmd st =
   failwith "todo"
