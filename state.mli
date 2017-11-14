@@ -46,6 +46,10 @@ type state = {
 (* [init_state j] is the initial state of the game *)
 val init_state : Trie.dictionary -> state
 
+(* [point_moves m] is the number of points earned by the move [m] *)
+val point_moves : Command.move -> int
+
+
 (* [do' c st] is [st'] if doing command [c] in state [st] results
  * in a new state [st']. *)
 val do' : Command.command -> state -> state
