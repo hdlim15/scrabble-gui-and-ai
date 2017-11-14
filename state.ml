@@ -32,6 +32,7 @@ type state = {
   bag : bag;
   players : player list;
   added_words : string list;
+  current_player : player;
 }
 
 let init_state dict =
