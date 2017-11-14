@@ -3,7 +3,7 @@ open Command
 
 type coordinate = int * int
 
-type letter = char
+type letter = (char * int)
 
 type cell = {
   coordinate : coordinate;
@@ -23,7 +23,7 @@ type player_type = Human | AI of difficulty
 type player = {
   name : string;
   score: int;
-  letters : letter list;
+  tiles : letter list;
   player_type : player_type;
 }
 

@@ -5,7 +5,7 @@ open Command
 type coordinate = int * int
 
 (* [letter] represents a char. *)
-type letter = char
+type letter = (char * int)
 
 (* [cell] represents a cell of the board. *)
 type cell = {
@@ -31,7 +31,7 @@ type player_type = Human | AI of difficulty
 type player = {
   name : string;
   score: int;
-  letters : letter list;
+  tiles : letter list;
   player_type : player_type;
 }
 
