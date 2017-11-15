@@ -21,7 +21,7 @@ type command =
 
 exception InvalidCommand
 
-(* [get_chars] splits [s] into a list of its characters. *)
+(* [get_chars s] splits [s] into a list of its characters. *)
 let get_chars s =
   let rec split_helper s' acc =
     match s' with
@@ -34,7 +34,7 @@ let get_chars s =
  * requires: c is a lowercase letter in a..z *)
 let index c = Char.code c - 97
 
-(* [get_coordinate] returns a [coordinate] representing the coordinate string
+(* [get_coordinate s] returns a [coordinate] representing the coordinate string
  * [s] entered by a player.
  * Example: get_coordinate "a0" --> (0,0) *)
 let get_coordinate s =
