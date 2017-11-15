@@ -42,8 +42,14 @@ let insert dict w =
       begin
         match find h acc with
         | None ->
-            add_child (helper t (Node (h, [], (t = [])))) acc
-        | Some d' -> add_child (helper t d') acc
+            let new_node = Node (h, [], t=[]) in
+            add_child (helper t new_node) acc
+        | Some d' ->
+            let new_node =
+              if t = [] then let Node(c, dl, _) = d' in Node(c, dl, true)
+              else d'
+            in
+            add_child (helper t new_node) acc
       end
   in
   helper char_list dict
