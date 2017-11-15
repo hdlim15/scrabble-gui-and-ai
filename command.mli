@@ -18,7 +18,7 @@ exception InvalidCommand
 (* [command] represents a command input by a player. *)
 type command =
   | PlaceWord of move (* place a word on the board *)
-  | Swap of char list (* swap tiles with the bag *)
+  | Swap of letter list (* swap tiles with the bag *)
   | Score (* show current score of all players *)
   | Rack (* show my rack of tiles *)
   | Hint (* give a hint to the player *)
