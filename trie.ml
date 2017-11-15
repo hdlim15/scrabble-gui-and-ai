@@ -1,6 +1,4 @@
-type dictionary =
-  | Empty
-  | Node of char * (dictionary list) * (string option)
+type dictionary = Node of char * (dictionary list) * bool
 
 (* [explode s] is [s] split into a list of its characters, in order. *)
 let explode s =
@@ -14,28 +12,23 @@ let explode s =
  * of [n]. *)
 let remove_child n dict =
   match n with
-  | Empty -> failwith "cannot remove empty"
   | Node (c, _, _) ->
       List.filter
         (fun d -> match d with
-         | Empty -> true
          | Node (c', _, _) -> c' <> c
         ) dict
 
 let add_child n dict =
   match dict with
-  | Empty -> failwith "cannot add child to Empty"
   | Node (c, lst, so) -> Node (c, n::(remove_child n lst), so)
 
 (* [find c dict] is None, if [c] is not the char of a child of [dict]. If [c]
  * is the char of a child of dict, it returns Some child *)
 let find c dict =
   match dict with
-  | Empty -> None
   | Node (_, lst, _) ->
       List.find_opt (fun d ->
         match d with
-        | Empty -> false
         | Node (c', _, _) -> c' = c
       ) lst
 
@@ -49,8 +42,7 @@ let insert dict w =
       begin
         match find h acc with
         | None ->
-            let word_opt = if (t = []) then (Some w) else None in
-            add_child (helper t (Node (h, [], word_opt))) acc
+            add_child (helper t (Node (h, [], (t = [])))) acc
         | Some d' -> add_child (helper t d') acc
       end
   in
@@ -58,7 +50,7 @@ let insert dict w =
 
 let insert_word_list lst =
   (* [+] used to represent the head of the trie *)
-  let root = Node ('+', [], None) in
+  let root = Node ('+', [], false) in
   List.fold_left insert root lst
 
 

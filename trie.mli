@@ -1,7 +1,5 @@
 (* The type of the dictionary, which will be implemented later as a trie *)
-type dictionary =
-  | Empty
-  | Node of char * (dictionary list) * (string option)
+type dictionary = Node of char * (dictionary list) * bool
 
 (* [insert w dict] is [dict] with [w] appended as a valid word in [dict] *)
 val insert : dictionary -> string -> dictionary
