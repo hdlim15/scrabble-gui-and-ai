@@ -1,8 +1,10 @@
 (* The type of the dictionary, which will be implemented later as a trie *)
-type dictionary = unit
+type dictionary =
+  | Empty
+  | Node of char * (dictionary list) * (string option)
 
 (* [insert w dict] is [dict] with [w] appended as a valid word in [dict] *)
-val insert : string -> dictionary -> dictionary
+val insert : dictionary -> string -> dictionary
 
 (* [is_word w dict] is true iff [w] is as a valid word in [dict] *)
 val is_word : string -> dictionary -> bool
