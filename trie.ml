@@ -12,11 +12,7 @@ let explode s =
  * of [n]. *)
 let remove_child n dict =
   match n with
-  | Node (c, _, _) ->
-      List.filter
-        (fun d -> match d with
-         | Node (c', _, _) -> c' <> c
-        ) dict
+  | Node (c, _, _) -> List.filter (fun (Node (c', _, _) )->  c' <> c) dict
 
 (* [add_child n dict] is [dict] with [n] appended as a child. If the character
  * of [n] is already contained in a direct child of [dict], [n] replaces that
@@ -79,16 +75,13 @@ let insert_word_list lst =
   let root = Node ('+', [], false) in
   List.fold_left insert root lst
 
-(* [initialize_dict file] is the dictionary that results from adding all the
- * words in [file] to the empty dictionary.
- * requires: there is one word per line in [file]
- * aside: if you uncomment the commented code, it will also return a list of
- * all the words, which is useful for utop debugging *)
 let initialize_dict file =
-  let rec helper channel dict (* lst *) =
+  let rec helper channel dict =
     match (Pervasives.input_line channel) with
     (* If End_of_file, close file and return idx' *)
-    | exception End_of_file -> Pervasives.close_in channel ; dict(* , lst *)
-    | s -> helper channel (insert dict s) (* (s::lst) *)
+    | exception End_of_file -> Pervasives.close_in channel ; dict
+    | s -> helper channel (insert dict s)
   in
-  helper (Pervasives.open_in file) (Node ('+', [], false)) (* [] *)
+  (* [+] used to represent the head of the trie *)
+  let root = Node ('+', [], false) in
+  helper (Pervasives.open_in file) root
