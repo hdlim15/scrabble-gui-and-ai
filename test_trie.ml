@@ -11,14 +11,22 @@ let file_word_list file =
   in
   helper (Pervasives.open_in file) []
 
-(* [test_dict dict file] is true iff [is_word dict w] is true for all words [w]
- * in [file] that were inserted into a dictionary [dict]. *)
-let test_dict file =
-  let dict = initialize_dict file in
-  let word_list = file_word_list file in
-  (List.filter (is_word dict) word_list) = word_list
+(* forward_dict.txt dictionary and list *)
+let f_dict = initialize_dict "forward_dict.txt"
+let f_list = file_word_list "forward_dict.txt"
+
+(* reverse_dict.txt dictionary and list *)
+let r_dict = initialize_dict "reverse_dict.txt"
+let r_list = file_word_list "reverse_dict.txt"
+
+let fake_words = [
+  "a"; "aaa"; "abacterials"; "abac"; "abasjment"; "abb"; "abnormalityes";
+  "abstemiousnessesp"; "123"; "/.,/()*&^%$#@!!~`"; " "; ""; " admissibilities";
+  "admix "; "zyzzyvass"; "zyzz yvas"; "zymurgis"; "zygosity."
+]
 
 let tests = [
-  "forward_dict" >:: (fun _ -> assert_equal true (test_dict "forward_dict.txt"));
-  "reverse_dict" >:: (fun _ -> assert_equal true (test_dict "reverse_dict.txt"));
+  "forward_dict" >:: (fun _ -> assert_equal f_list (List.filter (is_word f_dict) f_list));
+  "forward_dict" >:: (fun _ -> assert_equal r_list (List.filter (is_word r_dict) r_list));
+  "fake_words" >:: (fun _ -> assert_equal [] (List.filter (is_word f_dict) fake_words));
 ]
