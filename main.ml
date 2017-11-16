@@ -28,9 +28,9 @@ let rec string_of_board board =
   | row::t ->
     let rec helper row =
       match row with
-      | [] -> "\n"
-      | cell::[] -> Char.escaped (fst cell.letter)
-      | cell::t -> Char.escaped (fst cell.letter) ^ " | " ^ helper t
+      | [] -> ""
+      | cell::[] -> " | " ^ Char.escaped (fst cell.letter) ^ " |"
+      | cell::t -> " | " ^ Char.escaped (fst cell.letter) ^ helper t
   in helper row ^ "\n" ^ string_of_board t
 
 (* [get_command ()] is a command, generated from user input *)
