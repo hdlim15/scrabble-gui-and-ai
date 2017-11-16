@@ -42,6 +42,23 @@ type state = {
   current_player : player;
 }
 
+(* [bag_to_rack r b p st] adds letters from bag [b] to player [p]'s rack [r]
+ * until the player has 7 letters on their rack.
+ * returns: the updated state after letters are added from [b] to [r]. *)
+let rec bag_to_rack r b p st =
+  if List.length r = 7 then
+    let updated_current_player = {p with rack = r} in
+    let updated_players =
+      updated_current_player ::
+      (List.filter (fun p -> p.name <> updated_current_player.name) st.players) in
+    {st with bag = b;
+             players = updated_players;
+             current_player = updated_current_player}
+  else
+    let char_from_bag = List.hd b in
+    let updated_bag = List.tl b in
+    bag_to_rack (char_from_bag :: r) updated_bag p st
+
 (* [init_board n] creates an nxn board.
  * requires: n > 0 *)
 let rec init_board n =
@@ -154,20 +171,7 @@ let swap lst st =
   if List.length st.bag >= List.length lst && valid_swap then
     let remove_chars_rack =
       List.filter (fun (c,_) -> not (List.mem c lst)) player.rack in
-    let rec bag_to_rack rack bag =
-      if List.length rack = 7 then
-        let updated_current_player = {player with rack = rack} in
-        let updated_players =
-          updated_current_player ::
-          (List.filter (fun p -> p.name <> updated_current_player.name) st.players) in
-        {st with bag = bag;
-                 players = updated_players;
-                 current_player = updated_current_player}
-      else
-        let char_from_bag = List.hd bag in
-        let updated_bag = List.tl bag in
-        bag_to_rack (char_from_bag :: rack) updated_bag
-    in bag_to_rack remove_chars_rack st.bag
+    bag_to_rack remove_chars_rack st.bag player st
   else
     raise InvalidSwap
 
