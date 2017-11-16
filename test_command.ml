@@ -46,16 +46,16 @@ let tests = [
 
   (* PlaceWord tests. *)
   "place_lower_horizontal" >:: (fun _ ->
-      assert_equal (PlaceWord {word_segment=['a';'b';'c']; coordinate=(0,0);
+      assert_equal (PlaceWord {word_segment=['a';'b';'c']; mv_coord=(0,0);
                                is_horizontal=true}) (parse "place abc a0 horizontal"));
   "place_upper_horizontal" >:: (fun _ ->
-      assert_equal (PlaceWord {word_segment=['d']; coordinate=(10,10);
+      assert_equal (PlaceWord {word_segment=['d']; mv_coord=(10,10);
                                is_horizontal=true}) (parse "PLACE D K10 HORIZONTAL"));
   "place_vertical" >:: (fun _ ->
-      assert_equal (PlaceWord {word_segment=['a';'b']; coordinate=(1,13);
+      assert_equal (PlaceWord {word_segment=['a';'b']; mv_coord=(1,13);
                                is_horizontal=false}) (parse "place ab b13 vertical"));
   "place_spaces_vertical" >:: (fun _ ->
-      assert_equal (PlaceWord {word_segment=['a';'b']; coordinate=(1,13);
+      assert_equal (PlaceWord {word_segment=['a';'b']; mv_coord=(1,13);
                                is_horizontal=false}) (parse " place   ab  b13  vertical "));
 
   (* Exception tests. *)

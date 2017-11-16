@@ -4,7 +4,7 @@ type coordinate = int * int
 (* [move] represents a move when a word is played on the board. *)
 type move = {
   word_segment : char list;
-  coordinate : coordinate;
+  mv_coord : coordinate;
   is_horizontal : bool;
 }
 
