@@ -12,4 +12,7 @@ val insert : dictionary -> string -> dictionary
 (* [is_word w dict] is true iff [w] is as a valid word in [dict] *)
 val is_word : dictionary -> string -> bool
 
-
+(* [initialize_dict file] is the dictionary that results from adding all the
+ * words in [file] to the empty dictionary.
+ * requires: there is one word per line in [file] *)
+val initialize_dict : string -> dictionary
