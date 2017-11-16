@@ -22,6 +22,7 @@ type command =
   | AddWord of string (* adds word to dictionary *)
   | Help (* tells the user what commands they can use to play the game *)
   | Quit (* quit the game *)
+  | Board (* print current state of board *)
 
 (* [parse str] is the command that represents player input [str]. *)
 val parse : string -> command

@@ -16,6 +16,7 @@ type command =
   | AddWord of string (* adds word to dictionary *)
   | Help (* tells the user what commands they can use to play the game *)
   | Quit (* quit the game *)
+  | Board (* print current state of board *)
 
 exception InvalidCommand
 
@@ -47,6 +48,7 @@ let parse str =
   | "hint" -> Hint
   | "score" -> Score
   | "rack" -> Rack
+  | "board" -> Board
   | _ ->
     try
       let words = Str.split (Str.regexp "[ \t]+") lower_str in

@@ -21,6 +21,19 @@ let rec str_of_help () =
   in
   helper (Pervasives.open_in "help.txt") ""
 
+(* [string_of_board board] is a string representing the board state *)
+let rec string_of_board board =
+  match board with
+  | [] -> ""
+  | row::t ->
+    let rec helper row =
+      match row with
+      | [] -> "\n"
+      | cell::[] -> Char.escaped (fst cell.letter)
+      | cell::t -> Char.escaped (fst cell.letter) ^ " | " ^ helper t
+  in helper row ^ "\n" ^ string_of_board t
+
+(* [get_command ()] is a command, generated from user input *)
 let rec get_command () =
   print_string "> ";
   let command = try (parse (read_line ())) with
@@ -41,6 +54,7 @@ let rec play_game st =
       | AddWord str -> print_endline ("Added word to dictionary!"); do' command st
       | Help -> print_endline ((str_of_help ())^"\n"); st
       | Quit -> print_endline "Thanks for playing!\n"; exit 0;
+      | Board -> print_endline (string_of_board st.board); st
     with
     | _ -> failwith "catch all possibly-raised exceptions"
   in
