@@ -62,14 +62,15 @@ let rec bag_to_rack r b p st =
 (* [get_points c] returns the number of points associated with letter [c]. *)
 let get_points c =
   match c with
-  | 'a' | 'e' | 'i' | 'o' | 's' | 'u' | 'l' | 'n' | 'r' | 't' -> 1
-  | 'c' | 'm' | 'b' | 'p' -> 3
-  | 'g' | 'd' -> 2
-  | 'k' -> 5
-  | 'q' | 'z' -> 10
-  | 'w' | 'y' | 'f' | 'h' | 'v' -> 4
-  | '*' -> 0
-  | 'j' | 'x' -> 8
+  | 'a' | 'e' | 'i' | 'l' | 'n'
+  | 'o' | 'r' | 's' | 't' | 'u' -> 1
+  | 'd' | 'g'                   -> 2
+  | 'b' | 'c' | 'm' | 'p'       -> 3
+  | 'f' | 'h' | 'v' | 'w' | 'y' -> 4
+  | 'k'                         -> 5
+  | 'j' | 'x'                   -> 8
+  | 'q' | 'z'                   -> 10
+  | '*'                         -> 0
   | _ -> failwith "impossible"
 
 (* [init_board n] creates an nxn board.
@@ -94,11 +95,12 @@ and gen_cell row_num col_num =
 let rec init_bag () =
   let alphabet = ['a';'b';'c';'d';'e';'f';'g';'h';'i';'j';'k';'l';'m';'n';'o';
                   'p';'q';'r';'s';'t';'u';'v';'w';'x';'y';'z';'*'] in
-  let rec helper lst =
+  (* let rec helper lst =
     match lst with
     | [] -> []
     | h::t -> init_letters_of_char h @ helper t in
-  helper alphabet
+  helper alphabet *)
+  List.flatten (List.map init_letters_of_char alphabet) (*david*)
 and init_letters_of_char c =
   match c with
   | 'a' -> num_tiles_of_char 9 'a' 1  | 'b' -> num_tiles_of_char 2 'b' 3
@@ -184,9 +186,9 @@ let place w c is_h =
  * player's rack or there are not enough letters in the bag to do the swap. *)
 let swap lst st =
   let player = st.current_player in
-  let valid_swap =
-    List.fold_left (fun acc l -> acc && List.mem_assoc l player.rack) true lst in
-  if List.length st.bag >= List.length lst && valid_swap then
+  let valid_swap = List.for_all (fun (x) -> List.mem_assoc x player.rack) lst in (*david*)
+    (* List.fold_left (fun acc l -> acc && List.mem_assoc l player.rack) true lst in *)
+  if (List.length st.bag >= List.length lst) && valid_swap then
     let remove_chars_rack =
       List.fold_left (fun acc c -> List.remove_assoc c acc) player.rack lst in
     let st' = bag_to_rack remove_chars_rack st.bag player st in

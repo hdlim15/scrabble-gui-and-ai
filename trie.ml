@@ -39,13 +39,13 @@ let insert dict w =
              * indicates whether we are at the last letter of a word or not. *)
             Node (h, [], t=[])
         | Some d' ->
-            (* we are at the last letter of a word *)
+            (* if we are at the last letter of a word *)
             if t = [] then let Node(c, dl, _) = d' in Node(c, dl, true)
-            (* use the original node found in the trie *)
+            (* else use the original node found in the trie *)
             else d'
       in
       (* This line of code is the crux of this function. We first recursively
-       * call helper using [t] (the remainder of [lst]), and [new_node] (the
+       * call [helper] using [t] (the remainder of [lst]), and [new_node] (the
        * node we should use to insert [t]). After this recursive call returns,
        * we add the result to [acc], updating the entire dictionary. *)
       add_child (helper t new_node) acc

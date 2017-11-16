@@ -4,22 +4,27 @@ open Char
 
 (* [str_list_to_string lst] is a string representation of a string list
  * example: ["hello";"world"] -> "hello, world" *)
-let rec str_list_to_string lst =
+(* let rec str_list_to_string lst =
   match lst with
   | [] -> ""
   | h::[] -> h ^ str_list_to_string []
-  | h::t -> h ^ ", " ^ str_list_to_string t
+  | h::t -> h ^ ", " ^ str_list_to_string t *)
 
 (* [get_scores players] returns a string of player, score information *)
 let rec get_scores players =
+(*
   match players with
   | [] -> ""
   | p::[] -> p.name ^ ": " ^ (string_of_int p.score)
-  | p::t -> get_scores t ^ "\n" ^ p.name ^ ": " ^ (string_of_int p.score)
+  | p::t -> get_scores t ^ "\n" ^ p.name ^ ": " ^ (string_of_int p.score) *)
+  let string_of_score p = p.name ^ ": " ^ (string_of_int p.score) in
+  let score_string_list = (List.map string_of_score (List.rev players)) in
+  String.concat "\n" score_string_list(*david*)
 
 (* [str_of_rack rack] is the string representation of a rack *)
 let rec str_of_rack rack =
-  rack |> List.map (fun (c,_) -> Char.escaped c) |> str_list_to_string
+  rack |> List.map (fun (c,_) -> Char.escaped c) |> (String.concat ", ")(*david*)
+  (* rack |> List.map (fun (c,_) -> Char.escaped c) |> str_list_to_string *)
 
 (* [str_of_help ()] is the string representation of help.txt *)
 let rec str_of_help () =
