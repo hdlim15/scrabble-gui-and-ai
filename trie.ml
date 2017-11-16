@@ -22,9 +22,9 @@ let add_child n dict =
   match dict with
   | Node (c, lst, so) -> Node (c, n::(remove_child n lst), so)
 
-(* [find c dict] is None, if [c] is not the char of a child of [dict]. If [c]
- * is the char of a child of dict, it returns Some child *)
-let find c dict =
+(* [get_subtree c dict] is None, if [c] is not the char of a child of [dict].
+ * If [c] is the char of a child of dict, it returns Some child *)
+let get_subtree c dict =
   match dict with
   | Node (_, lst, _) ->
       List.find_opt (fun d ->
@@ -40,7 +40,7 @@ let insert dict w =
     | [] -> acc
     | h::t ->
       begin
-        match find h acc with
+        match get_subtree h acc with
         | None ->
             let new_node = Node (h, [], t=[]) in
             add_child (helper t new_node) acc
@@ -60,11 +60,25 @@ let insert_word_list lst =
   List.fold_left insert root lst
 
 
-let is_word w dict =
-  failwith "todo"
-
-let get_subtree letter dict =
-  failwith "todo"
+let is_word dict w =
+  let char_list = explode w in
+  let rec helper lst dict =
+    match lst with
+    | [] -> false
+    | c :: [] ->
+      begin
+        match get_subtree c dict with
+        | None -> false
+        | Some (Node(_, _, b)) -> b
+      end
+    | c :: t ->
+      begin
+        match get_subtree c dict with
+        | None -> false
+        | Some d' -> helper t d'
+      end
+  in
+  helper char_list dict
 
 (*
              *
