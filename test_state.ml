@@ -255,7 +255,7 @@ let board_15 = [
 
 let player1 = {name = "arman";
                score = 0;
-               rack = [('s', 1);('p', 3);('p', 3);('o', 1);('p', 3);('p', 3);('u', 1)];
+               rack = [('s', 1);('p', 3);('s', 1);('o', 1);('p', 3);('p', 3);('u', 1)];
                player_type = Human}
 
 let player2 = {name = "connor";
@@ -289,13 +289,14 @@ let tests = [
 
   (* swap tests. *)
   "swap1_basic_rack" >:: (fun _ ->
-      assert_equal [('z', 10);('p', 3);('p', 3);('o', 1);('p', 3);('p', 3);('u', 1)]
+      assert_equal [('z', 10);('p', 3);('s', 1);('o', 1);('p', 3);('p', 3);('u', 1)]
         (do' (Swap ['s']) basic_state_1bag).current_player.rack);
   "swap1_basic_bag" >:: (fun _ ->
       assert_equal [('s', 1)] (do' (Swap ['s']) basic_state_1bag).bag);
   "swap2_basic_rack" >:: (fun _ ->
       let rack' = (do' (Swap ['s'; 'u']) basic_state_2bag).current_player.rack in
-      assert_equal true ((List.mem_assoc 'z' rack') && (List.mem_assoc 'k' rack')));
+      assert_equal true ((List.mem_assoc 'z' rack') && (List.mem_assoc 'k' rack')
+                        && List.mem_assoc 's' rack'));
   "swap2_basic_bag" >:: (fun _ ->
       let bag' = (do' (Swap ['s'; 'u']) basic_state_2bag).bag in
       assert_equal true ((List.mem_assoc 's' bag') && (List.mem_assoc 'u' bag')));
