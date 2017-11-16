@@ -1,9 +1,52 @@
 open State
 open Command
+open Char
 
+(* [str_list_to_string lst] is a string representation of a string list
+ * example: ["hello";"world"] -> "hello, world" *)
+let rec str_list_to_string lst =
+  match lst with
+  | [] -> ""
+  | h::[] -> h ^ str_list_to_string []
+  | h::t -> h ^ ", " ^ str_list_to_string t
 
+let rec get_scores players =
+  match players with
+  | [] -> ""
+  | p::[] -> p.name ^ ": " ^ (string_of_int p.score)
+  | p::t -> get_scores t ^ "\n" ^ p.name ^ ": " ^ (string_of_int p.score)
+
+let rec str_of_rack rack =
+  rack |> List.map (fun (c,_) -> Char.escaped c) |> str_list_to_string
+
+let rec print_help () =
+  let rec helper channel str =
+    match (Pervasives.input_line channel) with
+    | exception End_of_file -> Pervasives.close_in channel; str
+    | s -> helper channel (str ^ "\n" ^ s)
+  in
+  helper (Pervasives.open_in "help.txt") ""
+
+(* [play_game st] plays the game represented by [st]. *)
 let rec play_game st =
-  failwith "play_game todo"
+  print_string "> ";
+  let command = parse (read_line ()) in
+  let new_state =
+    try
+      match command with
+      | PlaceWord mv -> failwith "todo main.ml PlaceWord"
+      | Swap chars -> print_endline "Swapping!"; do' command st
+      | Score -> print_endline (get_scores st.players); st
+      | Rack -> print_endline (str_of_rack st.current_player.rack); st
+      | Hint -> failwith "todo main.ml Hint (requires AI code)"
+      | AddWord str -> print_endline ("Added word to dictionary!"); do' command st
+      | Help -> print_endline ((print_help ())^"\n"); st
+      | Quit -> print_endline "Thanks for playing!\n"; exit 0;
+    with
+    | _ -> failwith "catch all possibly-raised exceptions"
+  in
+  (* MUST CHECK WIN/ENDGAME CONDITION HERE *)
+  play_game new_state
 
 
 (* GAME INITIALIZATION CODE BELOW *)
