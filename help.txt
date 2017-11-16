@@ -1,19 +1,28 @@
-Welcome to our text-based version of Scrabble! If you are unfamiliar with the rules of Scrabble, we have attached a link to the official rules below. The different game commands included below describe how to perform different actions throughout the game. The winner is the player with the highest score at the end of the game!
+Welcome to our text-based version of Scrabble! If you are unfamiliar with the
+rules of Scrabble, we have attached a link to the official rules below. The
+different game commands included below describe how to perform different actions
+throughout the game. The winner is the player with the highest score at the end
+of the game!
 
-The board is a grid whose rows are represented by letters in alphabetical order going downward and whose columns are represented by numbers that increase going to the right, starting at 0. An individual cell is represented by a combination of a letter and a number. For example, "A0" represents the top left corner of the board.
+The board is a grid whose rows are represented by letters in alphabetical order
+going downward and whose columns are represented by numbers that increase going
+to the right, starting at 0. An individual cell is represented by a combination
+of a letter and a number. For example, "A0" represents the top left corner of
+the board.
 
-Scrabble Rules: https://scrabble.hasbro.com/en-us/rules 
+Scrabble Rules: https://scrabble.hasbro.com/en-us/rules
 
-Commands: 
-	- Quit: quits the current game.
-	- Help: displays useful information on how to play the game.
-	- Hint: provides a hint on a potential move that could be made.
-	- Score: displays the scores of everyone in the game.
-	- Rack: displays the letters one has in their rack.
-	- Add: adds a new word to the dictionary of allowed words.
-		- Ex: "Add ExampleWord" adds exampleword to the dictionary.
-	- Swap: swaps tiles on one's rack with tiles in the bag.
-		- Ex: "Swap b" swaps the letter b with a letter in the bag.
-	- Place: places letters on the board horizontally or vertically 	starting at a particular cell.
-		- Ex: "Place word A0 horizontal" places "word" on the board horizontally starting at cell coordinate A0.
-
+Commands:
+- Quit: quits the current game.
+- Help: displays useful information on how to play the game.
+- Hint: provides a hint on a potential move that could be made.
+- Score: displays the scores of everyone in the game.
+- Rack: displays the letters one has in their rack.
+- Add: adds a new word to the dictionary of allowed words.
+  Ex: "Add ExampleWord" adds exampleword to the dictionary.
+- Swap: swaps tiles on one's rack with tiles in the bag.
+  Ex: "Swap b" swaps the letter b with a letter in the bag.
+- Place: places letters on the board horizontally or vertically starting at a
+  particular cell.
+  Ex: "Place word A0 horizontal" places "word" on the board horizontally starting
+  at cell coordinate A0.

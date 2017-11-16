@@ -1,5 +1,6 @@
 open OUnit2
 open State
+open Command
 
 let board_1 = [[{coordinate = (0, 0); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1}]]
 
@@ -252,8 +253,57 @@ let board_15 = [
   ]
 ]
 
+let player1 = {name = "arman";
+               score = 0;
+               rack = [('s', 1);('p', 3);('s', 1);('o', 1);('p', 3);('p', 3);('u', 1)];
+               player_type = Human}
+
+let player2 = {name = "connor";
+               score = 0;
+               rack = [('t', 1);('m', 3);('m', 3);('i', 1);('m', 3);('m', 3);('r', 1)];
+               player_type = Human}
+
+let basic_state_1bag = {board = board_1;
+                        bag = [('z', 10)];
+                        players = [player1; player2];
+                        added_words = [];
+                        current_player = player1}
+
+let basic_state_2bag = {board = board_1;
+                        bag = [('z', 10); ('k', 5)];
+                        players = [player1; player2];
+                        added_words = [];
+                        current_player = player1}
+
 let tests = [
+  (* init_board tests. *)
   "init_board_1" >:: (fun _ -> assert_equal board_1 (init_board 1));
   "init_board_2" >:: (fun _ -> assert_equal board_2 (init_board 2));
   "init_board_15" >:: (fun _ -> assert_equal board_15 (init_board 15));
+
+  (* do' tests. *)
+
+  (* add_word tests. *)
+  "add_word_basic" >:: (fun _ ->
+      assert_equal ["blah"] (do' (AddWord "blah") basic_state_1bag).added_words);
+
+  (* swap tests. *)
+  "swap1_basic_rack" >:: (fun _ ->
+      assert_equal [('z', 10);('p', 3);('s', 1);('o', 1);('p', 3);('p', 3);('u', 1)]
+        (do' (Swap ['s']) basic_state_1bag).current_player.rack);
+  "swap1_basic_bag" >:: (fun _ ->
+      assert_equal [('s', 1)] (do' (Swap ['s']) basic_state_1bag).bag);
+  "swap2_basic_rack" >:: (fun _ ->
+      let rack' = (do' (Swap ['s'; 'u']) basic_state_2bag).current_player.rack in
+      assert_equal true ((List.mem_assoc 'z' rack') && (List.mem_assoc 'k' rack')
+                        && List.mem_assoc 's' rack'));
+  "swap2_basic_bag" >:: (fun _ ->
+      let bag' = (do' (Swap ['s'; 'u']) basic_state_2bag).bag in
+      assert_equal true ((List.mem_assoc 's' bag') && (List.mem_assoc 'u' bag')));
+  "swap1_exn_bag_too_small" >:: (fun _ ->
+      let e = fun () -> do' (Swap ['s';'o']) basic_state_1bag in
+      assert_raises InvalidSwap e);
+  "swap1_exn_not_in_rack" >:: (fun _ ->
+      let e = fun () -> do' (Swap ['l']) basic_state_1bag in
+      assert_raises InvalidSwap e);
 ]

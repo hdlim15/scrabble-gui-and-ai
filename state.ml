@@ -188,7 +188,7 @@ let swap lst st =
     List.fold_left (fun acc l -> acc && List.mem_assoc l player.rack) true lst in
   if List.length st.bag >= List.length lst && valid_swap then
     let remove_chars_rack =
-      List.filter (fun (c,_) -> not (List.mem c lst)) player.rack in
+      List.fold_left (fun acc c -> List.remove_assoc c acc) player.rack lst in
     let st' = bag_to_rack remove_chars_rack st.bag player st in
     let updated_current_player =
       List.hd (List.filter (fun p -> p.name = player.name) st'.players) in
