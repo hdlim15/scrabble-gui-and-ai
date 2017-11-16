@@ -10,16 +10,19 @@ let rec str_list_to_string lst =
   | h::[] -> h ^ str_list_to_string []
   | h::t -> h ^ ", " ^ str_list_to_string t
 
+(* [get_scores players] returns a string of player, score information *)
 let rec get_scores players =
   match players with
   | [] -> ""
   | p::[] -> p.name ^ ": " ^ (string_of_int p.score)
   | p::t -> get_scores t ^ "\n" ^ p.name ^ ": " ^ (string_of_int p.score)
 
+(* [str_of_rack rack] is the string representation of a rack *)
 let rec str_of_rack rack =
   rack |> List.map (fun (c,_) -> Char.escaped c) |> str_list_to_string
 
-let rec print_help () =
+(* [str_of_help ()] is the string representation of help.txt *)
+let rec str_of_help () =
   let rec helper channel str =
     match (Pervasives.input_line channel) with
     | exception End_of_file -> Pervasives.close_in channel; str
@@ -27,10 +30,15 @@ let rec print_help () =
   in
   helper (Pervasives.open_in "help.txt") ""
 
+let rec get_command () =
+  print_string "> ";
+  let command = try (parse (read_line ())) with
+    | InvalidCommand -> (print_endline "Invalid action, try again"; get_command ())
+  in command
+
 (* [play_game st] plays the game represented by [st]. *)
 let rec play_game st =
-  print_string "> ";
-  let command = parse (read_line ()) in
+  let command = get_command () in
   let new_state =
     try
       match command with
@@ -40,7 +48,7 @@ let rec play_game st =
       | Rack -> print_endline (str_of_rack st.current_player.rack); st
       | Hint -> failwith "todo main.ml Hint (requires AI code)"
       | AddWord str -> print_endline ("Added word to dictionary!"); do' command st
-      | Help -> print_endline ((print_help ())^"\n"); st
+      | Help -> print_endline ((str_of_help ())^"\n"); st
       | Quit -> print_endline "Thanks for playing!\n"; exit 0;
     with
     | _ -> failwith "catch all possibly-raised exceptions"
