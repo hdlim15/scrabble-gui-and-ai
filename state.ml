@@ -47,13 +47,12 @@ type state = {
  * returns: the updated state after letters are added from [b] to [r]. *)
 let rec bag_to_rack r b p st =
   if List.length r = 7 then
-    let updated_current_player = {p with rack = r} in
+    let updated_player = {p with rack = r} in
     let updated_players =
-      updated_current_player ::
-      (List.filter (fun p -> p.name <> updated_current_player.name) st.players) in
+      updated_player ::
+      (List.filter (fun p -> p.name <> updated_player.name) st.players) in
     {st with bag = b;
-             players = updated_players;
-             current_player = updated_current_player}
+             players = updated_players}
   else
     let i = Random.int (List.length b) in
     let letter_from_bag = List.nth b i in
@@ -145,20 +144,25 @@ let init_players init_data =
     let ai_players = gen_ai_players (num_players-num_humans) init_data.ai_difficulty in
     human_players @ ai_players
 
-let init_racks players bag =
-  failwith "todo"
+let rec init_racks players st =
+  match players with
+  | [] -> st
+  | h::t ->
+    let st' = bag_to_rack (h.rack) (st.bag) h st in
+    init_racks t st'
 
 let init_state init_data =
   let board = init_board 15 in
   let bag = init_bag () in
   let players = init_players init_data in
-  let players' = init_racks players bag in
   let current_player = List.hd players in
-  {board=board;
-   bag=bag;
-   players=players';
-   added_words=[];
-   current_player=current_player}
+  let st = {board=board;
+            bag=bag;
+            players=players;
+            added_words=[];
+            current_player=current_player} in
+  let st' = init_racks players st in
+  {st' with current_player = List.hd st'.players}
 
 let point_moves m =
   failwith "todo"
@@ -186,12 +190,14 @@ let swap lst st =
     let remove_chars_rack =
       List.filter (fun (c,_) -> not (List.mem c lst)) player.rack in
     let st' = bag_to_rack remove_chars_rack st.bag player st in
+    let updated_current_player =
+      List.hd (List.filter (fun p -> p.name = player.name) st'.players) in
     let rec add_to_bag l b =
       match l with
       | [] -> b
       | h::t -> add_to_bag t ((h, get_points h) :: b)
     in let updated_bag = add_to_bag lst st'.bag in
-    {st' with bag = updated_bag}
+    {st' with bag = updated_bag; current_player = updated_current_player}
   else
     raise InvalidSwap
 
