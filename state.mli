@@ -1,4 +1,5 @@
 open Trie
+open Command
 
 (* [coordinate] represents the coordinate of a board cell *)
 type coordinate = int * int
@@ -30,7 +31,7 @@ type player_type = Human | AI of difficulty
 type player = {
   name : string;
   score: int;
-  tiles : letter list;
+  rack : letter list;
   player_type : player_type;
 }
 

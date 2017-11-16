@@ -1,12 +1,9 @@
 (* [coordinate] represents the coordinate of a board cell. *)
 type coordinate = int * int
 
-(* [letter] represents a letter character. *)
-type letter = char
-
 (* [move] represents a move when a word is played on the board. *)
 type move = {
-  word_segment : letter list;
+  word_segment : char list;
   coordinate : coordinate;
   is_horizontal : bool;
 }
@@ -18,7 +15,7 @@ exception InvalidCommand
 (* [command] represents a command input by a player. *)
 type command =
   | PlaceWord of move (* place a word on the board *)
-  | Swap of letter list (* swap tiles with the bag *)
+  | Swap of char list (* swap tiles with the bag *)
   | Score (* show current score of all players *)
   | Rack (* show my rack of tiles *)
   | Hint (* give a hint to the player *)
