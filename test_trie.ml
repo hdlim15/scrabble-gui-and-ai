@@ -19,6 +19,7 @@ let f_list = file_word_list "forward_dict.txt"
 let r_dict = initialize_dict "reverse_dict.txt"
 let r_list = file_word_list "reverse_dict.txt"
 
+(* words that should not be found in [f_dict] *)
 let fake_words = [
   "a"; "aaa"; "abacterials"; "abac"; "abasjment"; "abb"; "abnormalityes";
   "abstemiousnessesp"; "123"; "/.,/()*&^%$#@!!~`"; " "; ""; " admissibilities";

@@ -19,54 +19,61 @@ let remove_child n dict =
  * child. *)
 let add_child n dict =
   match dict with
-  | Node (c, lst, so) -> Node (c, n::(remove_child n lst), so)
+  | Node (c, lst, b) -> Node (c, n::(remove_child n lst), b)
 
 let get_subtree c dict =
   match dict with
-  | Node (_, lst, _) ->
-      List.find_opt (fun d ->
-        match d with
-        | Node (c', _, _) -> c' = c
-      ) lst
+  | Node (_, lst, _) -> List.find_opt (fun (Node (c', _, _) )->  c' = c) lst
 
 let insert dict w =
-  let char_list = explode w in
+  (* [helper lst acc] is a recursive helper function to [insert] that
+   * updates [acc] one character at a time. *)
   let rec helper lst acc =
     match lst with
-    | [] -> acc
+    | [] -> acc (* no more characters to insert *)
     | h::t ->
-      begin
-        match get_subtree h acc with
+      let new_node =
+        match (get_subtree h acc) with
         | None ->
-            let new_node = Node (h, [], t=[]) in
-            add_child (helper t new_node) acc
+            (* child does not yet exist; add a new node with no children. t=[]
+             * indicates whether we are at the last letter of a word or not. *)
+            Node (h, [], t=[])
         | Some d' ->
-            let new_node =
-              if t = [] then let Node(c, dl, _) = d' in Node(c, dl, true)
-              else d'
-            in
-            add_child (helper t new_node) acc
-      end
+            (* we are at the last letter of a word *)
+            if t = [] then let Node(c, dl, _) = d' in Node(c, dl, true)
+            (* use the original node found in the trie *)
+            else d'
+      in
+      (* This line of code is the crux of this function. We first recursively
+       * call helper using [t] (the remainder of [lst]), and [new_node] (the
+       * node we should use to insert [t]). After this recursive call returns,
+       * we add the result to [acc], updating the entire dictionary. *)
+      add_child (helper t new_node) acc
   in
+  let char_list = explode (String.lowercase_ascii w) in
   helper char_list dict
 
 
 let is_word dict w =
-  let lower = String.lowercase_ascii w in
-  let char_list = explode lower in
-  let rec helper lst dict =
+  (* [helper lst acc] is a recursive helper function to [is_word] that
+   * utilizes a char list instead of a string. *)
+  let rec helper acc lst =
     match lst with
-    | [] -> false
+    | [] -> false (* empty string is not a word *)
     | c :: t ->
       begin
-        match get_subtree c dict with
-        | None -> false
+        (* search for [c] in the children of [acc] *)
+        match (get_subtree c acc) with
+        | None -> false (* [c] not found, meaning [w] is not a word *)
         | Some d' ->
+            (* last letter, check bool to see if we are at the end of a word *)
             if (t = []) then let (Node(_, _, b)) = d' in b
-            else (helper t d')
+            (* else, keep recursing down the trie *)
+            else (helper d' t)
       end
   in
-  helper char_list dict
+  let char_list = explode (String.lowercase_ascii w) in
+  helper dict char_list
 
 (* [insert_word_list lst] is the dictionary that results from adding all the
  * words in [lst] to the empty dictionary. *)
@@ -76,6 +83,8 @@ let insert_word_list lst =
   List.fold_left insert root lst
 
 let initialize_dict file =
+  (* [helper channel dict] is a helper function to [intialize_dict] that
+   * iterates through a file line by line to construct a dictionary. *)
   let rec helper channel dict =
     match (Pervasives.input_line channel) with
     (* If End_of_file, close file and return idx' *)
