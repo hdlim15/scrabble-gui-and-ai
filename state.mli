@@ -51,6 +51,14 @@ type init_game_data = {
   human_names : string list;
 }
 
+(* [InvalidPlace] is an exception that is raised when a player cannot place a
+ * sequence of characters at a coordinate. *)
+exception InvalidPlace
+
+(* [InvalidSwap] is raised if a letter to be swapped is not in the current
+ * player's rack or there are not enough letters in the bag to do the swap. *)
+exception InvalidSwap
+
 val init_board : int -> board
 
 (* [init_state j] is the initial state of the game *)
