@@ -44,8 +44,17 @@ type state = {
   current_player : player;
 }
 
+type init_game_data = {
+  num_players : int;
+  num_humans : int;
+  ai_difficulty : difficulty list;
+  human_names : string list;
+}
+
+val init_board : int -> board
+
 (* [init_state j] is the initial state of the game *)
-val init_state : Trie.dictionary -> state
+val init_state : init_game_data -> state
 
 (* [point_moves m] is the number of points earned by the move [m] *)
 val point_moves : Command.move -> int

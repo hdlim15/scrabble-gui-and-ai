@@ -27,6 +27,13 @@ type player = {
   player_type : player_type;
 }
 
+type init_game_data = {
+  num_players : int;
+  num_humans : int;
+  ai_difficulty : difficulty list;
+  human_names : string list;
+}
+
 type state = {
   board : board;
   bag : bag;
@@ -35,8 +42,92 @@ type state = {
   current_player : player;
 }
 
-let init_state dict =
+(* [init_board n] creates an nxn board.
+ * requires: n > 0 *)
+let rec init_board n =
+  let rec helper n' =
+    match n' with
+    | 0 -> gen_row 0 n :: []
+    | i -> helper (i - 1) @ [gen_row i n] in
+  helper (n - 1)
+and gen_row row_num len =
+  match len with
+  | 0 -> []
+  | i -> gen_row row_num (len - 1) @ [gen_cell row_num (i-1)]
+and gen_cell row_num col_num =
+  {coordinate = row_num, col_num;
+   letter = (' ', -1);
+   letter_multiplier = 1;
+   word_multiplier = 1}
+
+(* [init_bag ()] creates a scrabble bag of tiles *)
+let rec init_bag () =
+  let alphabet = ['a';'b';'c';'d';'e';'f';'g';'h';'i';'j';'k';'l';'m';'n';'o';
+                  'p';'q';'r';'s';'t';'u';'v';'w';'x';'y';'z';'*'] in
+  let rec helper lst =
+    match lst with
+    | [] -> []
+    | h::t -> init_letters_of_char h @ helper t in
+  helper alphabet
+and init_letters_of_char c =
+  match c with
+  | 'a' -> num_tiles_of_char 9 'a' 1  | 'b' -> num_tiles_of_char 2 'b' 3
+  | 'c' -> num_tiles_of_char 2 'c' 3  | 'd' -> num_tiles_of_char 4 'd' 2
+  | 'e' -> num_tiles_of_char 12 'e' 1 | 'f' -> num_tiles_of_char 2 'f' 4
+  | 'g' -> num_tiles_of_char 3 'g' 2  | 'h' -> num_tiles_of_char 2 'h' 4
+  | 'i' -> num_tiles_of_char 9 'i' 1  | 'j' -> num_tiles_of_char 1 'j' 8
+  | 'k' -> num_tiles_of_char 1 'k' 5  | 'l' -> num_tiles_of_char 4 'l' 1
+  | 'm' -> num_tiles_of_char 2 'm' 3  | 'n' -> num_tiles_of_char 6 'n' 1
+  | 'o' -> num_tiles_of_char 8 'o' 1  | 'p' -> num_tiles_of_char 2 'p' 3
+  | 'q' -> num_tiles_of_char 1 'q' 10 | 'r' -> num_tiles_of_char 6 'r' 1
+  | 's' -> num_tiles_of_char 4 's' 1  | 't' -> num_tiles_of_char 6 't' 1
+  | 'u' -> num_tiles_of_char 4 'u' 1  | 'v' -> num_tiles_of_char 2 'v' 4
+  | 'w' -> num_tiles_of_char 2 'w' 4  | 'x' -> num_tiles_of_char 1 'x' 8
+  | 'y' -> num_tiles_of_char 2 'y' 4  | 'z' -> num_tiles_of_char 1 'z' 10
+  | '*' -> num_tiles_of_char 2 '*' 0  | _ -> failwith "impossible"
+and num_tiles_of_char n c p =
+  match n with
+  | 0 -> []
+  | i -> (c, p) :: num_tiles_of_char (n - 1) c p
+
+let rec gen_human_players num names =
+  match num, names with
+  | 0, [] -> []
+  | i, name::t -> {name=name;score=0;rack=[];player_type=Human}
+                  :: gen_human_players (num-1) t
+  | _ -> failwith "impossible, num = names.length"
+
+let rec gen_ai_players num difficulty =
+  match num, difficulty with
+  | 0, [] -> []
+  | i, diff::t -> {name="AI_"^(string_of_int i);score=0;rack=[];player_type=AI diff}
+                  :: gen_ai_players (num-1) t
+  | _ -> failwith "impossible, num = difficulty.length"
+
+let init_players init_data =
+  let num_players = init_data.num_players in
+  let num_humans = init_data.num_humans in
+  if num_players = num_humans then
+    gen_human_players num_players init_data.human_names
+  else
+    let human_players = gen_human_players num_humans init_data.human_names in
+    let ai_players = gen_ai_players (num_players-num_humans) init_data.ai_difficulty in
+    human_players @ ai_players
+
+let init_racks players bag =
   failwith "todo"
+
+let init_state init_data =
+  let board = init_board 15 in
+  let bag = init_bag () in
+  let players = init_players init_data in
+  let players' = init_racks players bag in
+  let current_player = List.hd players in
+  {board=board;
+   bag=bag;
+   players=players';
+   added_words=[];
+   current_player=current_player}
 
 let point_moves m =
   failwith "todo"
