@@ -18,6 +18,7 @@ Commands:
 - Hint: provides a hint on a potential move that could be made.
 - Score: displays the scores of everyone in the game.
 - Rack: displays the letters one has in their rack.
+- Board: displays the current board.
 - Add: adds a new word to the dictionary of allowed words.
   Ex: "Add ExampleWord" adds exampleword to the dictionary.
 - Swap: swaps tiles on one's rack with tiles in the bag.
