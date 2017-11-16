@@ -54,8 +54,10 @@ let insert dict w =
   in
   helper char_list dict
 
+
 let is_word dict w =
-  let char_list = explode w in
+  let lower = String.lowercase_ascii w in
+  let char_list = explode lower in
   let rec helper lst dict =
     match lst with
     | [] -> false
