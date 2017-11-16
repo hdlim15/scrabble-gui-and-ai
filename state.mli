@@ -9,7 +9,7 @@ type letter = (char * int)
 
 (* [cell] represents a cell of the board. *)
 type cell = {
-  coordinate : coordinate;
+  cell_coord : coordinate;
   letter : letter;
   letter_multiplier : int;
   word_multiplier : int;

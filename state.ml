@@ -6,7 +6,7 @@ type coordinate = int * int
 type letter = (char * int)
 
 type cell = {
-  coordinate : coordinate;
+  cell_coord : coordinate;
   letter : letter;
   letter_multiplier : int;
   word_multiplier : int;
@@ -86,7 +86,7 @@ and gen_row row_num len =
   | 0 -> []
   | i -> gen_row row_num (len - 1) @ [gen_cell row_num (i-1)]
 and gen_cell row_num col_num =
-  {coordinate = row_num, col_num;
+  {cell_coord = row_num, col_num;
    letter = (' ', -1);
    letter_multiplier = 1;
    word_multiplier = 1}
@@ -223,11 +223,30 @@ let get_horizontal_word c st =
 let get_vertical_word c st =
   failwith ""
 
+let place_horizontal mv st =
+  let row_idx = fst mv.mv_coord in
+  let rec helper board count =
+    match board with
+    | [] -> []
+    | row::t ->
+      if count <> row_idx then
+        row :: helper t (count+1)
+      else (* row corresponds to row we want to work with *)
+        failwith "todo"
+  in failwith "todo"
+
+let place_vertical mv st =
+  failwith ""
+
 (* [place w c is_h] places word segment [w] at coordinate [c] horizontally if
  * [is_h] is true and vertically if [is_h] is false.
  * raises: [InvalidPlace] if one cannot place [w] at coordinate [c]. *)
-let place w c is_h =
-  failwith ""
+let rec place mv st =
+  (* assuming place is valid... *)
+  if mv.is_horizontal then
+    place_horizontal mv st
+  else place_vertical mv st
+
 
 (* [swap lst st] removes the letters in [lst] from the current player's rack and
  * swaps them with letters in the bag.
@@ -263,5 +282,5 @@ let do' cmd st =
   match cmd with
   | Swap lst -> swap lst st
   | AddWord s -> add_word s st
-  | PlaceWord {word_segment; coordinate; is_horizontal} -> failwith ""
+  | PlaceWord mv -> place mv st
   | _ -> st
