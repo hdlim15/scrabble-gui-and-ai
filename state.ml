@@ -59,6 +59,19 @@ let rec bag_to_rack r b p st =
     let updated_bag = List.tl b in
     bag_to_rack (char_from_bag :: r) updated_bag p st
 
+(* [get_points c] returns the number of points associated with letter [c]. *)
+let get_points c =
+  match c with
+  | 'a' | 'e' | 'i' | 'o' | 's' | 'u' | 'l' | 'n' | 'r' | 't' -> 1
+  | 'c' | 'm' | 'b' | 'p' -> 3
+  | 'g' | 'd' -> 2
+  | 'k' -> 5
+  | 'q' | 'z' -> 10
+  | 'w' | 'y' | 'f' | 'h' | 'v' -> 4
+  | '*' -> 0
+  | 'j' | 'x' -> 8
+  | _ -> failwith "impossible"
+
 (* [init_board n] creates an nxn board.
  * requires: n > 0 *)
 let rec init_board n =
@@ -160,7 +173,7 @@ let place w c is_h =
   failwith ""
 
 (* [swap lst st] removes the letters in [lst] from the current player's rack and
- * replaces them with letters in the bag.
+ * swaps them with letters in the bag.
  * returns: the updated [state] after the swap.
  * raises: [InvalidSwap] if a letter in [lst] is not in the current
  * player's rack or there are not enough letters in the bag to do the swap. *)
@@ -171,7 +184,13 @@ let swap lst st =
   if List.length st.bag >= List.length lst && valid_swap then
     let remove_chars_rack =
       List.filter (fun (c,_) -> not (List.mem c lst)) player.rack in
-    bag_to_rack remove_chars_rack st.bag player st
+    let st' = bag_to_rack remove_chars_rack st.bag player st in
+    let rec add_to_bag l b =
+      match l with
+      | [] -> b
+      | h::t -> add_to_bag t ((h, get_points h) :: b)
+    in let updated_bag = add_to_bag lst st'.bag in
+    {st' with bag = updated_bag}
   else
     raise InvalidSwap
 
