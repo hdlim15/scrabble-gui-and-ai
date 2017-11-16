@@ -55,9 +55,10 @@ let rec bag_to_rack r b p st =
              players = updated_players;
              current_player = updated_current_player}
   else
-    let char_from_bag = List.hd b in
-    let updated_bag = List.tl b in
-    bag_to_rack (char_from_bag :: r) updated_bag p st
+    let i = Random.int (List.length b) in
+    let letter_from_bag = List.nth b i in
+    let updated_bag = List.remove_assoc (fst letter_from_bag) b in
+    bag_to_rack (letter_from_bag :: r) updated_bag p st
 
 (* [get_points c] returns the number of points associated with letter [c]. *)
 let get_points c =
