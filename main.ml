@@ -128,6 +128,8 @@ let init_game rdy =
                          num_humans = num_humans;
                          human_names = player_names;
                          ai_difficulty = ai_difficulty_lst}) in
+    print_endline "For gameplay manual, type 'help'.";
+    print_endline "Let's begin!";
     play_game s
 
 (* [main ()] starts the REPL *)
