@@ -173,6 +173,56 @@ exception InvalidPlace
 
 exception InvalidSwap
 
+(* [get_row c st] returns a list of cells representing the row that coordinate
+ * [c] lies in.
+ * raises: [InvalidPlace] if (fst c) is greater than the number of rows. *)
+let get_row c st =
+  try List.nth st.board (fst c) with
+  | exn -> raise InvalidPlace
+
+(* [get_column c st] returns a list of cells representing the column that
+ * coordinate [c] lies in.
+ * raises: [InvalidPlace] if (snd c) is greater than the number of columns. *)
+let get_column c st =
+  let col_num = snd c in
+  try
+    let rec col_helper b acc =
+      match b with
+      | [] -> acc
+      | h::t -> col_helper t (List.nth h col_num :: acc)
+    in col_helper st.board []
+  with
+  | exn -> raise InvalidPlace
+
+(* [get_cell_from_coordinate c st] returns the cell at coordinate [c] on the
+ * board in [st].
+ * raises: [InvalidPlace] if [c] does not correspond to a cell in the board. *)
+let get_cell_from_coordinate c st =
+  try
+    let row = get_row c st in
+    List.nth row (snd c)
+  with
+  | exn -> raise InvalidPlace
+
+(* [cell_is_empty c] returns [true] if cell [c] is empty and returns [false] if
+ * there is a [letter] at cell [c]. *)
+let cell_is_empty c =
+  c.letter = (' ', 0)
+
+(* [get_horizontal_word c st] returns the horizontal word starting at coordinate
+ * [c] on the board in [st]. If the cell at [c] is empty, the empty string is
+ * returned. *)
+let get_horizontal_word c st =
+  let cell = get_cell_from_coordinate c st in
+  let row = get_row c st in
+  failwith ""
+
+(* [get_vertical_word c st] returns the vertical word starting at coordinate
+ * [c] on the board in [st]. If the cell at [c] is empty, the empty string is
+ * returned. *)
+let get_vertical_word c st =
+  failwith ""
+
 (* [place w c is_h] places word segment [w] at coordinate [c] horizontally if
  * [is_h] is true and vertically if [is_h] is false.
  * raises: [InvalidPlace] if one cannot place [w] at coordinate [c]. *)
