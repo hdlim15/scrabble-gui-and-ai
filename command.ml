@@ -1,7 +1,7 @@
 type coordinate = int * int
 
 type move = {
-  word_segment : char list;
+  word : char list;
   mv_coord : coordinate;
   is_horizontal : bool;
 }
@@ -58,7 +58,7 @@ let parse str =
       | "place" ->
         let coordinate = get_coordinate (List.nth words 2) in
         let is_horizontal = (List.nth words 3) = "horizontal" in
-        let move = {word_segment = get_chars (List.nth words 1);
+        let move = {word = get_chars (List.nth words 1);
                     mv_coord = coordinate;
                     is_horizontal = is_horizontal} in
         PlaceWord move
