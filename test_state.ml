@@ -256,12 +256,14 @@ let board_15 = [
 let player1 = {name = "arman";
                score = 0;
                rack = [('s', 1);('p', 3);('s', 1);('o', 1);('p', 3);('p', 3);('u', 1)];
-               player_type = Human}
+               player_type = Human;
+               order_num = 1}
 
 let player2 = {name = "connor";
                score = 0;
                rack = [('t', 1);('m', 3);('m', 3);('i', 1);('m', 3);('m', 3);('r', 1)];
-               player_type = Human}
+               player_type = Human;
+               order_num = 1}
 
 let basic_state_1bag = {board = board_1;
                         bag = [('z', 10)];

@@ -25,6 +25,7 @@ type player = {
   score: int;
   rack : letter list;
   player_type : player_type;
+  order_num : int;
 }
 
 type init_game_data = {
@@ -125,15 +126,15 @@ and num_tiles_of_char n c p =
 let rec gen_human_players num names =
   match num, names with
   | 0, [] -> []
-  | i, name::t -> {name=name;score=0;rack=[];player_type=Human}
+  | i, name::t -> {name=name;score=0;rack=[];player_type=Human;order_num=i}
                   :: gen_human_players (num-1) t
   | _ -> failwith "impossible, num = names.length"
 
-let rec gen_ai_players num difficulty =
-  match num, difficulty with
+let rec gen_ai_players num_players num_ai difficulty =
+  match num_ai, difficulty with
   | 0, [] -> []
-  | i, diff::t -> {name="AI_"^(string_of_int i);score=0;rack=[];player_type=AI diff}
-                  :: gen_ai_players (num-1) t
+  | i, diff::t -> {name="AI_"^(string_of_int i);score=0;rack=[];player_type=AI diff;order_num=num_players-i+1}
+                  :: gen_ai_players num_players (num_ai-1) t
   | _ -> failwith "impossible, num = difficulty.length"
 
 let init_players init_data =
@@ -143,7 +144,8 @@ let init_players init_data =
     gen_human_players num_players init_data.human_names
   else
     let human_players = gen_human_players num_humans init_data.human_names in
-    let ai_players = gen_ai_players (num_players-num_humans) init_data.ai_difficulty in
+    let ai_players =
+      gen_ai_players num_players (num_players-num_humans) init_data.ai_difficulty in
     human_players @ ai_players
 
 let rec init_racks players st =
@@ -209,19 +211,66 @@ let get_cell_from_coordinate c st =
 let cell_is_empty c =
   c.letter = (' ', 0)
 
-(* [get_horizontal_word c st] returns the horizontal word starting at coordinate
- * [c] on the board in [st]. If the cell at [c] is empty, the empty string is
- * returned. *)
-let get_horizontal_word c st =
-  let cell = get_cell_from_coordinate c st in
-  let row = get_row c st in
-  failwith ""
+(* [fst_triple t] returns the first element from tuple [t] with three
+ * elements. *)
+let fst_triple t =
+  match t with
+  | (x, _, _) -> x
 
-(* [get_vertical_word c st] returns the vertical word starting at coordinate
- * [c] on the board in [st]. If the cell at [c] is empty, the empty string is
- * returned. *)
-let get_vertical_word c st =
-  failwith ""
+(* [snd_triple t] returns the second element from tuple [t] with three
+ * elements. *)
+let snd_triple t =
+  match t with
+  | (_, x, _) -> x
+
+(* [trd_triple t] returns the third element from tuple [t] with three
+ * elements. *)
+let trd_triple t =
+  match t with
+  | (_, _, x) -> x
+
+(* [get_adjacent_cells c st is_h] returns a list of cells that contains the
+ * adjacent word formed by placing a letter at coordinate [c]. [is_h] determines
+ * whether the adjacent word is searched for horizontally or vertically. *)
+let get_adjacent_cells c st is_h =
+  let cell = get_cell_from_coordinate c st in
+  let cell_list =
+    if is_h then
+      get_row c st
+    else
+      get_column c st
+  in
+  let rec start_coord_helper lst acc =
+    match lst with
+    | [] -> acc
+    | h::t ->
+      begin
+        match h.letter with
+        | (' ', _) ->
+          if List.mem cell acc then
+            acc
+          else
+            start_coord_helper t []
+        | (x, _) -> start_coord_helper t (h :: acc)
+      end
+  in start_coord_helper cell_list []
+
+(* [get_adjacent_word c st is_h] returns a pair with the adjacent word at
+ * coordinate [c] on the board in [st] and the points associated with it. [is_h]
+ * determines whether the adjacent word is searched for horizontally or
+ * vertically. If the cell at [c] is empty, the empty string is returned with 0
+ * points. *)
+let get_adjacent_word c st is_h =
+  let word_cells = get_adjacent_cells c st is_h in
+  let rec adjacent_helper lst (acc : (string * int * int)) =
+    match lst with
+    | [] -> acc
+    | h::t ->
+      let new_string = (fst_triple acc) ^ (Char.escaped (fst h.letter)) in
+      let points = (snd_triple acc) + (h.letter_multiplier * (snd h.letter)) in
+      let word_multiplier = (trd_triple acc) * h.word_multiplier in
+      adjacent_helper t (new_string, points, word_multiplier)
+  in adjacent_helper word_cells ("", 0, 1)
 
 let place_horizontal mv st =
   let row_idx = fst mv.mv_coord in
