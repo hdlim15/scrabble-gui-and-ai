@@ -287,6 +287,19 @@ let place_horizontal mv st =
 let place_vertical mv st =
   failwith ""
 
+(* [get_next_player n p] returns the player whose turn is next given the
+ * current player's order number [n] and a list of the players [p]. *)
+let rec get_next_player n p =
+  let n' =
+    if n = List.length p then 0
+    else n
+  in
+  match p with
+  | [] -> failwith "Invalid n value"
+  | h::t ->
+    if h.order_num = n' + 1 then h
+    else get_next_player n t
+
 (* [place w c is_h] places word segment [w] at coordinate [c] horizontally if
  * [is_h] is true and vertically if [is_h] is false.
  * raises: [InvalidPlace] if one cannot place [w] at coordinate [c]. *)
@@ -295,7 +308,6 @@ let rec place mv st =
   if mv.is_horizontal then
     place_horizontal mv st
   else place_vertical mv st
-
 
 (* [swap lst st] removes the letters in [lst] from the current player's rack and
  * swaps them with letters in the bag.
@@ -310,8 +322,7 @@ let swap lst st =
     let remove_chars_rack =
       List.fold_left (fun acc c -> List.remove_assoc c acc) player.rack lst in
     let st' = bag_to_rack remove_chars_rack st.bag player st in
-    let updated_current_player =
-      List.hd (List.filter (fun p -> p.name = player.name) st'.players) in
+    let updated_current_player = get_next_player player.order_num st'.players in
     let rec add_to_bag l b =
       match l with
       | [] -> b

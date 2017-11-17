@@ -277,6 +277,19 @@ let basic_state_2bag = {board = board_1;
                         added_words = [];
                         current_player = player1}
 
+(* [get_prev_player n p] returns the player whose turn was before the
+ * current player with order number [n] given a list of the players [p]. *)
+let rec get_prev_player n p =
+  let n' =
+    if n = 1 then List.length p + 1
+    else n
+  in
+  match p with
+    | [] -> failwith "Invalid n value"
+    | h::t ->
+      if h.order_num = n' - 1 then h
+      else get_prev_player n t
+
 let tests = [
   (* init_board tests. *)
   "init_board_1" >:: (fun _ -> assert_equal board_1 (init_board 1));
@@ -292,11 +305,13 @@ let tests = [
   (* swap tests. *)
   "swap1_basic_rack" >:: (fun _ ->
       assert_equal [('z', 10);('p', 3);('s', 1);('o', 1);('p', 3);('p', 3);('u', 1)]
-        (do' (Swap ['s']) basic_state_1bag).current_player.rack);
+        (let st = (do' (Swap ['s']) basic_state_1bag) in (get_prev_player 2 st.players).rack));
   "swap1_basic_bag" >:: (fun _ ->
-      assert_equal [('s', 1)] (do' (Swap ['s']) basic_state_1bag).bag);
+      assert_equal [('s', 1)]
+        (do' (Swap ['s']) basic_state_1bag).bag);
   "swap2_basic_rack" >:: (fun _ ->
-      let rack' = (do' (Swap ['s'; 'u']) basic_state_2bag).current_player.rack in
+      let st = (do' (Swap ['s'; 'u']) basic_state_2bag) in
+      let rack' = (get_prev_player 2 st.players).rack in
       assert_equal true ((List.mem_assoc 'z' rack') && (List.mem_assoc 'k' rack')
                         && List.mem_assoc 's' rack'));
   "swap2_basic_bag" >:: (fun _ ->
