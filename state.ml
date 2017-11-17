@@ -96,11 +96,6 @@ and gen_cell row_num col_num =
 let rec init_bag () =
   let alphabet = ['a';'b';'c';'d';'e';'f';'g';'h';'i';'j';'k';'l';'m';'n';'o';
                   'p';'q';'r';'s';'t';'u';'v';'w';'x';'y';'z';'*'] in
-  (* let rec helper lst =
-    match lst with
-    | [] -> []
-    | h::t -> init_letters_of_char h @ helper t in
-  helper alphabet *)
   List.flatten (List.map init_letters_of_char alphabet)
 and init_letters_of_char c =
   match c with
