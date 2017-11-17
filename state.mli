@@ -33,6 +33,7 @@ type player = {
   score: int;
   rack : letter list;
   player_type : player_type;
+  order_num : int;
 }
 
 (* [state] represents all the information relevant to the state of a game. *)
