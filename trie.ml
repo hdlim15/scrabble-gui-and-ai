@@ -25,6 +25,53 @@ let get_subtree c dict =
   match dict with
   | Node (_, lst, _) -> List.find_opt (fun (Node (c', _, _) )->  c' = c) lst
 
+let rec get_subtree_string s dict =
+  if String.length s = 0 then Some dict
+  else let c = String.get s 0 in
+    match get_subtree c dict with
+    | None -> None
+    | Some d ->
+      get_subtree_string (String.sub s 1 (String.length s-1 )) d
+
+(* [get_ extensions_helper dict str acc] returns a list of all possible extensions of
+ *
+ *
+ *)
+let rec get_extensions_helper dict str acc =
+  match dict with
+  | Node (c, d, true) ->
+    let c' = Char.escaped c in
+    let new_acc = (str ^ c')::acc in
+    begin
+      match d with
+      | [] -> new_acc,(str ^ c')
+      | _ ->
+        List.fold_left (fun (acc',str') x ->
+            fst (get_extensions_helper x str' acc'),str' )
+          (new_acc,(str ^ c')) (d)
+    end
+  | Node (c, d, false) ->
+    let c' = Char.escaped c in
+    begin
+      match d with
+      | [] -> acc,(str ^ c')
+      | _ ->
+        List.fold_left (fun (acc',str') x ->
+            fst(get_extensions_helper x str' acc'),str' )
+          (acc,(str ^ c')) (d)
+    end
+
+let rec get_extensions s dict =
+  match get_subtree_string s dict with
+  | None -> []
+  | Some d ->
+    match d with
+    | Node (_,d',_) ->
+      List.flatten(
+      List.fold_left (fun acc x ->
+          (fst (get_extensions_helper x "" [])::acc))
+        [] d')
+
 let insert dict w =
   (* [helper lst acc] is a recursive helper function to [insert] that
    * updates [acc] one character at a time. *)
