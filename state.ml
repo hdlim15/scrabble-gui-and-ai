@@ -433,6 +433,11 @@ let update_rack_and_bag chars_from_rack rack bag =
       update_rack (letter_from_bag :: rack) updated_bag in
   update_rack rack' bag
 
+let update_players current_player rack players =
+  let updated_player = {current_player with rack = rack} in
+  updated_player ::
+  (List.filter (fun p -> p.name <> updated_player.name) players)
+
 (* [place w c is_h] places word segment [w] at coordinate [c] horizontally if
  * [is_h] is true and vertically if [is_h] is false.
  * raises: [InvalidPlace] if one cannot place [w] at coordinate [c]. *)
@@ -450,7 +455,7 @@ let rec place mv st =
     else (* word was placed on center tile *)
       (* update score, player rack, current player, bag *)
       let rack_bag = update_rack_and_bag mv.word st.current_player.rack st.bag in
-      
+
 
       failwith ""
 
@@ -479,9 +484,9 @@ let swap lst st =
   let player = st.current_player in
   let valid_swap = List.for_all (fun (x) -> List.mem_assoc x player.rack) lst in
   if (List.length st.bag >= List.length lst) && valid_swap then
-    let remove_chars_rack =
-      List.fold_left (fun acc c -> List.remove_assoc c acc) player.rack lst in
-    let st' = bag_to_rack remove_chars_rack st.bag player st in
+    let rack_bag = update_rack_and_bag lst player.rack st.bag in
+    let players' = update_players player (fst rack_bag) st.players in
+    let st' = {st with players = players'; bag = (snd rack_bag)} in
     let updated_current_player = get_next_player player.order_num st'.players in
     let rec add_to_bag l b =
       match l with
