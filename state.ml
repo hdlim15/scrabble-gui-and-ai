@@ -417,6 +417,22 @@ let update_board mv st =
     place_horizontal mv st
   else place_vertical mv st
 
+let update_rack_and_bag chars_from_rack rack bag =
+  let rec remove_from_rack chars rack =
+    match chars with
+    | [] -> rack
+    | c::t -> remove_from_rack t (List.remove_assoc c rack) in
+  let rack' = remove_from_rack chars_from_rack rack in
+  let rec update_rack rack bag =
+    match List.length rack = 7 with
+    | true -> rack, bag
+    | false ->
+      let i = Random.int (List.length bag) in
+      let letter_from_bag = List.nth bag i in
+      let updated_bag = List.remove_assoc (fst letter_from_bag) bag in
+      update_rack (letter_from_bag :: rack) updated_bag in
+  update_rack rack' bag
+
 (* [place w c is_h] places word segment [w] at coordinate [c] horizontally if
  * [is_h] is true and vertically if [is_h] is false.
  * raises: [InvalidPlace] if one cannot place [w] at coordinate [c]. *)
@@ -433,7 +449,10 @@ let rec place mv st =
       raise InvalidPlace
     else (* word was placed on center tile *)
       (* update score, player rack, current player, bag *)
-      failwith "do stuff in comment above"
+      let rack_bag = update_rack_and_bag mv.word st.current_player.rack st.bag in
+      
+
+      failwith ""
 
   else (* not first move of game *)
     (* new_chars is an assoc list of character*coord *)
@@ -446,7 +465,8 @@ let rec place mv st =
     else
       (* assuming place is valid... *)
       let board' = update_board mv st in
-
+      let just_new_chars = List.map (fun (c,coord) -> c) new_chars in
+      let rack_bag = update_rack_and_bag just_new_chars st.current_player.rack st.bag in
       (* update score, change turn, update player rack and bag etc *)
       {st with board = board'}
 
