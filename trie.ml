@@ -33,9 +33,12 @@ let rec get_subtree_string s dict =
     | Some d ->
       get_subtree_string (String.sub s 1 (String.length s-1 )) d
 
-(* [get_ extensions_helper dict str acc] returns a list of all possible extensions of
- *
- *
+(* [get_ extensions_helper dict str acc] is [acc',str'], where
+ * [acc'] is a list of all possible extensions;
+ * [str'] is only used internally to implement the function recursively
+ * and is not useful as an output.
+ * requires: [str] is ""
+ *           [acc] is []
  *)
 let rec get_extensions_helper dict str acc =
   match dict with

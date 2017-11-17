@@ -27,4 +27,4 @@ val get_subtree_string : string -> dictionary -> dictionary option
  * [str] in [dict].
  * If no extensions are possible, then returns [].
  *)
-val get_extensions : string -> dictionary  -> string list
+val get_extensions : string -> dictionary -> string list
