@@ -60,6 +60,23 @@ let rec bag_to_rack r b p st =
     let updated_bag = List.remove_assoc (fst letter_from_bag) b in
     bag_to_rack (letter_from_bag :: r) updated_bag p st
 
+let update_rack_and_bag chars_from_rack rack bag =
+  let rack' =
+    List.fold_left (fun acc c -> List.remove_assoc c acc) rack chars_from_rack in
+  let rec update_rack r b =
+    if List.length r = 7 then
+      (r, b)
+    else
+      begin
+        Random.self_init ();
+        let i = Random.int (List.length b) in
+        let letter_from_bag = List.nth b i in
+        let updated_bag = List.remove_assoc (fst letter_from_bag) bag in
+        update_rack (letter_from_bag :: r) updated_bag
+      end
+  in
+  update_rack rack' bag
+
 (* [get_points c] returns the number of points associated with letter [c]. *)
 let get_points c =
   match c with
@@ -268,7 +285,9 @@ let get_adjacent_word c st is_h =
       let points = (snd_triple acc) + (h.letter_multiplier * (snd h.letter)) in
       let word_multiplier = (trd_triple acc) * h.word_multiplier in
       adjacent_helper t (new_string, points, word_multiplier)
-  in adjacent_helper word_cells ("", 0, 1)
+    in
+    let word_triple = adjacent_helper word_cells ("", 0, 1) in
+    (fst_triple word_triple, (snd_triple word_triple) * (trd_triple word_triple))
 
 (* [get_next_player n p] returns the player whose turn is next given the
  * current player's order number [n] and a list of the players [p]. *)
@@ -417,24 +436,9 @@ let update_board mv st =
     place_horizontal mv st
   else place_vertical mv st
 
-let update_rack_and_bag chars_from_rack rack bag =
-  let rec remove_from_rack chars rack =
-    match chars with
-    | [] -> rack
-    | c::t -> remove_from_rack t (List.remove_assoc c rack) in
-  let rack' = remove_from_rack chars_from_rack rack in
-  let rec update_rack rack bag =
-    match List.length rack = 7 with
-    | true -> rack, bag
-    | false ->
-      let i = Random.int (List.length bag) in
-      let letter_from_bag = List.nth bag i in
-      let updated_bag = List.remove_assoc (fst letter_from_bag) bag in
-      update_rack (letter_from_bag :: rack) updated_bag in
-  update_rack rack' bag
-
-let update_players current_player rack players =
-  let updated_player = {current_player with rack = rack} in
+let update_players current_player rack players new_points =
+  let updated_player =
+    {current_player with rack = rack; score = current_player.score + new_points} in
   updated_player ::
   (List.filter (fun p -> p.name <> updated_player.name) players)
 
@@ -446,34 +450,43 @@ let rec place mv st =
   if not (tentatively_valid_move mv st) then raise InvalidPlace
   else
     (* check first-move-of-game condition *)
-  if List.for_all (fun p -> p.score = 0) st.players then
-    let board' = update_board mv st in
-    let row7 = List.nth board' 7 in
-    let cell7 = List.nth row7 7 in
-    if cell_is_empty cell7 then
-      raise InvalidPlace
-    else (* word was placed on center tile *)
-      (* update score, player rack, current player, bag *)
-      let rack_bag = update_rack_and_bag mv.word st.current_player.rack st.bag in
-
-
-      failwith ""
-
-  else (* not first move of game *)
-    (* new_chars is an assoc list of character*coord *)
-    let new_chars = check_fit_and_new_entries mv st in
-    (* if lengths are equal, move invalid because no pre-existing letters on board *)
-    if List.length new_chars = List.length mv.word then raise InvalidPlace
-    else
-    if not (check_rack st.current_player.rack new_chars) then
-      raise InvalidPlace (* newly-placed chars not in player rack *)
-    else
-      (* assuming place is valid... *)
+    if List.for_all (fun p -> p.score = 0) st.players then
       let board' = update_board mv st in
-      let just_new_chars = List.map (fun (c,coord) -> c) new_chars in
-      let rack_bag = update_rack_and_bag just_new_chars st.current_player.rack st.bag in
-      (* update score, change turn, update player rack and bag etc *)
-      {st with board = board'}
+      let row7 = List.nth board' 7 in
+      let cell7 = List.nth row7 7 in
+      if cell_is_empty cell7 then
+        raise InvalidPlace
+      else (* word was placed on center tile *)
+        (* update score, player rack, current player, bag *)
+        let current_player = st.current_player in
+        let rack_bag = update_rack_and_bag mv.word current_player.rack st.bag in
+        let word_score =
+          get_adjacent_word mv.mv_coord {st with board = board'} mv.is_horizontal in
+        let updated_players =
+          update_players current_player (fst rack_bag) st.players (snd word_score) in
+        let next_player = get_next_player current_player.order_num updated_players in
+        {st with players = updated_players;
+                 board = board';
+                 current_player = next_player;
+                 bag = (snd rack_bag)}
+    else (* not first move of game *)
+      (* new_chars is an assoc list of character*coord *)
+      let new_chars = check_fit_and_new_entries mv st in
+      (* if lengths are equal, move invalid because no pre-existing letters on board *)
+      if List.length new_chars = List.length mv.word then raise InvalidPlace
+      else
+      if not (check_rack st.current_player.rack new_chars) then
+        raise InvalidPlace (* newly-placed chars not in player rack *)
+      else
+        (* assuming place is valid... *)
+        let board' = update_board mv st in
+        let just_new_chars = List.map (fun (c,coord) -> c) new_chars in
+        let current_player = st.current_player in
+        let rack_bag = update_rack_and_bag just_new_chars current_player.rack st.bag in
+        let updated_current_player = get_next_player current_player.order_num st.players in
+        let updated_players = update_players current_player (fst rack_bag) st.players in
+        (* update score, change turn, update player rack and bag etc *)
+        {st with board = board'}
 
 (* [swap lst st] removes the letters in [lst] from the current player's rack and
  * swaps them with letters in the bag.
@@ -485,7 +498,7 @@ let swap lst st =
   let valid_swap = List.for_all (fun (x) -> List.mem_assoc x player.rack) lst in
   if (List.length st.bag >= List.length lst) && valid_swap then
     let rack_bag = update_rack_and_bag lst player.rack st.bag in
-    let players' = update_players player (fst rack_bag) st.players in
+    let players' = update_players player (fst rack_bag) st.players 0 in
     let st' = {st with players = players'; bag = (snd rack_bag)} in
     let updated_current_player = get_next_player player.order_num st'.players in
     let rec add_to_bag l b =
