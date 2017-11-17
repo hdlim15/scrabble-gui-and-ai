@@ -101,7 +101,7 @@ let rec init_bag () =
     | [] -> []
     | h::t -> init_letters_of_char h @ helper t in
   helper alphabet *)
-  List.flatten (List.map init_letters_of_char alphabet) (*david*)
+  List.flatten (List.map init_letters_of_char alphabet)
 and init_letters_of_char c =
   match c with
   | 'a' -> num_tiles_of_char 9 'a' 1  | 'b' -> num_tiles_of_char 2 'b' 3
@@ -209,7 +209,7 @@ let get_cell_from_coordinate c st =
 (* [cell_is_empty c] returns [true] if cell [c] is empty and returns [false] if
  * there is a [letter] at cell [c]. *)
 let cell_is_empty c =
-  c.letter = (' ', 0)
+  c.letter = (' ', -1)
 
 (* [fst_triple t] returns the first element from tuple [t] with three
  * elements. *)
@@ -316,8 +316,7 @@ let rec place mv st =
  * player's rack or there are not enough letters in the bag to do the swap. *)
 let swap lst st =
   let player = st.current_player in
-  let valid_swap = List.for_all (fun (x) -> List.mem_assoc x player.rack) lst in (*david*)
-    (* List.fold_left (fun acc l -> acc && List.mem_assoc l player.rack) true lst in *)
+  let valid_swap = List.for_all (fun (x) -> List.mem_assoc x player.rack) lst in
   if (List.length st.bag >= List.length lst) && valid_swap then
     let remove_chars_rack =
       List.fold_left (fun acc c -> List.remove_assoc c acc) player.rack lst in
