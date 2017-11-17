@@ -43,40 +43,6 @@ type state = {
   current_player : player;
 }
 
-(* [bag_to_rack r b p st] adds letters from bag [b] to player [p]'s rack [r]
- * until the player has 7 letters on their rack.
- * returns: the updated state after letters are added from [b] to [r]. *)
-let rec bag_to_rack r b p st =
-  if List.length r = 7 then
-    let updated_player = {p with rack = r} in
-    let updated_players =
-      updated_player ::
-      (List.filter (fun p -> p.name <> updated_player.name) st.players) in
-    {st with bag = b;
-             players = updated_players}
-  else
-    let i = Random.int (List.length b) in
-    let letter_from_bag = List.nth b i in
-    let updated_bag = List.remove_assoc (fst letter_from_bag) b in
-    bag_to_rack (letter_from_bag :: r) updated_bag p st
-
-let update_rack_and_bag chars_from_rack rack bag =
-  let rack' =
-    List.fold_left (fun acc c -> List.remove_assoc c acc) rack chars_from_rack in
-  let rec update_rack r b =
-    if List.length r = 7 then
-      (r, b)
-    else
-      begin
-        Random.self_init ();
-        let i = Random.int (List.length b) in
-        let letter_from_bag = List.nth b i in
-        let updated_bag = List.remove_assoc (fst letter_from_bag) bag in
-        update_rack (letter_from_bag :: r) updated_bag
-      end
-  in
-  update_rack rack' bag
-
 (* [get_points c] returns the number of points associated with letter [c]. *)
 let get_points c =
   match c with
@@ -160,11 +126,40 @@ let init_players init_data =
       gen_ai_players num_players (num_players-num_humans) init_data.ai_difficulty in
     human_players @ ai_players
 
+(* [update_rack_and_bag chars_from_rack rack bag] adds letters from [bag] to
+ *  [rack] until the player has 7 letters on their rack.
+ * returns: a pair with the updated [rack] and [bag]. *)
+let update_rack_and_bag chars_from_rack rack bag =
+  let rack' =
+    List.fold_left (fun acc c -> List.remove_assoc c acc) rack chars_from_rack in
+  let rec update_rack r b =
+    if List.length r = 7 then
+      (r, b)
+    else
+      begin
+        Random.self_init ();
+        let i = Random.int (List.length b) in
+        let letter_from_bag = List.nth b i in
+        let updated_bag = List.remove_assoc (fst letter_from_bag) bag in
+        update_rack (letter_from_bag :: r) updated_bag
+      end
+  in
+  update_rack rack' bag
+
+let update_players current_player rack players new_points =
+  let updated_player =
+    {current_player with rack = rack; score = current_player.score + new_points} in
+  updated_player ::
+  (List.filter (fun p -> p.name <> updated_player.name) players)
+
 let rec init_racks players st =
   match players with
   | [] -> st
   | h::t ->
-    let st' = bag_to_rack (h.rack) (st.bag) h st in
+    let rack_bag = update_rack_and_bag [] h.rack st.bag in
+    let updated_players =
+      update_players st.current_player (fst rack_bag) (st.players) 0 in
+    let st' = {st with bag = (snd rack_bag); players = updated_players} in
     init_racks t st'
 
 let init_state init_data =
@@ -435,12 +430,6 @@ let update_board mv st =
   if mv.is_horizontal then
     place_horizontal mv st
   else place_vertical mv st
-
-let update_players current_player rack players new_points =
-  let updated_player =
-    {current_player with rack = rack; score = current_player.score + new_points} in
-  updated_player ::
-  (List.filter (fun p -> p.name <> updated_player.name) players)
 
 (* [place w c is_h] places word segment [w] at coordinate [c] horizontally if
  * [is_h] is true and vertically if [is_h] is false.
