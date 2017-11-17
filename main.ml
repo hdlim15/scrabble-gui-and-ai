@@ -46,7 +46,7 @@ let rec play_game st =
   let new_state =
     try
       match command with
-      | PlaceWord mv -> failwith "todo main.ml PlaceWord"
+      | PlaceWord mv -> do' command st
       | Swap chars -> print_endline "Swapping!"; do' command st
       | Score -> print_endline (get_scores st.players); st
       | Rack -> print_endline (str_of_rack st.current_player.rack); st

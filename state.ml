@@ -175,6 +175,9 @@ exception InvalidPlace
 
 exception InvalidSwap
 
+(* dictionary *)
+let dict = Trie.initialize_dict "forward_dict.txt"
+
 (* [get_row c st] returns a list of cells representing the row that coordinate
  * [c] lies in.
  * raises: [InvalidPlace] if (fst c) is greater than the number of rows. *)
@@ -272,21 +275,6 @@ let get_adjacent_word c st is_h =
       adjacent_helper t (new_string, points, word_multiplier)
   in adjacent_helper word_cells ("", 0, 1)
 
-let place_horizontal mv st =
-  let row_idx = fst mv.mv_coord in
-  let rec helper board count =
-    match board with
-    | [] -> []
-    | row::t ->
-      if count <> row_idx then
-        row :: helper t (count+1)
-      else (* row corresponds to row we want to work with *)
-        failwith "todo"
-  in failwith "todo"
-
-let place_vertical mv st =
-  failwith ""
-
 (* [get_next_player n p] returns the player whose turn is next given the
  * current player's order number [n] and a list of the players [p]. *)
 let rec get_next_player n p =
@@ -300,14 +288,172 @@ let rec get_next_player n p =
     if h.order_num = n' + 1 then h
     else get_next_player n t
 
+let place_horizontal mv st =
+  let row_idx = fst mv.mv_coord in
+  let rec helper board count =
+    match board with
+    | [] -> []
+    | row::t ->
+      if count <> row_idx then
+        row :: helper t (count+1)
+      else
+        (* row corresponds to row to which we want to add chars *)
+        let rec helper' row count =
+          match row with
+          | [] -> []
+          | cell::t -> (* coord is (0,0) *)
+            if count < (snd mv.mv_coord) ||
+               count >= (snd mv.mv_coord + (List.length mv.word)) then
+              cell :: helper' t (count+1)
+            else (* cell letter needs to be updated *)
+              let letter_char = List.nth mv.word (count - (snd mv.mv_coord)) in
+              let letter_points = get_points letter_char in
+              {cell with letter = (letter_char, letter_points)} :: helper' t (count+1)
+        in helper' row 0 :: helper t (count+1)
+  in helper st.board 0
+
+let place_vertical mv st =
+  failwith "todo"
+
+let check_word word st =
+  (Trie.is_word dict word) || (List.mem word st.added_words)
+
+let check_bounds mv st =
+  let word = List.fold_right (fun c acc -> (Char.escaped c)^acc) mv.word "" in
+  if mv.is_horizontal then (snd mv.mv_coord) + String.length word < 15
+  else (fst mv.mv_coord) + String.length word < 15
+
+let check_endpoints mv st =
+  if mv.is_horizontal then
+    let left_empty =
+      try
+        get_cell_from_coordinate (fst mv.mv_coord, snd mv.mv_coord - 1) st |> cell_is_empty
+      with
+      | InvalidPlace -> true in
+    let right_empty =
+      try
+        get_cell_from_coordinate (fst mv.mv_coord, snd mv.mv_coord + (List.length mv.word)) st |> cell_is_empty
+      with
+      | InvalidPlace -> true in
+    left_empty && right_empty
+  else
+    let top_empty =
+      try
+        get_cell_from_coordinate (fst mv.mv_coord - 1, snd mv.mv_coord) st |> cell_is_empty
+      with
+      | InvalidPlace -> true in
+    let bottom_empty =
+      try
+        get_cell_from_coordinate (fst mv.mv_coord + (List.length mv.word), snd mv.mv_coord) st |> cell_is_empty
+      with
+      | InvalidPlace -> true in
+    top_empty && bottom_empty
+
+let tentatively_valid_move mv st =
+  let word = List.fold_right (fun c acc -> (Char.escaped c)^acc) mv.word "" in
+  check_word word st && check_bounds mv st && check_endpoints mv st
+
+(* [check_fit_and_new_entries mv st] is the list of new chars being placed on
+ * the board, assuming mv.word doesn't violate the current board state.
+ * raises: InvalidPlace when mv.word violates current board state. *)
+let check_fit_and_new_entries mv st =
+  if mv.is_horizontal then
+    let row = get_row mv.mv_coord st in
+    let rec helper row count acc =
+      match row with
+      | [] -> acc
+      | cell::t ->
+        if count < (snd mv.mv_coord) ||
+           count >= (snd mv.mv_coord + (List.length mv.word)) then
+          helper t (count+1) acc
+        else (* cell contains piece of new word *)
+        if fst cell.letter = (List.nth mv.word (count - (snd mv.mv_coord))) then
+          (* pre-existing letter, not coming from player rack *)
+          helper t (count+1) acc
+        else
+        if fst cell.letter <> ' ' then raise InvalidPlace
+        else (* adding char from rack to this cell *)
+          helper t (count+1)
+            ((List.nth mv.word (count - (snd mv.mv_coord)), (fst mv.mv_coord, count)) :: acc)
+    in helper row 0 []
+  else
+    let col = get_column mv.mv_coord st in
+    let rec helper col count acc =
+      match col with
+      | [] -> acc
+      | cell::t ->
+        if count < (fst mv.mv_coord) ||
+           count >= (fst mv.mv_coord + (List.length mv.word)) then
+          helper t (count+1) acc
+        else (* cell contains piece of new word *)
+        if fst cell.letter = (List.nth mv.word (count - (fst mv.mv_coord))) then
+          (* pre-existing letter, not coming from player rack *)
+          helper t (count+1) acc
+        else
+        if fst cell.letter <> ' ' then raise InvalidPlace
+        else (* adding char from rack to this cell *)
+          helper t (count+1)
+            ((List.nth mv.word (count - (snd mv.mv_coord)), (fst mv.mv_coord, count)) :: acc)
+    in helper col 0 []
+
+let rec remove c lst =
+  match lst with
+  | [] -> []
+  | h::t -> if h = c then remove c t
+    else h :: remove c t
+
+(* [check_rack rack new_board_chars] checks that new_board_chars is a subset of rack *)
+let check_rack rack new_board_chars =
+  let board_chars = List.map (fun (c, coord) -> c) new_board_chars in
+  let rack' = List.map (fun (c,p) -> c) rack in
+  if List.length rack < List.length board_chars then false
+  else
+    let rec helper r new_board_chars =
+      match new_board_chars with
+      | [] -> true
+      | c::t ->
+        if List.mem c r && List.mem c board_chars then
+          true && helper (remove c r) t
+        else false
+    in helper rack' board_chars
+
+let update_board mv st =
+  if mv.is_horizontal then
+    place_horizontal mv st
+  else place_vertical mv st
+
 (* [place w c is_h] places word segment [w] at coordinate [c] horizontally if
  * [is_h] is true and vertically if [is_h] is false.
  * raises: [InvalidPlace] if one cannot place [w] at coordinate [c]. *)
 let rec place mv st =
-  (* assuming place is valid... *)
-  if mv.is_horizontal then
-    place_horizontal mv st
-  else place_vertical mv st
+
+  if not (tentatively_valid_move mv st) then raise InvalidPlace
+  else
+    (* check first-move-of-game condition *)
+  if List.for_all (fun p -> p.score = 0) st.players then
+    let board' = update_board mv st in
+    let row7 = List.nth board' 7 in
+    let cell7 = List.nth row7 7 in
+    if cell_is_empty cell7 then
+      raise InvalidPlace
+    else (* word was placed on center tile *)
+      (* update score, player rack, current player, bag *)
+      failwith "do stuff in comment above"
+
+  else (* not first move of game *)
+    (* new_chars is an assoc list of character*coord *)
+    let new_chars = check_fit_and_new_entries mv st in
+    (* if lengths are equal, move invalid because no pre-existing letters on board *)
+    if List.length new_chars = List.length mv.word then raise InvalidPlace
+    else
+    if not (check_rack st.current_player.rack new_chars) then
+      raise InvalidPlace (* newly-placed chars not in player rack *)
+    else
+      (* assuming place is valid... *)
+      let board' = update_board mv st in
+
+      (* update score, change turn, update player rack and bag etc *)
+      {st with board = board'}
 
 (* [swap lst st] removes the letters in [lst] from the current player's rack and
  * swaps them with letters in the bag.
