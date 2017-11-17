@@ -1,4 +1,5 @@
 open Command
+open State
 
 (* [eval_move st mv] is an AI's quantitative evaluation of a move based on the
  * current state of the game *)

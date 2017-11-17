@@ -65,6 +65,15 @@ val init_board : int -> board
 (* [init_state j] is the initial state of the game *)
 val init_state : init_game_data -> state
 
+(* [get_row c st] returns a list of cells representing the row that coordinate
+ * [c] lies in.
+ * raises: [InvalidPlace] if (fst c) is greater than the number of rows. *)
+val get_row : coordinate -> state -> cell list
+
+(* [cell_is_empty c] returns [true] if cell [c] is empty and returns [false] if
+ * there is a [letter] at cell [c]. *)
+val cell_is_empty  : cell -> bool
+
 (* [point_moves m] is the number of points earned by the move [m] *)
 val point_moves : Command.move -> int
 
