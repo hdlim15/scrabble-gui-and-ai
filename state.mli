@@ -70,6 +70,8 @@ val init_state : init_game_data -> state
  * raises: [InvalidPlace] if (fst c) is greater than the number of rows. *)
 val get_row : coordinate -> state -> cell list
 
+val get_cell_from_coordinate : coordinate -> state -> cell
+
 (* [cell_is_empty c] returns [true] if cell [c] is empty and returns [false] if
  * there is a [letter] at cell [c]. *)
 val cell_is_empty  : cell -> bool
