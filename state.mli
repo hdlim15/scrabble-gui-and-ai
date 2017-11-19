@@ -76,11 +76,26 @@ val init_state : init_game_data -> state
  * raises: [InvalidPlace] if (fst c) is greater than the number of rows. *)
 val get_row : coordinate -> state -> cell list
 
+(* [get_cell_from_coordinate c st] returns the cell at coordinate [c] on the
+ * board in [st].
+ * raises: [InvalidPlace] if [c] does not correspond to a cell in the board. *)
 val get_cell_from_coordinate : coordinate -> state -> cell
 
 (* [cell_is_empty c] returns [true] if cell [c] is empty and returns [false] if
  * there is a [letter] at cell [c]. *)
 val cell_is_empty  : cell -> bool
+
+(* [remove c lst] returns lst with the first instance of [c] removed. If [c] is
+ * not in [lst], [lst] is returned. *)
+val remove : 'a -> 'a list -> 'a list
+
+(* [get_adjacent_word c st is_h] returns a pair option with the adjacent word at
+ * coordinate [c] on the board in [st] and the points associated with it. [is_h]
+ * determines whether the adjacent word is searched for horizontally or
+ * vertically. If the cell at [c] is empty, the empty string is returned with 0
+ * points. None is returned if [c] is empty or there are no adjacent characters
+ * to [c] in the direction specified by [is_h]. *)
+val get_adjacent_word : coordinate -> state -> bool -> (string*int) option
 
 (* [point_moves m] is the number of points earned by the move [m] *)
 val point_moves : Command.move -> int

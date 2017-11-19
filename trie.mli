@@ -1,6 +1,9 @@
 (* The type of the dictionary, which will be implemented later as a trie *)
 type dictionary = Node of char * (dictionary list) * bool
 
+(* [explode s] is [s] split into a list of its characters, in order. *)
+val explode : string -> char list
+
 (* [get_subtree c dict] is [None] if no direct child of [dict] contains [c].
  * If there is a direct child of [dict], [child], that contains [c],
  * it returns [Some child] *)
