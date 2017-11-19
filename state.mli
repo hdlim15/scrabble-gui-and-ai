@@ -54,13 +54,19 @@ type init_game_data = {
 
 (* [InvalidPlace] is an exception that is raised when a player cannot place a
  * sequence of characters at a coordinate. *)
-exception InvalidPlace
+exception InvalidPlace of string
 
 (* [InvalidSwap] is raised if a letter to be swapped is not in the current
  * player's rack or there are not enough letters in the bag to do the swap. *)
 exception InvalidSwap
 
+(* [InvalidAdd] is raised if the word to be added to the custom dictionary contains
+ * characters besides those in the alphabet *)
+exception InvalidAdd
+
 val init_board : int -> board
+
+val get_points : char -> int
 
 (* [init_state j] is the initial state of the game *)
 val init_state : init_game_data -> state

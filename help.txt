@@ -24,6 +24,6 @@ Commands:
 - Swap: swaps tiles on one's rack with tiles in the bag.
   Ex: "Swap b" swaps the letter b with a letter in the bag.
 - Place: places letters on the board horizontally or vertically starting at a
-  particular cell.
+  particular cell. The word must be a valid word.
   Ex: "Place word A0 horizontal" places "word" on the board horizontally starting
   at cell coordinate A0.

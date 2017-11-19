@@ -263,7 +263,44 @@ let player2 = {name = "connor";
                score = 0;
                rack = [('t', 1);('m', 3);('m', 3);('i', 1);('m', 3);('m', 3);('r', 1)];
                player_type = Human;
-               order_num = 1}
+               order_num = 2}
+
+let init_game_data_1h = {
+  num_players = 1;
+  num_humans = 1;
+  ai_difficulty = [];
+  human_names = ["foo"];
+}
+let init_game_data_1ai = {
+  num_players = 1;
+  num_humans = 0;
+  ai_difficulty = [Easy];
+  human_names = [];
+}
+let init_game_data_2h = {
+  num_players = 2;
+  num_humans = 2;
+  ai_difficulty = [];
+  human_names = ["foo";"bar"];
+}
+let init_game_data_2ai = {
+  num_players = 2;
+  num_humans = 0;
+  ai_difficulty = [Easy;Hard];
+  human_names = [];
+}
+let init_game_data_4h = {
+  num_players = 4;
+  num_humans = 4;
+  ai_difficulty = [];
+  human_names = ["foo";"bar";"hello";"world"];
+}
+let init_game_data_1h3ai = {
+  num_players = 4;
+  num_humans = 1;
+  ai_difficulty = [Easy;Easy;Hard];
+  human_names = ["foo"];
+}
 
 let basic_state_1bag = {board = board_1;
                         bag = [('z', 10)];
@@ -281,28 +318,85 @@ let basic_state_2bag = {board = board_1;
  * current player with order number [n] given a list of the players [p]. *)
 let rec get_prev_player n p =
   let n' =
-    if n = 1 then List.length p + 1
-    else n
+    if n = 1 then List.length p
+    else n - 1
   in
-  match p with
-    | [] -> failwith "Invalid n value"
-    | h::t ->
-      if h.order_num = n' - 1 then h
-      else get_prev_player n t
+  List.hd (List.filter (fun p -> p.order_num = n') p)
 
-let tests = [
+(* checks all players have 7 letters in rack *)
+let rec check_racks players =
+  List.for_all (fun p -> List.length p.rack = 7) players
+
+(* checks all players have unique order nums *)
+  let rec check_order_nums players =
+    let order_nums = List.fold_left (fun acc p -> p.order_num :: acc) [] players in
+    List.length (List.sort Pervasives.compare order_nums) = List.length order_nums
+
+let init_state_tests = [
   (* init_board tests. *)
   "init_board_1" >:: (fun _ -> assert_equal board_1 (init_board 1));
   "init_board_2" >:: (fun _ -> assert_equal board_2 (init_board 2));
   "init_board_15" >:: (fun _ -> assert_equal board_15 (init_board 15));
 
-  (* do' tests. *)
+  (* bag tests *)
+  "init_bag_1h" >:: (fun _ ->
+      assert_equal 93 (List.length (init_state init_game_data_1h).bag));
+  "init_bag_1ai" >:: (fun _ ->
+      assert_equal 93 (List.length (init_state init_game_data_1ai).bag));
+  "init_bag_2h" >:: (fun _ ->
+      assert_equal 86 (List.length (init_state init_game_data_2h).bag));
+  "init_bag_2ai" >:: (fun _ ->
+      assert_equal 86 (List.length (init_state init_game_data_2ai).bag));
+  "init_bag_4h" >:: (fun _ ->
+      assert_equal 72 (List.length (init_state init_game_data_4h).bag));
+  "init_bag_1h3ai" >:: (fun _ ->
+      assert_equal 72 (List.length (init_state init_game_data_1h3ai).bag));
 
+  (* player rack tests *)
+  "init_rack_1h" >:: (fun _ ->
+      assert_equal 7 (List.length (init_state init_game_data_1h).current_player.rack));
+  "init_rack_1ai" >:: (fun _ ->
+      assert_equal 7 (List.length (init_state init_game_data_1ai).current_player.rack));
+  "init_rack_2h" >:: (fun _ ->
+      assert_equal true (check_racks (init_state init_game_data_1ai).players));
+  "init_rack_2ai" >:: (fun _ ->
+      assert_equal true (check_racks (init_state init_game_data_2ai).players));
+  "init_rack_4h" >:: (fun _ ->
+      assert_equal true (check_racks (init_state init_game_data_4h).players));
+  "init_rack_1h3ai" >:: (fun _ ->
+      assert_equal true (check_racks (init_state init_game_data_1h3ai).players));
+
+  (* player order_num tests *)
+  "init_order_num_1h" >:: (fun _ ->
+      assert_equal true (check_order_nums (init_state init_game_data_1h).players));
+  "init_order_num_1ai" >:: (fun _ ->
+      assert_equal true (check_order_nums (init_state init_game_data_1ai).players));
+  "init_order_num_2h" >:: (fun _ ->
+      assert_equal true (check_order_nums (init_state init_game_data_2h).players));
+  "init_order_num_2ai" >:: (fun _ ->
+      assert_equal true (check_order_nums (init_state init_game_data_2ai).players));
+  "init_order_num_4h" >:: (fun _ ->
+      assert_equal true (check_order_nums (init_state init_game_data_4h).players));
+  "init_order_num_1h3ai" >:: (fun _ ->
+      assert_equal true (check_order_nums (init_state init_game_data_1h3ai).players));
+]
+
+let add_word_tests = [
   (* add_word tests. *)
   "add_word_basic" >:: (fun _ ->
       assert_equal ["blah"] (do' (AddWord "blah") basic_state_1bag).added_words);
+  "add_word_invalid" >:: (fun _ ->
+      let e = fun () -> (do' (AddWord "3110") basic_state_1bag).added_words in
+      assert_raises InvalidAdd e);
+  "add_word_invalid1" >:: (fun _ ->
+      let e = fun () -> (do' (AddWord "CS3110") basic_state_1bag).added_words in
+      assert_raises InvalidAdd e);
+  "add_word_invalid2" >:: (fun _ ->
+      let e = fun () -> (do' (AddWord "CS A") basic_state_1bag).added_words in
+      assert_raises InvalidAdd e);
+]
 
-  (* swap tests. *)
+let swap_tests = [
   "swap1_basic_rack" >:: (fun _ ->
       assert_equal [('z', 10);('p', 3);('s', 1);('o', 1);('p', 3);('p', 3);('u', 1)]
         (let st = (do' (Swap ['s']) basic_state_1bag) in (get_prev_player 2 st.players).rack));
@@ -324,3 +418,5 @@ let tests = [
       let e = fun () -> do' (Swap ['l']) basic_state_1bag in
       assert_raises InvalidSwap e);
 ]
+
+let place_tests = []
