@@ -31,6 +31,10 @@ let tests = [
   "rack_upper" >:: (fun _ -> assert_equal Rack (parse "RACK"));
   "rack_space" >:: (fun _ -> assert_equal Rack (parse "  RACK "));
 
+  (* Board tests. *)
+  "board_lower" >:: (fun _ -> assert_equal Board (parse "board"));
+  "board_upper" >:: (fun _ -> assert_equal Board (parse "BOARD"));
+  "board_space" >:: (fun _ -> assert_equal Board (parse "  board "));
 
   (* AddWord tests. *)
   "add_lower" >:: (fun _ -> assert_equal (AddWord "blah") (parse "add blah"));
