@@ -57,6 +57,27 @@ let get_points c =
   | '*'                         -> 0
   | _ -> failwith "impossible"
 
+(* [get_multipliers coord] is the (letter multiplier, word multiplier) pair
+ * representing the multipliers for a given [coord]. *)
+let get_multipliers coord =
+  match coord with
+  | (1,1)  | (2,2)   | (3,3)  | (4,4)
+  | (1,13) | (2,12)  | (3,11) | (4,10)
+  | (10,4) | (10,10) | (11,3) | (11,11)
+  | (12,2) | (12,12) | (13,1) | (13,13) -> (1,2)
+  | (0,0)  | (0,7)   | (0,14) | (7,0)
+  | (7,14) | (14,0)  | (14,7) | (14,14) -> (1,3)
+  | (3,0)  | (11,0)  | (6,2)  | (7,3)
+  | (8,2)  | (0,3)   | (14,3) | (2,6)
+  | (6,6)  | (8,6)   | (12,6) | (3,7)
+  | (11,7) | (2,8)   | (6,8)  | (8,8)
+  | (12,8) | (0,11)  | (7,11) | (14,11)
+  | (6,12) | (8,12)  | (3,14) | (11,14) -> (2,1)
+  | (5,1)  | (9,1)   | (1,5)  | (5,5)
+  | (9,5)  | (13,5)  | (1,9)  | (5,9)
+  | (9,9)  | (13,9)  | (5,13) | (9,13)  -> (3,1)
+  | _                                   -> (1,1)
+
 (* [init_board n] creates an nxn board.
  * requires: n > 0 *)
 let rec init_board n =
@@ -72,8 +93,8 @@ and gen_row row_num len =
 and gen_cell row_num col_num =
   {cell_coord = row_num, col_num;
    letter = (' ', -1);
-   letter_multiplier = 1;
-   word_multiplier = 1}
+   letter_multiplier = fst (get_multipliers (row_num, col_num));
+   word_multiplier = snd (get_multipliers (row_num, col_num))}
 
 (* [init_bag ()] creates a scrabble bag of tiles *)
 let rec init_bag () =
@@ -131,7 +152,7 @@ let update_rack_and_bag chars_from_rack rack bag =
   let rack' =
     List.fold_left (fun acc c -> List.remove_assoc c acc) rack chars_from_rack in
   let rec update_rack r b =
-    if List.length r = 7 then
+    if List.length r = 7 || List.length b = 0 then
       (r, b)
     else
       begin
@@ -275,7 +296,7 @@ let get_adjacent_cells c st is_h =
 (* [has_adj_new_chars c is_h st] returns true if the cell at coordinate [c] has
  * a non-empty cell adjacent to it in the direction specified by [is_h]. If
  * the cells adjacent to [c] are empty or [c] is empty, then false is returned.
- *)
+*)
 let has_adj_new_chars c is_h st =
   if cell_is_empty (get_cell_from_coordinate c st) then
     false
@@ -312,12 +333,14 @@ let has_adj_new_chars c is_h st =
         cell_right.letter <> (' ', -1) || cell_left.letter <> (' ', -1)
     end
 
-(* [get_adjacent_word c st is_h] returns a pair option with the adjacent word at
- * coordinate [c] on the board in [st] and the points associated with it. [is_h]
- * determines whether the adjacent word is searched for horizontally or
- * vertically. None is returned if [c] is empty or there are no adjacent
- * characters to [c] in the direction specified by [is_h]. *)
-let get_adjacent_word c st is_h =
+(* [get_adjacent_word c st is_h new_chars] returns a pair option with the
+ * adjacent word at coordinate [c] on the board in [st] and the points
+ * associated with it. Only coordinates in [new_coord] have their scores multiplied
+ * by their letter multiplier. [is_h] determines whether the adjacent word is
+ * searched for horizontally or vertically. None is returned if [c] is empty or
+ * there are no adjacent characters to [c] in the direction specified by [is_h].
+*)
+let get_adjacent_word c st is_h new_coords =
   if has_adj_new_chars c is_h st then
     let word_cells = get_adjacent_cells c st is_h in
     let rec adjacent_helper lst (acc : (string * int * int)) =
@@ -325,7 +348,12 @@ let get_adjacent_word c st is_h =
       | [] -> acc
       | h::t ->
         let new_string = (fst_triple acc) ^ (Char.escaped (fst h.letter)) in
-        let points = (snd_triple acc) + (h.letter_multiplier * (snd h.letter)) in
+        let points =
+          if List.mem h.cell_coord new_coords then
+            (snd_triple acc) + (h.letter_multiplier * (snd h.letter))
+          else
+            (snd_triple acc) + (snd h.letter)
+        in
         let word_multiplier = (trd_triple acc) * h.word_multiplier in
         adjacent_helper t (new_string, points, word_multiplier)
     in
@@ -465,14 +493,14 @@ let check_fit_and_new_entries mv st =
            count >= (fst mv.mv_coord + (List.length mv.word)) then
           helper t (count+1) acc
         else (* cell contains piece of new word *)
-          if fst cell.letter = (List.nth mv.word (count - (fst mv.mv_coord))) then
-            (* pre-existing letter, not coming from player rack *)
-            helper t (count+1) acc
-          else
-            if fst cell.letter <> ' ' then raise (InvalidPlace "overlapping letters")
-            else (* adding char from rack to this cell *)
-              helper t (count+1)
-                ((List.nth mv.word (count - (fst mv.mv_coord)), (count, snd mv.mv_coord)) :: acc)
+        if fst cell.letter = (List.nth mv.word (count - (fst mv.mv_coord))) then
+          (* pre-existing letter, not coming from player rack *)
+          helper t (count+1) acc
+        else
+        if fst cell.letter <> ' ' then raise (InvalidPlace "overlapping letters")
+        else (* adding char from rack to this cell *)
+          helper t (count+1)
+            ((List.nth mv.word (count - (fst mv.mv_coord)), (count, snd mv.mv_coord)) :: acc)
     in
     helper col 0 []
 
@@ -576,8 +604,9 @@ let rec place mv st =
         (* update score, player rack, current player, bag *)
         let current_player = st.current_player in
         let rack_bag = update_rack_and_bag mv.word rack' st.bag in
+        let new_coords = List.map (fun (_,coord) -> coord) new_chars in
         let word_score_opt =
-          get_adjacent_word mv.mv_coord {st with board = board'} mv.is_horizontal in
+          get_adjacent_word mv.mv_coord {st with board = board'} mv.is_horizontal new_coords in
         let word_score = List.hd (get_values_from_opt_list [word_score_opt] []) in
         let updated_players =
           update_players current_player (fst rack_bag) st.players (snd word_score) in
@@ -591,45 +620,46 @@ let rec place mv st =
     (* new_chars is an assoc list of character*coord *)
     let new_chars = check_fit_and_new_entries mv st in
     if not (check_rack st.current_player.rack new_chars) then
-        raise (InvalidPlace "letters not in rack")(* newly-placed chars not in player rack *)
+      raise (InvalidPlace "letters not in rack")(* newly-placed chars not in player rack *)
     else
-        (* assuming place is valid... *)
-        let rack' = refresh_rack new_chars st.current_player.rack in
+      (* assuming place is valid... *)
+      let rack' = refresh_rack new_chars st.current_player.rack in
 
-        let board' = update_board mv st in
-        let just_new_chars = List.map (fun (c,coord) -> c) new_chars in
-        let current_player = st.current_player in
-        let rack_bag = update_rack_and_bag just_new_chars rack' st.bag in
-        let st_board = {st with board = board'} in
-        if List.length new_chars = List.length mv.word &&
-           not (List.fold_left
-                  (fun acc (_, c) ->
-                     (has_adj_new_chars c (not mv.is_horizontal) st_board) || acc) false new_chars) then
-          raise (InvalidPlace "not connected to board")
+      let board' = update_board mv st in
+      let just_new_chars = List.map (fun (c,coord) -> c) new_chars in
+      let new_coords = List.map (fun (_,coord) -> coord) new_chars in
+      let current_player = st.current_player in
+      let rack_bag = update_rack_and_bag just_new_chars rack' st.bag in
+      let st_board = {st with board = board'} in
+      if List.length new_chars = List.length mv.word &&
+         not (List.fold_left
+                (fun acc (_, c) ->
+                   (has_adj_new_chars c (not mv.is_horizontal) st_board) || acc) false new_chars) then
+        raise (InvalidPlace "not connected to board")
+      else
+        let word_score_opp_dir_opt =
+          List.fold_left (fun acc c ->
+              (get_adjacent_word (snd c) st_board
+                 (not mv.is_horizontal) new_coords) :: acc) [] new_chars in
+        let word_score_lst_opt =
+          (get_adjacent_word mv.mv_coord st_board mv.is_horizontal new_coords)
+          :: word_score_opp_dir_opt in
+        let word_score_lst = get_values_from_opt_list word_score_lst_opt [] in
+        let valid_words =
+          List.fold_left (fun acc (s, i) ->
+              (fst acc && check_word s st, snd acc + i)) (true, 0) word_score_lst in
+        if fst valid_words then
+          let updated_players =
+            update_players current_player (fst rack_bag) st.players (snd valid_words) in
+          let updated_players' = fix_score current_player.name updated_players rack' in
+
+          let next_player = get_next_player current_player.order_num updated_players' in
+          (* update score, change turn, update player rack and bag etc *)
+          {st_board with players = updated_players';
+                         current_player = next_player;
+                         bag = (snd rack_bag)}
         else
-          let word_score_opp_dir_opt =
-            List.fold_left (fun acc c ->
-                (get_adjacent_word (snd c) st_board
-                   (not mv.is_horizontal)) :: acc) [] new_chars in
-          let word_score_lst_opt =
-            (get_adjacent_word mv.mv_coord st_board mv.is_horizontal)
-            :: word_score_opp_dir_opt in
-          let word_score_lst = get_values_from_opt_list word_score_lst_opt [] in
-          let valid_words =
-            List.fold_left (fun acc (s, i) ->
-                (fst acc && check_word s st, snd acc + i)) (true, 0) word_score_lst in
-          if fst valid_words then
-            let updated_players =
-              update_players current_player (fst rack_bag) st.players (snd valid_words) in
-            let updated_players' = fix_score current_player.name updated_players rack' in
-
-            let next_player = get_next_player current_player.order_num updated_players' in
-            (* update score, change turn, update player rack and bag etc *)
-            {st_board with players = updated_players';
-                           current_player = next_player;
-                           bag = (snd rack_bag)}
-          else
-            raise (InvalidPlace "invalid newly-formed word")
+          raise (InvalidPlace "invalid newly-formed word")
 
 (* [swap lst st] removes the letters in [lst] from the current player's rack and
  * swaps them with letters in the bag.

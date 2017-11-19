@@ -68,6 +68,8 @@ val init_board : int -> board
 
 val get_points : char -> int
 
+val init_bag : unit -> bag
+
 (* [init_state j] is the initial state of the game *)
 val init_state : init_game_data -> state
 
@@ -95,7 +97,7 @@ val remove : 'a -> 'a list -> 'a list
  * vertically. If the cell at [c] is empty, the empty string is returned with 0
  * points. None is returned if [c] is empty or there are no adjacent characters
  * to [c] in the direction specified by [is_h]. *)
-val get_adjacent_word : coordinate -> state -> bool -> (string*int) option
+val get_adjacent_word : coordinate -> state -> bool -> coordinate list -> (string*int) option
 
 (* [point_moves m] is the number of points earned by the move [m] *)
 val point_moves : Command.move -> int

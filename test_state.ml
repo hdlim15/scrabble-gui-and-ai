@@ -2,256 +2,12 @@ open OUnit2
 open State
 open Command
 
-let board_1 = [[{cell_coord = (0, 0); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1}]]
+let board_1 = [[{cell_coord = (0, 0); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 3}]]
 
-let board_2 = [[{cell_coord = (0, 0); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
+let board_2 = [[{cell_coord = (0, 0); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 3};
                 {cell_coord = (0, 1); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1}];
                [{cell_coord = (1, 0); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-                {cell_coord = (1, 1); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1}]]
-
-let board_15 = [
-  [
-    {cell_coord = (0, 0); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (0, 1); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (0, 2); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (0, 3); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (0, 4); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (0, 5); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (0, 6); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (0, 7); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (0, 8); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (0, 9); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (0, 10); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (0, 11); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (0, 12); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (0, 13); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (0, 14); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1}
-  ]; [
-    {cell_coord = (1, 0); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (1, 1); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (1, 2); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (1, 3); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (1, 4); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (1, 5); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (1, 6); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (1, 7); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (1, 8); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (1, 9); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (1, 10); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (1, 11); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (1, 12); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (1, 13); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (1, 14); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1}
-  ]; [
-    {cell_coord = (2, 0); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (2, 1); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (2, 2); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (2, 3); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (2, 4); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (2, 5); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (2, 6); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (2, 7); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (2, 8); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (2, 9); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (2, 10); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (2, 11); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (2, 12); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (2, 13); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (2, 14); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1}
-  ];[
-    {cell_coord = (3, 0); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (3, 1); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (3, 2); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (3, 3); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (3, 4); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (3, 5); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (3, 6); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (3, 7); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (3, 8); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (3, 9); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (3, 10); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (3, 11); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (3, 12); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (3, 13); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (3, 14); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1}
-  ];[
-    {cell_coord = (4, 0); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (4, 1); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (4, 2); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (4, 3); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (4, 4); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (4, 5); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (4, 6); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (4, 7); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (4, 8); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (4, 9); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (4, 10); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (4, 11); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (4, 12); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (4, 13); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (4, 14); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1}
-  ];[
-    {cell_coord = (5, 0); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (5, 1); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (5, 2); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (5, 3); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (5, 4); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (5, 5); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (5, 6); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (5, 7); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (5, 8); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (5, 9); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (5, 10); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (5, 11); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (5, 12); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (5, 13); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (5, 14); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1}
-  ];[
-    {cell_coord = (6, 0); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (6, 1); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (6, 2); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (6, 3); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (6, 4); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (6, 5); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (6, 6); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (6, 7); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (6, 8); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (6, 9); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (6, 10); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (6, 11); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (6, 12); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (6, 13); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (6, 14); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1}
-  ];[
-    {cell_coord = (7, 0); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (7, 1); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (7, 2); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (7, 3); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (7, 4); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (7, 5); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (7, 6); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (7, 7); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (7, 8); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (7, 9); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (7, 10); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (7, 11); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (7, 12); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (7, 13); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (7, 14); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1}
-  ];[
-    {cell_coord = (8, 0); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (8, 1); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (8, 2); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (8, 3); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (8, 4); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (8, 5); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (8, 6); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (8, 7); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (8, 8); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (8, 9); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (8, 10); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (8, 11); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (8, 12); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (8, 13); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (8, 14); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1}
-  ];[
-    {cell_coord = (9, 0); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (9, 1); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (9, 2); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (9, 3); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (9, 4); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (9, 5); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (9, 6); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (9, 7); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (9, 8); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (9, 9); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (9, 10); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (9, 11); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (9, 12); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (9, 13); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (9, 14); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1}
-  ];[
-    {cell_coord = (10, 0); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (10, 1); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (10, 2); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (10, 3); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (10, 4); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (10, 5); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (10, 6); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (10, 7); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (10, 8); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (10, 9); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (10, 10); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (10, 11); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (10, 12); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (10, 13); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (10, 14); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1}
-  ];[
-    {cell_coord = (11, 0); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (11, 1); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (11, 2); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (11, 3); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (11, 4); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (11, 5); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (11, 6); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (11, 7); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (11, 8); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (11, 9); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (11, 10); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (11, 11); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (11, 12); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (11, 13); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (11, 14); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1}
-  ];[
-    {cell_coord = (12, 0); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (12, 1); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (12, 2); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (12, 3); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (12, 4); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (12, 5); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (12, 6); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (12, 7); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (12, 8); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (12, 9); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (12, 10); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (12, 11); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (12, 12); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (12, 13); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (12, 14); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1}
-  ];[
-    {cell_coord = (13, 0); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (13, 1); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (13, 2); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (13, 3); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (13, 4); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (13, 5); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (13, 6); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (13, 7); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (13, 8); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (13, 9); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (13, 10); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (13, 11); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (13, 12); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (13, 13); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (13, 14); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1}
-  ];[
-    {cell_coord = (14, 0); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (14, 1); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (14, 2); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (14, 3); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (14, 4); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (14, 5); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (14, 6); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (14, 7); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (14, 8); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (14, 9); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (14, 10); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (14, 11); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (14, 12); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (14, 13); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1};
-    {cell_coord = (14, 14); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 1}
-  ]
-]
+                {cell_coord = (1, 1); letter = (' ', -1); letter_multiplier = 1; word_multiplier = 2}]]
 
 let player1 = {name = "arman";
                score = 0;
@@ -264,6 +20,12 @@ let player2 = {name = "connor";
                rack = [('t', 1);('m', 3);('m', 3);('i', 1);('m', 3);('m', 3);('r', 1)];
                player_type = Human;
                order_num = 2}
+
+let player_wildcard = {name = "wildcard";
+                       score = 0;
+                       rack = [('s', 1);('p', 3);('s', 1);('*', 0);('p', 3);('p', 3);('u', 1)];
+                       player_type = Human;
+                       order_num = 1}
 
 let init_game_data_1h = {
   num_players = 1;
@@ -302,17 +64,39 @@ let init_game_data_1h3ai = {
   human_names = ["foo"];
 }
 
-let basic_state_1bag = {board = board_1;
+let basic_state_1bag = {board = init_board 15;
                         bag = [('z', 10)];
                         players = [player1; player2];
                         added_words = [];
                         current_player = player1}
 
-let basic_state_2bag = {board = board_1;
+let basic_state_2bag = {board = init_board 15;
                         bag = [('z', 10); ('k', 5)];
                         players = [player1; player2];
                         added_words = [];
                         current_player = player1}
+
+let wildcard_player_state = {board = init_board 15;
+                             bag = [('z', 10); ('k', 5);('a', 1)];
+                             players = [player_wildcard; player2];
+                             added_words = [];
+                             current_player = player_wildcard}
+
+let move1_h = {word = ['s';'o'];
+               mv_coord = (7,7);
+               is_horizontal = true}
+
+let move1_v = {word = ['s';'o'];
+               mv_coord = (7,7);
+               is_horizontal = false}
+
+let move2_h = {word = ['s';'o';'r';'t'];
+               mv_coord = (7,7);
+               is_horizontal = true}
+
+let move2_v = {word = ['s';'o';'r';'t'];
+               mv_coord = (7,7);
+               is_horizontal = false}
 
 (* [get_prev_player n p] returns the player whose turn was before the
  * current player with order number [n] given a list of the players [p]. *)
@@ -321,7 +105,7 @@ let rec get_prev_player n p =
     if n = 1 then List.length p
     else n - 1
   in
-  List.hd (List.filter (fun p -> p.order_num = n') p)
+  List.hd (List.filter (fun p' -> p'.order_num = n') p)
 
 (* checks all players have 7 letters in rack *)
 let rec check_racks players =
@@ -332,11 +116,15 @@ let rec check_racks players =
     let order_nums = List.fold_left (fun acc p -> p.order_num :: acc) [] players in
     List.length (List.sort Pervasives.compare order_nums) = List.length order_nums
 
+let verify_board c st is_h word =
+  match (get_adjacent_word c st is_h []) with
+  | Some (s, _) -> s = word
+  | None -> false
+
 let init_state_tests = [
   (* init_board tests. *)
   "init_board_1" >:: (fun _ -> assert_equal board_1 (init_board 1));
   "init_board_2" >:: (fun _ -> assert_equal board_2 (init_board 2));
-  "init_board_15" >:: (fun _ -> assert_equal board_15 (init_board 15));
 
   (* bag tests *)
   "init_bag_1h" >:: (fun _ ->
@@ -419,4 +207,167 @@ let swap_tests = [
       assert_raises InvalidSwap e);
 ]
 
-let place_tests = []
+let blank_player = {name = "foo";
+                    score = 0;
+                    rack = [('*', 0); ('f',4); ('n',1)];
+                    player_type = Human;
+                    order_num = 1}
+let blank_player2 = {blank_player with rack = [('*',0); ('*',0); ('n',1)]}
+let camel_player = {blank_player with rack = [('e',1); ('c',3); ('a',1); ('m',3); ('l',1); ('s',1)]}
+let it_no_player = {blank_player with rack = [('i',1); ('t',1); ('n',1); ('o',1)]}
+
+
+let blank1_state = {board = init_board 15;
+                    bag = [('f',4);('f',4);('f',4);('f',4);('f',4);('f',4);('f',4);('f',4);('f',4);('f',4);('f',4);('f',4);('f',4);('f',4);];
+                    players = [blank_player];
+                    added_words = [];
+                    current_player = blank_player}
+let blank2_state = {blank1_state with players = [blank_player2];current_player = blank_player2}
+let basic_state = {blank1_state with players = [camel_player];current_player = camel_player}
+let it_no_state = {blank1_state with players = [it_no_player];current_player = it_no_player}
+
+let blank_mv1 = {word=['f';'u';'n'];mv_coord=(7,7);is_horizontal=true}
+let blank_mv2 = {word=['f';'i';'n'];mv_coord=(7,7);is_horizontal=false}
+let blank_mv3 = {word=['n';'o';'t'];mv_coord=(7,7);is_horizontal=true}
+let blank_mv4 = {word=['p';'i';'n'];mv_coord=(7,7);is_horizontal=false}
+
+let basic_mv1 = {word=['c';'a';'m';'e';'l'];mv_coord=(7,7);is_horizontal=true}
+let basic_mv2 = {word=['c';'a';'m';'e';'l'];mv_coord=(6,8);is_horizontal=false}
+let basic_mv3 = {word=['c';'a';'m';'e';'l'];mv_coord=(8,6);is_horizontal=true}
+let basic_mv4 = {word=['c';'a';'m';'e';'l';'s'];mv_coord=(7,7);is_horizontal=true}
+let basic_mv5 = {word=['c';'a';'m';'e';'l';'s'];mv_coord=(7,7);is_horizontal=false}
+let basic_mv6 = {word=['c';'a';'m';'e';'l'];mv_coord=(4,10);is_horizontal=false}
+
+let it_mv1 = {word=['i';'t'];mv_coord=(7,7);is_horizontal=true}
+let no_mv1 = {word=['n';'o'];mv_coord=(8,7);is_horizontal=true}
+let it_mv2 = {word=['i';'t'];mv_coord=(7,7);is_horizontal=false}
+let no_mv2 = {word=['n';'o'];mv_coord=(7,8);is_horizontal=false}
+
+
+let camel_hor_st =
+  let st = (do' (PlaceWord basic_mv1) basic_state) in
+  {st with current_player = {camel_player with score=10}}
+let camel_vert_st =
+  let st = (do' (PlaceWord {basic_mv1 with is_horizontal=false}) basic_state) in
+  {st with current_player = {camel_player with score=10}}
+
+let it_hor_st =
+  let st = (do' (PlaceWord it_mv1) it_no_state) in
+  {st with current_player = {it_no_player with score=2}}
+let it_vert_st =
+  let st = (do' (PlaceWord it_mv2) it_no_state) in
+  {st with current_player = {it_no_player with score=2}}
+
+let place_tests = [
+  (* Blank tile tests *)
+  "blank_score_1" >:: (fun _ ->
+      assert_equal 5 (do' (PlaceWord blank_mv1) blank1_state).current_player.score);
+  "blank_score_2" >:: (fun _ ->
+      assert_equal 5 (do' (PlaceWord blank_mv2) blank1_state).current_player.score);
+  "blank_rack_no_blank" >:: (fun _ ->
+      assert_equal false (let r = ((do' (PlaceWord blank_mv2) blank1_state).current_player.rack) in
+                          List.mem '*' (List.map (fun (c,_)->c) r)));
+  "blank_score_3" >:: (fun _ ->
+      assert_equal 1 (do' (PlaceWord blank_mv3) blank2_state).current_player.score);
+  "blank_score_4" >:: (fun _ ->
+      assert_equal 1 (do' (PlaceWord blank_mv4) blank2_state).current_player.score);
+  "blank_rack_no_blanks" >:: (fun _ ->
+      assert_equal false (let r = ((do' (PlaceWord blank_mv2) blank2_state).current_player.rack) in
+                          List.mem '*' (List.map (fun (c,_)->c) r)));
+
+  (* Score tests *)
+  "basic_score_hor" >:: (fun _ ->
+      assert_equal 10 (do' (PlaceWord basic_mv1) basic_state).current_player.score);
+  "basic_score_vert" >:: (fun _ ->
+      assert_equal 10
+        (do' (PlaceWord {basic_mv1 with is_horizontal=false}) basic_state).current_player.score);
+  "score_vert_intersect_hor" >:: (fun _ ->
+      assert_equal 25 (do' (PlaceWord basic_mv2) camel_hor_st).current_player.score);
+  "score_hor_intersect_vert" >:: (fun _ ->
+      assert_equal 25 (do' (PlaceWord basic_mv3) camel_vert_st).current_player.score);
+  "score_hor_hor" >:: (fun _ ->
+      assert_equal 10 (do' (PlaceWord no_mv1) it_hor_st).current_player.score);
+  "score_vert_vert" >:: (fun _ ->
+      assert_equal 10 (do' (PlaceWord no_mv2) it_vert_st).current_player.score);
+  "score_hor_overlap" >:: (fun _ ->
+      assert_equal 20 (do' (PlaceWord basic_mv4) camel_hor_st).current_player.score);
+  "score_vert_overlap" >:: (fun _ ->
+      assert_equal 20 (do' (PlaceWord basic_mv5) camel_vert_st).current_player.score);
+  "score_word_multiplier" >:: (fun _ ->
+      assert_equal 28 (do' (PlaceWord basic_mv6) camel_hor_st).current_player.score);
+
+  "place1_rack_horizontal" >:: (fun _ ->
+      assert_equal true
+        (let st = (do' (PlaceWord move1_h) basic_state_2bag) in
+         let lst_chars = ['z';'k';'p';'s';'u'] in
+         let prev_rack = (get_prev_player 2 st.players).rack in
+         List.for_all (fun c -> List.mem_assoc c prev_rack) lst_chars
+         && List.length prev_rack = 7));
+
+  "place1_rack_vertical" >:: (fun _ ->
+      assert_equal true
+        (let st = (do' (PlaceWord move1_v) basic_state_2bag) in
+         let lst_chars = ['z';'k';'p';'s';'u'] in
+         let prev_rack = (get_prev_player 2 st.players).rack in
+         List.for_all (fun c -> List.mem_assoc c prev_rack) lst_chars
+         && List.length prev_rack = 7));
+
+  "place2_rack_horizontal" >:: (fun _ ->
+      assert_equal true
+        (let st = {(do' (PlaceWord move1_h) basic_state_2bag)
+                   with bag = [('q',10);('a',1)]} in
+         let st' = (do' (PlaceWord move2_h) st) in
+         let lst_chars = ['q';'a';'i';'m'] in
+         let prev_rack = (get_prev_player 1 st'.players).rack in
+         List.for_all (fun c -> List.mem_assoc c prev_rack) lst_chars
+         && List.length prev_rack = 7));
+
+  "place2_rack_vertical" >:: (fun _ ->
+    assert_equal true
+      (let st = {(do' (PlaceWord move1_v) basic_state_2bag)
+                 with bag = [('q',10);('a',1)]} in
+       let st' = (do' (PlaceWord move2_v) st) in
+       let lst_chars = ['q';'a';'i';'m'] in
+       let prev_rack = (get_prev_player 1 st'.players).rack in
+       List.for_all (fun c -> List.mem_assoc c prev_rack) lst_chars
+       && List.length prev_rack = 7));
+
+  "place1_bag_horizontal" >:: (fun _ ->
+      assert_equal [] (do' (PlaceWord move1_h) basic_state_2bag).bag);
+
+  "place1_bag_vertical" >:: (fun _ ->
+      assert_equal [] (do' (PlaceWord move1_v) basic_state_2bag).bag);
+
+  "place1_bag_wildcard" >:: (fun _ ->
+      assert_equal 1 (List.length (do' (PlaceWord move1_h) wildcard_player_state).bag));
+
+  "place2_rack_horizontal" >:: (fun _ ->
+      assert_equal 1
+        (let st = {(do' (PlaceWord move1_h) basic_state_2bag)
+                   with bag = [('q',10);('a',1);('a',1)]} in
+         List.length ((do' (PlaceWord move2_h) st).bag)));
+
+  "place2_rack_vertical" >:: (fun _ ->
+      assert_equal 1
+        (let st = {(do' (PlaceWord move1_v) basic_state_2bag)
+                   with bag = [('q',10);('a',1);('a',1)]} in
+         List.length ((do' (PlaceWord move2_v) st).bag)));
+
+  "place2_bag_too_small" >:: (fun _ ->
+      assert_equal true
+        (let st = (do' (PlaceWord move1_h) basic_state_2bag) in
+         let st' = (do' (PlaceWord move2_h) st) in
+         let lst_chars = ['i';'m'] in
+         let prev_rack = (get_prev_player 1 st'.players).rack in
+         List.for_all (fun c -> List.mem_assoc c prev_rack) lst_chars
+         && List.length prev_rack = 5));
+
+  "place2_next_player_overflow" >:: (fun _ ->
+      assert_equal 1
+        (let st = {(do' (PlaceWord move1_v) basic_state_2bag)
+                   with bag = [('q',10);('a',1)]} in
+         let st' = (do' (PlaceWord move2_v) st) in
+         st'.current_player.order_num));
+
+
+]
