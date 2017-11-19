@@ -60,7 +60,7 @@ let cross_check c chr cells st =
     match up_cell c with
     | None -> true
     | Some c' ->
-      match get_adjacent_word c' st false with
+      match get_adjacent_word c' st false [] with
       | None -> failwith "impossible"
       | Some (str,_) ->
         is_word f_dict (chr ^ str) in
@@ -68,7 +68,7 @@ let cross_check c chr cells st =
     match down_cell c with
     | None -> true
     | Some c' ->
-      match get_adjacent_word c' st false with
+      match get_adjacent_word c' st false [] with
       | None -> failwith "impossible"
       | Some (str,_) ->
         is_word f_dict (chr ^ str) in
@@ -102,49 +102,61 @@ let valid_extensions anchor_rack extensions =
 let reverse_str s =
   List.fold_right (fun x acc -> acc ^ Char.escaped x ) (explode s) ""
 
+let concat_moves str exts =
+  List.fold_left
+    (fun acc x -> (str ^ x)::acc ) [] exts
+
+let concat_moves_rev str exts =
+  List.fold_left
+    (fun acc x -> (x ^ str)::acc ) [] exts
+
 let make_move c rack st =
   let left =
   match left_cell c with
   | None -> None, Left
   | Some c' ->
-    match get_adjacent_word c' st true with
+    match get_adjacent_word c' st true [] with
   | None -> failwith "impossible"
   | Some (str,_) ->
     let extensions = get_extensions str f_dict in
-    Some (valid_extensions rack extensions), Left in
+    let words = (valid_extensions rack extensions) |> concat_moves str in
+    Some words, Left in
   let right =
   match right_cell c with
   | None -> None, Right
   | Some c' ->
-    match get_adjacent_word c' st true with
+    match get_adjacent_word c' st true [] with
   | None -> failwith "impossible"
   | Some (str,_) ->
     let extensions = get_extensions (reverse_str str) r_dict in
-    Some (valid_extensions rack extensions), Right in
+    let words = (valid_extensions rack extensions) |> concat_moves_rev str in
+    Some words, Right in
   let up =
   match up_cell c with
   | None -> None, Up
   | Some c' ->
-    match get_adjacent_word c' st false with
+    match get_adjacent_word c' st false [] with
   | None -> failwith "impossible"
   | Some (str,_) ->
     let extensions = get_extensions str f_dict in
-    Some (valid_extensions rack extensions), Up in
+    let words = (valid_extensions rack extensions) |> concat_moves str in
+    Some words, Up in
   let down =
     match down_cell c with
   | None -> None, Down
   | Some c' ->
-    match get_adjacent_word c' st false with
+    match get_adjacent_word c' st false [] with
   | None -> failwith "impossible"
   | Some (str,_) ->
     let extensions = get_extensions (reverse_str str) r_dict in
-    Some (valid_extensions rack extensions), Down in
+    let words = (valid_extensions rack extensions) |> concat_moves_rev str in
+    Some words, Down in
   [left;right;up;down]
 
 let all_moves anchors st =
   List.fold_left
     (fun acc x ->
-       (make_move (fst x) (snd x) st)::acc
+       (x,(make_move (fst x) (snd x) st))::acc
     ) [] anchors
 
 let eval_move st mv =
