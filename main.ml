@@ -205,7 +205,7 @@ let init_game rdy =
                          num_humans = num_humans;
                          human_names = player_names;
                          ai_difficulty = ai_difficulty_lst}) in
-    (* clear (); *)
+    clear ();
     print_endline (s.current_player.name ^ "'s turn.");
     play_game s
 
