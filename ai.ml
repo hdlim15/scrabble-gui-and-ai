@@ -113,44 +113,44 @@ let concat_moves_rev str exts =
 let make_move c rack st =
   let left =
   match left_cell c with
-  | None -> None, Left
+  | None -> None
   | Some c' ->
-    match get_adjacent_word c' st true [] with
-  | None -> failwith "impossible"
-  | Some (str,_) ->
-    let extensions = get_extensions str f_dict in
-    let words = (valid_extensions rack extensions) |> concat_moves str in
-    Some (words,str), Left in
+      match get_adjacent_word c' st true [] with
+    | None -> failwith "impossible"
+    | Some (str,_) ->
+      let extensions = get_extensions str f_dict in
+      let words = (valid_extensions rack extensions) |> concat_moves str in
+      Some (words,str) in
   let right =
   match right_cell c with
-  | None -> None, Right
+  | None -> None
   | Some c' ->
-    match get_adjacent_word c' st true [] with
-  | None -> failwith "impossible"
-  | Some (str,_) ->
-    let extensions = get_extensions (reverse_str str) r_dict in
-    let words = (valid_extensions rack extensions) |> concat_moves_rev str in
-    Some (words,str), Right in
+      match get_adjacent_word c' st true [] with
+    | None -> failwith "impossible"
+    | Some (str,_) ->
+      let extensions = get_extensions (reverse_str str) r_dict in
+      let words = (valid_extensions rack extensions) |> concat_moves_rev str in
+      Some (words,str) in
   let up =
   match up_cell c with
-  | None -> None, Up
+  | None -> None
   | Some c' ->
-    match get_adjacent_word c' st false [] with
-  | None -> failwith "impossible"
-  | Some (str,_) ->
-    let extensions = get_extensions str f_dict in
-    let words = (valid_extensions rack extensions) |> concat_moves str in
-    Some (words,str), Up in
+      match get_adjacent_word c' st false [] with
+    | None -> failwith "impossible"
+    | Some (str,_) ->
+      let extensions = get_extensions str f_dict in
+      let words = (valid_extensions rack extensions) |> concat_moves str in
+      Some (words,str)in
   let down =
     match down_cell c with
-  | None -> None, Down
+  | None -> None
   | Some c' ->
-    match get_adjacent_word c' st false [] with
-  | None -> failwith "impossible"
-  | Some (str,_) ->
-    let extensions = get_extensions (reverse_str str) r_dict in
-    let words = (valid_extensions rack extensions) |> concat_moves_rev str in
-    Some (words,str), Down in
+      match get_adjacent_word c' st false [] with
+    | None -> failwith "impossible"
+    | Some (str,_) ->
+      let extensions = get_extensions (reverse_str str) r_dict in
+      let words = (valid_extensions rack extensions) |> concat_moves_rev str in
+      Some (words,str) in
   [left;right;up;down]
 
 let all_moves anchors st =
@@ -159,15 +159,124 @@ let all_moves anchors st =
        (x,(make_move (fst x) (snd x) st))::acc
     ) [] anchors
 
-let get_start_cell anchor word_pair dir =
+let get_start_cell anchor word dir =
   match dir with
   | Right | Down -> anchor.cell_coord
   | Left ->
-    let subtract = String.length (snd word_pair) in
+    let subtract = String.length (word) in
     ((fst anchor.cell_coord) - subtract), snd anchor.cell_coord
   | Up ->
-    let subtract = String.length (snd word_pair) in
+    let subtract = String.length (word) in
     fst anchor.cell_coord,((snd anchor.cell_coord) - subtract)
+
+let get_all_start_cells anchor word_lst st =
+  let left =
+    List.fold_left
+      (fun acc x ->
+         let updated_cell = (get_start_cell anchor (snd x) Left) in
+         (updated_cell, fst x)::acc
+      ) [] (List.nth word_lst 0) in
+  let right =
+    List.fold_left
+      (fun acc x ->
+         let updated_cell = (get_start_cell anchor (snd x) Right) in
+         (updated_cell, fst x)::acc
+      ) [] (List.nth word_lst 1) in
+  let up =
+    List.fold_left
+      (fun acc x ->
+         let updated_cell = (get_start_cell anchor (snd x) Up) in
+         (updated_cell, fst x)::acc
+      ) [] (List.nth word_lst 2) in
+  let down =
+    List.fold_left
+      (fun acc x ->
+         let updated_cell = (get_start_cell anchor (snd x) Down) in
+         (updated_cell, fst x)::acc
+      ) [] (List.nth word_lst 3) in
+  [left@right;up@down]
+
+let update_all_anchor_pairs anchor_pair_lst st =
+  List.map (fun x -> get_all_start_cells (fst x) (snd x) st) anchor_pair_lst
+
+let get_points mv st =
+  if not (check_bounds mv st) then raise (InvalidPlace "cannot place off board")
+  else if not (check_endpoints mv st) then raise (InvalidPlace "not complete word")
+  else
+    (* new_chars is an assoc list of character*coord *)
+    let new_chars = check_fit_and_new_entries mv st in
+    (* assuming place is valid... *)
+    let board' = update_board mv st in
+    let new_coords = List.map (fun (_,coord) -> coord) new_chars in
+    let st_board = {st with board = board'} in
+    if List.length new_chars = List.length mv.word &&
+       not (List.fold_left
+              (fun acc (_, c) ->
+                 (has_adj_new_chars c (not mv.is_horizontal) st_board)
+                 || acc) false new_chars) then
+      raise (InvalidPlace "not connected to board")
+    else
+      let word_score_opp_dir_opt =
+        List.fold_left (fun acc c ->
+            (get_adjacent_word (snd c) st_board
+               (not mv.is_horizontal) new_coords) :: acc) [] new_chars in
+      let word_score_lst_opt =
+        (get_adjacent_word mv.mv_coord st_board mv.is_horizontal new_coords)
+        :: word_score_opp_dir_opt in
+      let word_score_lst = get_values_from_opt_list word_score_lst_opt [] in
+      let valid_words =
+        List.fold_left (fun acc (s, i) ->
+            (fst acc, snd acc + i)) (true, 0) word_score_lst in
+      if fst valid_words then snd valid_words
+      else
+        raise (InvalidPlace "invalid newly-formed word")
+
+let generate_move cell str dir =
+  match dir with
+  | Left | Right -> {word = explode str; mv_coord = cell; is_horizontal = true;}
+  | Up | Down -> {word = explode str; mv_coord = cell; is_horizontal = false;}
+
+let generate_moves_for_anchor move_lst =
+  let left_right =
+    List.fold_left
+      (fun acc x ->
+         (generate_move (fst x) (snd x) Left)::acc
+      ) [] (List.nth move_lst 0) in
+  let up_down =
+    List.fold_left
+      (fun acc x ->
+         (generate_move (fst x) (snd x) Up)::acc
+      ) [] (List.nth move_lst 1) in
+  left_right @ up_down
+
+let generate_all_moves all_moves =
+  List.fold_left
+    (fun acc x -> (generate_moves_for_anchor x)::acc) [] all_moves
+  |> List.flatten
+
+let calculate_move_points mv st =
+  try get_points mv st with
+    Failure _ -> failwith "invalid move"
+
+let get_all_move_points moves st =
+  List.fold_left
+    (fun acc x ->
+       try
+         ( x, get_points x st)::acc with
+        Failure _ -> acc
+    ) [] moves
+
+let score_cmp mv1 mv2 =
+  if snd mv1 > snd mv2 then 1
+  else if snd mv1 < snd mv2 then -1 else 0
+
+let sort_moves moves =
+  List.sort score_cmp moves
+
+let pick_best_move moves =
+  match moves with
+  | [] -> failwith "swap"
+  | _ -> List.sort score_cmp moves |> List.hd
 
 let eval_move st mv =
   failwith "todo"
