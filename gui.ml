@@ -61,11 +61,11 @@ let draw_string_in_box pos str bcf col =
   Graphics.set_color col;
   Graphics.draw_string str
 
-let set_gray x = (Graphics.rgb x x x)
+let set_rgb x y z = (Graphics.rgb x y z)
 
-let gray1 = set_gray 100
-and gray2 = set_gray 170
-and gray3 = set_gray 240
+let gray1 = set_rgb 185 185 165
+and gray2 = set_rgb 205 205 185
+and gray3 = set_rgb 245 245 220
 
 let rec create_grid nb_col n sep b acc =
   if n < 0 then acc
@@ -77,7 +77,7 @@ let rec create_grid nb_col n sep b acc =
     (create_grid nb_col (n-1) sep b (b1 :: acc))
 
 let vb =
-  let b = {x=0; y=0; w=20;h=20; bw=2;
+  let b = {x=0; y=0; w=40;h=40; bw=2;
            b1_col=gray1; b2_col=gray3; b_col=gray2; r=Top} in
   Array.of_list (create_grid 15 224 0 b [])
 
@@ -85,7 +85,7 @@ let rec loop () = loop ()
 
 let rec main () =
   try
-    Graphics.open_graph " 600x600";
+    Graphics.open_graph " 6500x600";
     Array.iter draw_box vb;
     draw_string_in_box Center "X" vb.(5) Graphics.black;
     draw_string_in_box Center "X" vb.(8) Graphics.black;
