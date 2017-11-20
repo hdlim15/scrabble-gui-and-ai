@@ -8,6 +8,8 @@ let f_dict = Trie.initialize_dict "forward_dict.txt"
 
 let r_dict = initialize_dict "reverse_dict.txt"
 
+let vowels = ['a';'e';'i';'o';'u']
+
 let get_all_cells st =
   get_row (0,0) st @ get_row (1,0) st @ get_row (2,0) st @ get_row (3,0) st @
   get_row (4,0) st @ get_row (5,0) st @ get_row (6,0) st @ get_row (7,0) st @
@@ -272,6 +274,13 @@ let score_cmp mv1 mv2 =
 
 let sort_moves moves =
   List.sort score_cmp moves
+
+let evaluate_rack rack =
+  List.fold_left
+    (fun acc x ->
+       if List.mem x vowels then (fst acc + 1, snd acc)
+       else (fst acc, snd acc + 1)
+    ) (0,0) rack
 
 let pick_best_move moves =
   match moves with
