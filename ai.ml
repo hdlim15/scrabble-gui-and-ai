@@ -120,7 +120,7 @@ let make_move c rack st =
   | Some (str,_) ->
     let extensions = get_extensions str f_dict in
     let words = (valid_extensions rack extensions) |> concat_moves str in
-    Some words, Left in
+    Some (words,str), Left in
   let right =
   match right_cell c with
   | None -> None, Right
@@ -130,7 +130,7 @@ let make_move c rack st =
   | Some (str,_) ->
     let extensions = get_extensions (reverse_str str) r_dict in
     let words = (valid_extensions rack extensions) |> concat_moves_rev str in
-    Some words, Right in
+    Some (words,str), Right in
   let up =
   match up_cell c with
   | None -> None, Up
@@ -140,7 +140,7 @@ let make_move c rack st =
   | Some (str,_) ->
     let extensions = get_extensions str f_dict in
     let words = (valid_extensions rack extensions) |> concat_moves str in
-    Some words, Up in
+    Some (words,str), Up in
   let down =
     match down_cell c with
   | None -> None, Down
@@ -150,7 +150,7 @@ let make_move c rack st =
   | Some (str,_) ->
     let extensions = get_extensions (reverse_str str) r_dict in
     let words = (valid_extensions rack extensions) |> concat_moves_rev str in
-    Some words, Down in
+    Some (words,str), Down in
   [left;right;up;down]
 
 let all_moves anchors st =
@@ -158,6 +158,16 @@ let all_moves anchors st =
     (fun acc x ->
        (x,(make_move (fst x) (snd x) st))::acc
     ) [] anchors
+
+let get_start_cell anchor word_pair dir =
+  match dir with
+  | Right | Down -> anchor.cell_coord
+  | Left ->
+    let subtract = String.length (snd word_pair) in
+    ((fst anchor.cell_coord) - subtract), snd anchor.cell_coord
+  | Up ->
+    let subtract = String.length (snd word_pair) in
+    fst anchor.cell_coord,((snd anchor.cell_coord) - subtract)
 
 let eval_move st mv =
   failwith "todo"
