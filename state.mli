@@ -102,6 +102,33 @@ val get_adjacent_word : coordinate -> state -> bool -> coordinate list -> (strin
 (* [point_moves m] is the number of points earned by the move [m] *)
 val point_moves : Command.move -> int
 
+(* [check_bounds mv st] is true if [mv.word] fits on the board *)
+val check_bounds : Command.move -> state -> bool
+
+(* [check_endpoints mv st] is true if the cell to left/top and cell to right/bottom
+ * (depending on if mv is horizontal or vertical) is either empty or nonexistant. *)
+val check_endpoints : Command.move -> state -> bool
+
+(* [check_fit_and_new_entries mv st] is the list of new chars and their respective
+ * coordinates on the board, assuming mv.word doesn't violate the current board state.
+ * raises: InvalidPlace when mv.word violates current board state. *)
+val check_fit_and_new_entries :
+  Command.move -> state -> (char * (int * int)) list
+
+(* [update_board mv st] is the updated board based off [mv] and [st]. *)
+val update_board : Command.move -> state -> cell list list
+
+(* [has_adj_new_chars c is_h st] returns true if the cell at coordinate [c] has
+ * a non-empty cell adjacent to it in the direction specified by [is_h]. If
+ * the cells adjacent to [c] are empty or [c] is empty, then false is returned.
+ *)
+val has_adj_new_chars : coordinate -> bool -> state -> bool
+
+(* [get_values_from_opt_list opt_lst acc] returns a list containing the
+ * extracted values from [opt_lst]. [None] doesn't add anything to the returned
+ * list. *)
+val get_values_from_opt_list : 'a option list -> 'a list -> 'a list
+
 (* [do' c st] is [st'] if doing command [c] in state [st] results
  * in a new state [st']. *)
 val do' : Command.command -> state -> state
