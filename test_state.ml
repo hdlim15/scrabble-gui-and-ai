@@ -112,9 +112,9 @@ let rec check_racks players =
   List.for_all (fun p -> List.length p.rack = 7) players
 
 (* checks all players have unique order nums *)
-  let rec check_order_nums players =
-    let order_nums = List.fold_left (fun acc p -> p.order_num :: acc) [] players in
-    List.length (List.sort Pervasives.compare order_nums) = List.length order_nums
+let rec check_order_nums players =
+  let order_nums = List.fold_left (fun acc p -> p.order_num :: acc) [] players in
+  List.length (List.sort Pervasives.compare order_nums) = List.length order_nums
 
 let verify_board c st is_h word =
   match (get_adjacent_word c st is_h []) with
