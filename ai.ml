@@ -203,7 +203,8 @@ let update_all_anchor_pairs anchor_pair_lst st =
 
 let get_points mv st =
   if not (check_bounds mv st) then raise (InvalidPlace "cannot place off board")
-  else if not (check_endpoints mv st) then raise (InvalidPlace "not complete word")
+  else if not (check_endpoints mv st)
+  then raise (InvalidPlace "not complete word")
   else
     (* new_chars is an assoc list of character*coord *)
     let new_chars = check_fit_and_new_entries mv st in
@@ -255,10 +256,6 @@ let generate_all_moves all_moves =
   List.fold_left
     (fun acc x -> (generate_moves_for_anchor x)::acc) [] all_moves
   |> List.flatten
-
-let calculate_move_points mv st =
-  try get_points mv st with
-    Failure _ -> failwith "invalid move"
 
 let get_all_move_points moves st =
   List.fold_left
