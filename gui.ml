@@ -81,12 +81,18 @@ let vb =
            b1_col=gray1; b2_col=gray3; b_col=gray2; r=Top} in
   Array.of_list (create_grid 15 224 0 b [])
 
-let main () =
-  Graphics.open_graph " 600x400";
-  Array.iter draw_box vb;
-  draw_string_in_box Center "X" vb.(5) Graphics.black;
-  draw_string_in_box Center "X" vb.(8) Graphics.black;
-  draw_string_in_box Center "O" vb.(12) Graphics.yellow;
-  draw_string_in_box Center "O" vb.(11) Graphics.yellow;
-  draw_string_in_box Center "ABB" vb.(20) Graphics.yellow;
-  ignore (Graphics.read_key ())
+let rec loop () = loop ()
+
+let rec main () =
+  try
+    Graphics.open_graph " 600x600";
+    Array.iter draw_box vb;
+    draw_string_in_box Center "X" vb.(5) Graphics.black;
+    draw_string_in_box Center "X" vb.(8) Graphics.black;
+    draw_string_in_box Center "O" vb.(12) Graphics.yellow;
+    draw_string_in_box Center "O" vb.(11) Graphics.yellow;
+    draw_string_in_box Center "ABB" vb.(20) Graphics.yellow;
+    loop ()
+  with
+  | Graphic_failure("fatal I/O error") ->
+    print_endline "Thanks for playing!"
