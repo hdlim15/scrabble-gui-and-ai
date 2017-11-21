@@ -1,4 +1,3 @@
-(* #require "graphics" *)
 open State
 
 type relief = Top | Bot | Flat
