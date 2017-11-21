@@ -691,7 +691,8 @@ let swap lst st =
 
 (* [pass st] returns [st] with the sp_consec field incremented by 1. *)
 let pass st =
-  {st with sp_consec = st.sp_consec + 1}
+  {st with current_player = get_next_player st.current_player.order_num st.players;
+           sp_consec = st.sp_consec + 1}
 
 (* [check_word s] ensures that [s] only contains characters in the alphabet *)
 let check_word_chars s =
