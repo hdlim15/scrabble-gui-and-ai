@@ -62,6 +62,11 @@ let tests = [
       assert_equal (PlaceWord {word=['a';'b']; mv_coord=(1,13);
                                is_horizontal=false}) (parse " place   ab  b13  vertical "));
 
+  (* Pass tests. *)
+  "pass_basic" >:: (fun _ -> assert_equal Pass (parse "pass"));
+
+  "pass_spaces" >:: (fun _ -> assert_equal Pass (parse " pass  "));
+
   (* Exception tests. *)
   "invalid_command" >:: (fun _ -> let e = fun () -> parse "do something" in
                           assert_raises InvalidCommand e);

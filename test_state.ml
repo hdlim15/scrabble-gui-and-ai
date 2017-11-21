@@ -173,6 +173,9 @@ let init_state_tests = [
       assert_equal true (check_order_nums (init_state init_game_data_4h).players));
   "init_order_num_1h3ai" >:: (fun _ ->
       assert_equal true (check_order_nums (init_state init_game_data_1h3ai).players));
+
+  (* sp_consec test *)
+  "init_sp_consec" >:: (fun _ -> assert_equal 0 (init_state init_game_data_4h).sp_consec);
 ]
 
 let add_word_tests = [
@@ -191,6 +194,7 @@ let add_word_tests = [
 ]
 
 let swap_tests = [
+  (* swap tests. *)
   "swap1_basic_rack" >:: (fun _ ->
       assert_equal [('z', 10);('p', 3);('s', 1);('o', 1);('p', 3);('p', 3);('u', 1)]
         (let st = (do' (Swap ['s']) basic_state_1bag) in (get_prev_player 2 st.players).rack));
@@ -211,6 +215,9 @@ let swap_tests = [
   "swap1_exn_not_in_rack" >:: (fun _ ->
       let e = fun () -> do' (Swap ['l']) basic_state_1bag in
       assert_raises InvalidSwap e);
+  "swap_sp_consec" >:: (fun _ ->
+      let st = (do' (Swap ['s'; 'u']) basic_state_2bag) in
+      assert_equal 1 st.sp_consec);
 ]
 
 let blank_player = {name = "foo";
@@ -546,4 +553,25 @@ let place_tests = [
    "place_not_on_center_tile" >:: (fun _ ->
        let e = fun () -> do' (PlaceWord {no_mv2_v_right with mv_coord=(8,8)}) blank1_state in
        assert_raises (InvalidPlace "must fill center tile") e);
+
+  (* sp_consec tests *)
+  "place_sp_consec" >:: (fun _ ->
+      let st = (do' (PlaceWord no_mv2_v) it_no_state) in
+      assert_equal 0 st.sp_consec);
+
+  "sp_consec_reset" >:: (fun _ ->
+      let st = (do' (Swap ['i']) it_no_state) in
+      let st' = (do' (PlaceWord no_mv2_v) st) in
+      assert_equal true (st'.sp_consec = 0 && st.sp_consec = 1));
+]
+
+let pass_tests = [
+  (* pass tests *)
+  "pass_next_player" >:: (fun _ ->
+      let st = (do' Pass basic_state_2bag) in
+      assert_equal 2 st.current_player.order_num);
+
+  "pass_sp_consec" >:: (fun _ ->
+      let st = (do' Pass basic_state_2bag) in
+      assert_equal 1 st.sp_consec);
 ]
