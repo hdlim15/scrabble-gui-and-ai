@@ -64,13 +64,16 @@ let no_empty_rack st =
   List.for_all (fun p -> List.length p.rack <> 0) st.players
 
 (* [get_command ()] is a command, generated from user input *)
-let rec get_command () =
-  print_string "> ";
-  let command = try (parse (read_line ())) with
-    | InvalidCommand ->
-      (print_endline "Invalid action, type 'help' for a list of valid actions";
-       get_command ())
-  in command
+let rec get_command st =
+  match st.current_player.player_type with
+  | Human ->
+    print_string "> ";
+    let command = try (parse (read_line ())) with
+      | InvalidCommand ->
+        (print_endline "Invalid action, type 'help' for a list of valid actions";
+         get_command st)
+    in command
+  | AI diff -> Ai.best_move st
 
 (* [clear ()] wipes the terminal window so players can't see other players' racks *)
 let rec clear () =
@@ -101,7 +104,7 @@ let end_turn st end_type =
 
 (* [play_game st] plays the game represented by [st]. *)
 let rec play_game st =
-  let command = get_command () in
+  let command = get_command st in
   let new_state =
     try
       match command with
