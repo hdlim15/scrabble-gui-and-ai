@@ -218,7 +218,8 @@ let blank_player = {name = "foo";
 let blank_player2 = {blank_player with rack = [('*',0); ('*',0); ('n',1)]}
 let camel_player = {blank_player with rack = [('e',1); ('c',3); ('a',1); ('m',3); ('l',1); ('s',1)]}
 let it_no_player = {blank_player with rack = [('i',1); ('t',1); ('n',1); ('o',1)]}
-
+let scrabble_player = {blank_player with rack =
+  [('s',1); ('c',3); ('r',1); ('a',1); ('b',3); ('b',3); ('l',1); ('e',1); ('i',1); ('f',4); ('i',1); ('t',1)]}
 
 let blank1_state = {board = init_board 15;
                     bag = [('f',4);('f',4);('f',4);('f',4);('f',4);('f',4);
@@ -229,6 +230,7 @@ let blank1_state = {board = init_board 15;
 let blank2_state = {blank1_state with players = [blank_player2];current_player = blank_player2}
 let basic_state = {blank1_state with players = [camel_player];current_player = camel_player}
 let it_no_state = {blank1_state with players = [it_no_player];current_player = it_no_player}
+let scrabble_state = {blank1_state with players = [scrabble_player];current_player = scrabble_player}
 
 let blank_mv1 = {word=['f';'u';'n'];mv_coord=(7,7);is_horizontal=true}
 let blank_mv2 = {word=['f';'i';'n'];mv_coord=(7,7);is_horizontal=false}
@@ -251,6 +253,17 @@ let no_mv2_v = {word=['n';'o'];mv_coord=(7,7);is_horizontal=false}
 let no_mv2_v_right = {word=['n';'o'];mv_coord=(7,8);is_horizontal=false}
 let it_mv2_v_left = {word=['i';'t'];mv_coord=(7,6);is_horizontal=false}
 
+let scrabble_setup_vert1 = {word=['i';'f'];mv_coord=(7,7);is_horizontal=false}
+let scrabble_setup_vert2 = {word=['f';'i';'s';'t'];mv_coord=(8,7);is_horizontal=true}
+let scrabble_vert_outofbounds =
+  {word=['s';'c';'r';'a';'b';'b';'l';'e'];mv_coord=(8,9);is_horizontal=false}
+let scrabble_setup_hor1 = {word=['i';'f'];mv_coord=(7,7);is_horizontal=true}
+let scrabble_setup_hor2 = {word=['f';'i';'s';'t'];mv_coord=(7,8);is_horizontal=false}
+let scrabble_hor_outofbounds =
+  {word=['s';'c';'r';'a';'b';'b';'l';'e'];mv_coord=(9,9);is_horizontal=true}
+
+let disconnected_mv = {word=['a';'b';'l';'e'];mv_coord=(1,1);is_horizontal=true}
+
 let camel_hor_st =
   let st = (do' (PlaceWord basic_mv1) basic_state) in
   {st with current_player = {camel_player with score=10}}
@@ -264,6 +277,13 @@ let it_hor_st =
 let it_vert_st =
   let st = (do' (PlaceWord it_mv2_v) it_no_state) in
   {st with current_player = {it_no_player with score=2}}
+
+let scrabble_vert_setup_st =
+  let st = (do' (PlaceWord scrabble_setup_vert1) scrabble_state) in
+  (do' (PlaceWord scrabble_setup_vert2) st)
+let scrabble_hor_setup_st =
+  let st = (do' (PlaceWord scrabble_setup_hor1) scrabble_state) in
+  (do' (PlaceWord scrabble_setup_hor2) st)
 
 let move1_h_invalid = {word = ['s'; 'u'];
                        mv_coord = (7, 7);
@@ -492,4 +512,33 @@ let place_tests = [
       let st' = (do' (PlaceWord it_mv2_v_left) st) in
       assert_equal true ((verify_board (7, 6) st' false "it")
                          && (verify_board (7, 7) st' false "no")));
+
+   (* place error check tests *)
+   "place_out_of_bounds_bottom" >:: (fun _ ->
+       let e = fun () -> do' (PlaceWord scrabble_vert_outofbounds) scrabble_vert_setup_st in
+       assert_raises (InvalidPlace "cannot place off board") e);
+
+   "place_out_of_bounds_right" >:: (fun _ ->
+       let e = fun () -> do' (PlaceWord scrabble_hor_outofbounds) scrabble_hor_setup_st in
+       assert_raises (InvalidPlace "cannot place off board") e);
+
+   "place_not_connected_to_preexisting_board" >:: (fun _ ->
+       let e = fun () -> do' (PlaceWord disconnected_mv) scrabble_hor_setup_st in
+       assert_raises (InvalidPlace "not connected to board") e);
+
+   "place_letters_not_in_rack" >:: (fun _ ->
+       let e = fun () -> do' (PlaceWord no_mv1_h_below) {it_hor_st with current_player = scrabble_player} in
+       assert_raises (InvalidPlace "letters not in rack") e);
+
+   "place_invalid_second_word_vert" >:: (fun _ ->
+       let e = fun () -> do' (PlaceWord {no_mv1_h_below with mv_coord=(8,8)}) it_hor_st in
+       assert_raises (InvalidPlace "invalid newly-formed word") e);
+
+   "place_invalid_second_word_hor" >:: (fun _ ->
+       let e = fun () -> do' (PlaceWord {no_mv2_v_right with mv_coord=(8,8)}) it_vert_st in
+       assert_raises (InvalidPlace "invalid newly-formed word") e);
+
+   "place_not_on_center_tile" >:: (fun _ ->
+       let e = fun () -> do' (PlaceWord {no_mv2_v_right with mv_coord=(8,8)}) blank1_state in
+       assert_raises (InvalidPlace "must fill center tile") e);
 ]
