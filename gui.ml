@@ -89,7 +89,6 @@ let coord_to_array_index coord =
   | (x, y) -> 15 * (board_to_graph_row x) + y
 
 let update_board b =
-  Array.iter draw_box vb;
   let rec update_board_helper b' =
     match b' with
     | [] -> ()
@@ -97,7 +96,9 @@ let update_board b =
       draw_string_in_box Center (Char.escaped (fst cell.letter))
         vb.(coord_to_array_index (cell.cell_coord)) Graphics.black;
       update_board_helper t
-  in update_board_helper b
+  in
+  Array.iter draw_box vb;
+  update_board_helper b
 
 let init_gui () =
   try

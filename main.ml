@@ -101,7 +101,6 @@ let end_turn st end_type =
 
 (* [play_game st] plays the game represented by [st]. *)
 let rec play_game st =
-  init_gui ();
   let command = get_command () in
   let new_state =
     try
@@ -122,6 +121,7 @@ let rec play_game st =
     | InvalidSwap -> print_endline ("Invalid Swap\n"); st
     | InvalidAdd -> print_endline ("Invalid Add\n"); st
   in
+  update_board (List.flatten new_state.board);
   if no_empty_rack new_state then
     play_game new_state
   else
@@ -209,6 +209,7 @@ let init_game rdy =
                          ai_difficulty = ai_difficulty_lst}) in
     clear ();
     print_endline (s.current_player.name ^ "'s turn.");
+    init_gui ();
     play_game s
 
 (* [main ()] starts the REPL *)
