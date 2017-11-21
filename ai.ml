@@ -10,28 +10,52 @@ let r_dict = Trie.initialize_dict "reverse_dict.txt"
 
 let vowels = ['a';'e';'i';'o';'u']
 
+(* [get_all_cells st] returns a list of all cells currently on the board in
+ * state [st]
+ *)
 let get_all_cells st =
   List.flatten st.board
 
+(* [get_empty_cells lst] returns a list of all empty cells in [lst]. *)
 let get_empty_cells lst =
   List.filter (fun c -> (cell_is_empty c)) lst
 
+(* [up_cell c] returns [Some c'] if [c'] is the cell coordinate
+ * directly above [c], and [None] if the cell coordinate directly above [c]
+ * is out of bounds.
+ *)
 let up_cell c =
   if fst (c.cell_coord ) = 0 then None
   else Some((fst (c.cell_coord ) - 1), snd (c.cell_coord ))
 
+(* [down_cell c] returns [Some c'] if [c'] is the cell coordinate
+ * directly below [c], and [None] if the cell coordinate directly below [c]
+ * is out of bounds.
+ *)
 let down_cell c =
   if fst (c.cell_coord ) = 14 then None
   else Some((fst (c.cell_coord ) + 1), snd (c.cell_coord ))
 
+(* [left_cell c] returns [Some c'] if [c'] is the cell coordinate
+ * directly to the left of [c], and [None] if the cell coordinate
+ * directly to the left of [c] is out of bounds.
+ *)
 let left_cell c =
   if snd (c.cell_coord ) = 0 then None
   else Some((fst (c.cell_coord )), (snd (c.cell_coord )) - 1)
 
+(* [right_cell c] returns [Some c'] if [c'] is the cell coordinate
+ * directly to the right of [c], and [None] if the cell coordinate
+ * directly to the right of [c] is out of bounds.
+ *)
 let right_cell c =
   if snd (c.cell_coord ) = 14 then None
   else Some((fst (c.cell_coord )), (snd (c.cell_coord )) + 1)
 
+(* [adjacent_coordinates c] returns [up;down;left;right], where
+ * [up] is [up_cell c], [down] is [down_cell c],
+ * [left] is [left_cell c] and [right] is [right_cell c]
+ *)
 let adjacent_coordinates c =
   let up = up_cell c in
   let down = down_cell c in
@@ -39,6 +63,9 @@ let adjacent_coordinates c =
   let right = right_cell c in
   [up;down;left;right]
 
+(* [has_adjacent_word_tile c st] returns [true] if [c] has a non_empty
+ * adjacent tile in state [st], and [false] otherwise.
+ *)
 let has_adjacent_word_tile c st =
   List.fold_left
     (fun acc x ->
@@ -48,6 +75,10 @@ let has_adjacent_word_tile c st =
          acc || (not(get_cell_from_coordinate t st |> cell_is_empty)))
     false (adjacent_coordinates c)
 
+(* [get_anchors empty_cells st] returns a list of all anchors currently on the
+ * board in state [st], where an anchor is an empty tile with
+ * having at least one non-empty adjacent tile.
+ *)
 let get_anchors empty_cells st =
   List.filter (fun c -> has_adjacent_word_tile c st ) empty_cells
 
@@ -83,21 +114,30 @@ let generate_anchor_chars anchors rack cells st =
        (x, anchor_chars x rack cells st )::acc
     ) [] anchors
 
+(* [check_extension anchor_rack ext] returns [true] if [ext] can be formed
+ *by some permutation of the characters in [anchor_rack], and [false] otherwise.
+ *)
 let check_extension anchor_rack ext =
+  let check =
   List.fold_left
     (fun (check, rack') x ->
        let check_bool = check && List.mem x rack' in
        if check_bool then check_bool, remove x rack'
        else false, rack'
-       (*  check && List.mem x rack', remove x rack'  *)
-    ) (true, anchor_rack) (explode ext)
+    ) (true, anchor_rack) (explode ext) in
+  fst check
 
-let valid_extensions anchor_rack extensions =
-  List.fold_left
+(* [valid_extensions anchor_rack extension_lst] returns a list of all
+ * extensions in [extension_lst] that can be formed by some permutation of the
+ * characters in [anchor_rack].
+ *)
+let valid_extensions anchor_rack extension_lst =
+  List.filter (fun x -> check_extension anchor_rack x) extension_lst
+  (* List.fold_left
     (fun acc x ->
        let check = check_extension anchor_rack x in
        if fst check then x::acc else acc
-    ) [] extensions
+    ) [] extensions *)
 
 let reverse_str s =
   List.fold_right (fun x acc -> acc ^ Char.escaped x ) (explode s) ""
@@ -296,13 +336,10 @@ let print_points lst =
   List.fold_right
     (fun x acc -> acc ^ (string_of_int (snd x )) ^ " " ) lst ""
 
-
 let pick_best_move rack moves =
   match moves with
   | [] -> do_swap rack
-  | _ ->
-    print_endline (List.sort score_cmp moves |> List.rev |> print_points) ;
-    PlaceWord (fst (List.sort score_cmp moves |> List.rev |> List.hd))
+  | _ -> PlaceWord (fst (List.sort score_cmp moves |> List.rev |> List.hd))
 
 let eval_move st mv =
   failwith "todo"
