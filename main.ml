@@ -114,7 +114,13 @@ let rec play_game st =
         let st' = do' command st in end_turn st' `Swap; st'
       | Score -> print_endline (get_scores st.players); st
       | Rack -> print_endline (str_of_rack st.current_player.rack); st
-      | Hint -> failwith "todo main.ml Hint (requires AI code)"
+      | Hint ->
+        let hint =
+          match (Ai.best_move st) with
+          | PlaceWord mv ->
+            List.fold_right (fun x acc -> (Char.escaped x) ^ acc) mv.word ""
+          | _ -> "you should swap" in
+        print_endline hint; st
       | AddWord str -> print_endline ("Added word to dictionary"); do' command st
       | Help -> print_endline ((str_of_help ())^"\n"); st
       | Quit -> print_endline "Thanks for playing!\n"; exit 0;

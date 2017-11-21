@@ -10,6 +10,12 @@ let r_dict = Trie.initialize_dict "reverse_dict.txt"
 
 let vowels = ['a';'e';'i';'o';'u']
 
+let extends_forward str =
+  List.length (get_extensions str f_dict) <> 0
+
+let extends_reverse str =
+  List.length (get_extensions str r_dict) <> 0
+
 (* [get_all_cells st] returns a list of all cells currently on the board in
  * state [st]
  *)
@@ -61,7 +67,7 @@ let adjacent_coordinates c =
   let down = down_cell c in
   let left = left_cell c in
   let right = right_cell c in
-  [up;down;left;right]
+  [left;right;up;down]
 
 (* [has_adjacent_word_tile c st] returns [true] if [c] has a non_empty
  * adjacent tile in state [st], and [false] otherwise.
@@ -82,8 +88,74 @@ let has_adjacent_word_tile c st =
 let get_anchors empty_cells st =
   List.filter (fun c -> has_adjacent_word_tile c st ) empty_cells
 
-let cross_check c chr cells st =
-  let bool1 =
+let get_all_adj_words c st =
+  let left =
+    match left_cell c with
+    | None -> ""
+    | Some c' ->
+      match get_adjacent_word c' st true [] with
+      | None -> ""
+      | Some (word,_) -> word in
+  let right =
+    match right_cell c with
+    | None -> ""
+    | Some c' ->
+      match get_adjacent_word c' st true [] with
+      | None -> ""
+      | Some (word,_) -> word in
+  let up =
+    match up_cell c with
+    | None -> ""
+    | Some c' ->
+      match get_adjacent_word c' st false [] with
+      | None -> ""
+      | Some (word,_) -> word in
+  let down =
+    match up_cell c with
+    | None -> ""
+    | Some c' ->
+      match get_adjacent_word c' st false [] with
+      | None -> ""
+      | Some (word,_) -> word in
+  [left;right;up;down]
+
+(* let cross_check c chr st =
+  let left =
+    match left_cell c with
+    | None -> true
+    | Some c' ->
+      match get_adjacent_word c' st true [] with
+      | None -> true
+      | Some (word,_) ->
+        let new_str = word ^ (Char.escaped chr) in
+        (is_word f_dict new_str) || (extends_forward word)  in
+  let right =
+    match right_cell c with
+    | None -> true
+    | Some c' ->
+      match get_adjacent_word c' st true [] with
+      | None -> true
+      | Some (word,_) ->
+        let new_str = word ^ (Char.escaped chr) in
+        (is_word f_dict new_str) || (extends_forward word)  in
+  let up =
+    match up_cell c with
+    | None -> ""
+    | Some c' ->
+      match get_adjacent_word c' st false [] with
+      | None -> ""
+      | Some (word,_) -> word in
+  let down =
+    match up_cell c with
+    | None -> ""
+    | Some c' ->
+      match get_adjacent_word c' st false [] with
+      | None -> ""
+      | Some (word,_) -> word in
+  [left;right;up;down] *)
+
+
+  (* let bool1 =
     match up_cell c with
     | None -> true
     | Some c' ->
@@ -99,7 +171,7 @@ let cross_check c chr cells st =
       | None -> true
       | Some (str,_) ->
         is_word f_dict ((Char.escaped chr) ^ str) in
-  bool1 || bool2
+  bool1 || bool2 *)
 
 let anchor_chars anchor rack cells st =
   List.fold_left
@@ -139,8 +211,10 @@ let valid_extensions anchor_rack extension_lst =
        if fst check then x::acc else acc
     ) [] extensions *)
 
+(* [reverse_str s ] reverses [s]. *)
 let reverse_str s =
   List.fold_right (fun x acc -> acc ^ Char.escaped x ) (explode s) ""
+
 
 let concat_moves str exts =
   List.fold_left
@@ -340,9 +414,6 @@ let pick_best_move rack moves =
   match moves with
   | [] -> do_swap rack
   | _ -> PlaceWord (fst (List.sort score_cmp moves |> List.rev |> List.hd))
-
-let eval_move st mv =
-  failwith "todo"
 
 let get_letters_rack rack =
   List.map(fun (letter,_) -> letter) rack
