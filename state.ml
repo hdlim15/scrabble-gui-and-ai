@@ -686,8 +686,8 @@ let swap lst st =
   else
     raise InvalidSwap
 
-(* [check_word s] ensures that [s] only contains characters in the alphabet *)
-let check_word s =
+(* [check_word_chars s] ensures that [s] only contains characters in the alphabet *)
+let check_word_chars s =
   let splt = Str.split (Str.regexp "[^a-zA-Z]") s in
   if List.length splt = 1 then s
   else raise InvalidAdd
@@ -695,7 +695,7 @@ let check_word s =
 (* [add_word word st] adds [word] to the [added_words] field of [st] and returns
  * the updated state. *)
 let add_word word st =
-  let word' = check_word word in
+  let word' = check_word_chars word in
   let added_words' = word'::st.added_words in
   {st with added_words = added_words'}
 
