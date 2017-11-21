@@ -134,9 +134,10 @@ let rec gen_human_players num names =
 let rec gen_ai_players num_players num_ai difficulty =
   match num_ai, difficulty with
   | _, [] -> []
-  | i, diff::t -> {name = "AI_"^(string_of_int i); score = 0; rack = [];
-                   player_type = AI diff; order_num = (num_players-i+1)}
-                  :: gen_ai_players num_players (num_ai - 1) t
+  | i, diff::t ->
+    {name = "AI_"^(string_of_int (num_players - i + 1)); score = 0; rack = [];
+     player_type = AI diff; order_num = (num_players-i+1)}
+    :: gen_ai_players num_players (num_ai - 1) t
 
 (* [init_players init_data] is the initial players list (both human and AI) *)
 let init_players init_data =
