@@ -443,7 +443,7 @@ let get_points mv st =
       let word_score_lst = get_values_from_opt_list word_score_lst_opt [] in
       let valid_words =
         List.fold_left (fun acc (s, i) ->
-            (fst acc, snd acc + i)) (true, 0) word_score_lst in
+            (fst acc  && check_word s st, snd acc + i)) (true, 0) word_score_lst in
       if fst valid_words then snd valid_words
       else
         raise (InvalidPlace "invalid newly-formed word")
@@ -503,7 +503,15 @@ let print_points lst =
 let pick_best_move rack moves =
   match moves with
   | [] -> do_swap rack
-  | _ -> PlaceWord (fst (List.sort score_cmp moves |> List.rev |> List.hd))
+  | _ ->
+    let p = fst (List.sort score_cmp moves |> List.rev |> List.hd) in
+    let pr = p.word in
+    print_endline
+      ( string_of_int(fst p.mv_coord) ^ "," ^ string_of_int(snd p.mv_coord) ^ " " ^
+        string_of_bool(p.is_horizontal) ^ " " ^
+          List.fold_right
+         (fun x acc -> (Char.escaped x) ^ acc) pr "");
+    PlaceWord (fst (List.sort score_cmp moves |> List.rev |> List.hd))
 
 let get_letters_rack rack =
   List.map(fun (letter,_) -> letter) rack
