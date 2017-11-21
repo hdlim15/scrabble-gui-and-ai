@@ -6,18 +6,12 @@ type direction = Left | Right | Up | Down
 
 let f_dict = Trie.initialize_dict "forward_dict.txt"
 
-let r_dict = initialize_dict "reverse_dict.txt"
+let r_dict = Trie.initialize_dict "reverse_dict.txt"
 
 let vowels = ['a';'e';'i';'o';'u']
 
 let get_all_cells st =
-  get_row (0,0) st @ get_row (1,0) st @ get_row (2,0) st @ get_row (3,0) st @
-  get_row (4,0) st @ get_row (5,0) st @ get_row (6,0) st @ get_row (7,0) st @
-  get_row (8,0) st @ get_row (9,0) st @ get_row (10,0) st @ get_row (11,0) st @
-  get_row (12,0) st @ get_row (13,0) st @ get_row (14,0) st
-
-let get_filled_cells lst =
-  List.filter (fun c -> not(cell_is_empty c)) lst
+  List.flatten st.board
 
 let get_empty_cells lst =
   List.filter (fun c -> (cell_is_empty c)) lst
@@ -51,7 +45,7 @@ let has_adjacent_word_tile c st =
        match x with
        | None -> acc
        | Some t ->
-       acc || (get_cell_from_coordinate t st |> cell_is_empty))
+         acc || (not(get_cell_from_coordinate t st |> cell_is_empty)))
     false (adjacent_coordinates c)
 
 let get_anchors empty_cells st =
@@ -63,15 +57,15 @@ let cross_check c chr cells st =
     | None -> true
     | Some c' ->
       match get_adjacent_word c' st false [] with
-      | None -> failwith "impossible"
+      | None -> true
       | Some (str,_) ->
-        is_word f_dict ((Char.escaped chr) ^ str) in
+        is_word f_dict (str ^ (Char.escaped chr)) in
   let bool2 =
     match down_cell c with
     | None -> true
     | Some c' ->
       match get_adjacent_word c' st false [] with
-      | None -> failwith "impossible"
+      | None -> true
       | Some (str,_) ->
         is_word f_dict ((Char.escaped chr) ^ str) in
   bool1 || bool2
@@ -79,7 +73,8 @@ let cross_check c chr cells st =
 let anchor_chars anchor rack cells st =
   List.fold_left
     (fun acc x ->
-       if cross_check anchor x cells st then x::acc else acc
+       x::acc
+       (* if cross_check anchor x cells st then x::acc else acc *)
     ) [] rack
 
 let generate_anchor_chars anchors rack cells st =
@@ -95,7 +90,7 @@ let check_extension anchor_rack ext =
        if check_bool then check_bool, remove x rack'
        else false, rack'
        (*  check && List.mem x rack', remove x rack'  *)
-    ) (true,anchor_rack) (explode ext)
+    ) (true, anchor_rack) (explode ext)
 
 let valid_extensions anchor_rack extensions =
   List.fold_left
@@ -103,13 +98,6 @@ let valid_extensions anchor_rack extensions =
        let check = check_extension anchor_rack x in
        if fst check then x::acc else acc
     ) [] extensions
-
-    (*
-let get_all_valid_extensions anchor_pairs =
-  List.fold_left
-    (fun acc x ->
-       (valid_extensions (fst x) (snd x))::acc
-    ) [] anchor_pairs   *)
 
 let reverse_str s =
   List.fold_right (fun x acc -> acc ^ Char.escaped x ) (explode s) ""
@@ -128,7 +116,7 @@ let make_move c rack st =
   | None -> None
   | Some c' ->
       match get_adjacent_word c' st true [] with
-    | None -> failwith "impossible"
+    | None -> None
     | Some (str,_) ->
       let extensions = get_extensions str f_dict in
       let words = (valid_extensions rack extensions) |> concat_moves str in
@@ -138,7 +126,7 @@ let make_move c rack st =
   | None -> None
   | Some c' ->
       match get_adjacent_word c' st true [] with
-    | None -> failwith "impossible"
+    | None -> None
     | Some (str,_) ->
       let extensions = get_extensions (reverse_str str) r_dict in
       let words = (valid_extensions rack extensions) |> concat_moves_rev str in
@@ -148,7 +136,7 @@ let make_move c rack st =
   | None -> None
   | Some c' ->
       match get_adjacent_word c' st false [] with
-    | None -> failwith "impossible"
+    | None -> None
     | Some (str,_) ->
       let extensions = get_extensions str f_dict in
       let words = (valid_extensions rack extensions) |> concat_moves str in
@@ -158,7 +146,7 @@ let make_move c rack st =
   | None -> None
   | Some c' ->
       match get_adjacent_word c' st false [] with
-    | None -> failwith "impossible"
+    | None -> None
     | Some (str,_) ->
       let extensions = get_extensions (reverse_str str) r_dict in
       let words = (valid_extensions rack extensions) |> concat_moves_rev str in
@@ -176,10 +164,10 @@ let get_start_cell anchor word dir =
   | Right | Down -> anchor.cell_coord
   | Left ->
     let subtract = String.length (word) in
-    ((fst anchor.cell_coord) - subtract), snd anchor.cell_coord
+    ((fst (anchor.cell_coord )), (snd (anchor.cell_coord )) - subtract)
   | Up ->
     let subtract = String.length (word) in
-    fst anchor.cell_coord,((snd anchor.cell_coord) - subtract)
+    ((fst (anchor.cell_coord ) - subtract), snd (anchor.cell_coord ))
 
 let get_all_start_cells anchor word_lst st =
   let left =
@@ -284,7 +272,7 @@ let get_all_move_points moves st =
     (fun acc x ->
        try
          ( x, get_points x st)::acc with
-        Failure _ -> acc
+         _ -> acc
     ) [] moves
 
 let score_cmp mv1 mv2 =
@@ -301,10 +289,19 @@ let evaluate_rack rack =
        else (fst acc, snd acc + 1)
     ) (0,0) rack
 
-let pick_best_move moves =
+let do_swap rack =
+  Swap [List.hd rack]
+
+let print_points lst =
+  List.fold_right
+    (fun x acc -> acc ^ (string_of_int (snd x )) ^ " " ) lst ""
+
+
+let pick_best_move rack moves =
   match moves with
-  | [] -> failwith "swap"
+  | [] -> do_swap rack
   | _ ->
+    print_endline (List.sort score_cmp moves |> List.rev |> print_points) ;
     PlaceWord (fst (List.sort score_cmp moves |> List.rev |> List.hd))
 
 let eval_move st mv =
@@ -322,4 +319,4 @@ let best_move st =
   let anchor_moves = all_moves anchor_pairs st in
   let updated_anchors = update_all_anchor_pairs anchor_moves st in
   let moves = generate_all_moves updated_anchors in
-  get_all_move_points moves st |> pick_best_move
+  get_all_move_points moves st |> pick_best_move letters_rack
