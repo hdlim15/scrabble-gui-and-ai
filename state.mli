@@ -43,6 +43,7 @@ type state = {
   players : player list;
   added_words : string list;
   current_player : player;
+  sp_consec : int;  (* number of consecutive swap or pass turns. *)
 }
 
 type init_game_data = {
@@ -100,7 +101,7 @@ val remove : 'a -> 'a list -> 'a list
 val get_adjacent_word : coordinate -> state -> bool -> coordinate list -> (string*int) option
 
 (* [point_moves m] is the number of points earned by the move [m] *)
-val point_moves : Command.move -> int
+(* val point_moves : Command.move -> int *)
 
 (* [check_bounds mv st] is true if [mv.word] fits on the board *)
 val check_bounds : Command.move -> state -> bool
@@ -123,10 +124,8 @@ val update_board : Command.move -> state -> cell list list
 (* [has_adj_new_chars c is_h st] returns true if the cell at coordinate [c] has
  * a non-empty cell adjacent to it in the direction specified by [is_h]. If
  * the cells adjacent to [c] are empty or [c] is empty, then false is returned.
- *)
+*)
 val has_adj_new_chars : coordinate -> bool -> state -> bool
-
-
 
 (* [get_values_from_opt_list opt_lst acc] returns a list containing the
  * extracted values from [opt_lst]. [None] doesn't add anything to the returned

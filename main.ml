@@ -39,7 +39,7 @@ let rec string_of_board b =
             let letter = Char.chr (fst cell.cell_coord + 65) in
             Char.escaped letter ^ " | " ^ Char.escaped (fst cell.letter) ^ helper t
           else
-          " | " ^ Char.escaped (fst cell.letter) ^ helper t
+            " | " ^ Char.escaped (fst cell.letter) ^ helper t
       in helper row ^ "\n" ^ board_helper t
   in
   let board' = board_helper b in
@@ -102,6 +102,11 @@ let end_turn st end_type =
     clear ();
     print_endline (st.current_player.name ^ "'s turn.");
     print_endline (str_of_rack st.current_player.rack)
+  | `Pass ->
+    print_endline "Press 'ENTER' to end your turn.";
+    let _ = read_line () in
+    clear ();
+    print_endline (st.current_player.name ^ "'s turn.")
 
 (* [play_game st] plays the game represented by [st]. *)
 let rec play_game st =
@@ -127,18 +132,20 @@ let rec play_game st =
       | Help -> print_endline ((str_of_help ())^"\n"); st
       | Quit -> print_endline "Thanks for playing!\n"; exit 0;
       | Board -> print_endline (string_of_board st.board); st
+      | Pass ->
+        let st' = do' command st in end_turn st' `Pass; st'
     with
     | InvalidPlace s -> print_endline ("Invalid Place: " ^ s ^ "\n"); st
     | InvalidSwap -> print_endline ("Invalid Swap\n"); st
     | InvalidAdd -> print_endline ("Invalid Add\n"); st
   in
   update_board (List.flatten new_state.board);
-  if no_empty_rack new_state then
+  if no_empty_rack new_state && new_state.sp_consec <= 12 then
     play_game new_state
   else
     (let winner = (get_winner new_state).name in
-    print_endline ("Congratuations, " ^ winner ^ ", you win!\n");
-    exit 0;)
+     print_endline ("Congratuations, " ^ winner ^ ", you win!\n");
+     exit 0;)
 
 (******************************************************************************)
 (* GAME INITIALIZATION CODE *)
@@ -156,9 +163,9 @@ let rec init_player_names num_players =
         (print_endline "Invalid number of names."; init_player_names num_players)
       else
       if List.length (List.sort_uniq Pervasives.compare player_name_lst) <> List.length player_name_lst then
-          (print_endline "Player names must be unique."; init_player_names num_players)
-        else
-          player_name_lst
+        (print_endline "Player names must be unique."; init_player_names num_players)
+      else
+        player_name_lst
     end
   else
     []

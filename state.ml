@@ -41,6 +41,7 @@ type state = {
   players : player list;
   added_words : string list;
   current_player : player;
+  sp_consec : int;
 }
 
 (* [get_points c] returns the number of points associated with letter [c]. *)
@@ -196,16 +197,14 @@ let init_state init_data =
   let bag = init_bag () in
   let players = init_players init_data in
   let current_player = List.hd players in
-  let st = {board=board;
-            bag=bag;
-            players=players;
-            added_words=[];
-            current_player=current_player} in
+  let st = {board = board;
+            bag = bag;
+            players = players;
+            added_words = [];
+            current_player = current_player;
+            sp_consec = 0} in
   let st' = init_racks players st in
   {st' with current_player = List.hd st'.players}
-
-let point_moves m =
-  failwith "todo"
 
 exception InvalidPlace of string
 
@@ -618,7 +617,8 @@ let rec place mv st =
         {st with players = updated_players';
                  board = board';
                  current_player = next_player;
-                 bag = (snd rack_bag)}
+                 bag = (snd rack_bag);
+                 sp_consec = 0}
   else (* not first move of game *)
     (* new_chars is an assoc list of character*coord *)
     let new_chars = check_fit_and_new_entries mv st in
@@ -660,7 +660,8 @@ let rec place mv st =
           (* update score, change turn, update player rack and bag etc *)
           {st_board with players = updated_players';
                          current_player = next_player;
-                         bag = (snd rack_bag)}
+                         bag = (snd rack_bag);
+                         sp_consec = 0}
         else
           raise (InvalidPlace "invalid newly-formed word")
 
@@ -682,11 +683,17 @@ let swap lst st =
       | [] -> b
       | h::t -> add_to_bag t ((h, get_points h) :: b)
     in let updated_bag = add_to_bag lst st'.bag in
-    {st' with bag = updated_bag; current_player = updated_current_player}
+    {st' with bag = updated_bag;
+              current_player = updated_current_player;
+              sp_consec = st.sp_consec + 1}
   else
     raise InvalidSwap
 
-(* [check_word_chars s] ensures that [s] only contains characters in the alphabet *)
+(* [pass st] returns [st] with the sp_consec field incremented by 1. *)
+let pass st =
+  {st with sp_consec = st.sp_consec + 1}
+
+(* [check_word s] ensures that [s] only contains characters in the alphabet *)
 let check_word_chars s =
   let splt = Str.split (Str.regexp "[^a-zA-Z]") s in
   if List.length splt = 1 then s
@@ -704,4 +711,5 @@ let do' cmd st =
   | Swap lst -> swap lst st
   | AddWord s -> add_word s st
   | PlaceWord mv -> place mv st
+  | Pass -> pass st
   | _ -> st

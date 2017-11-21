@@ -68,19 +68,22 @@ let basic_state_1bag = {board = init_board 15;
                         bag = [('z', 10)];
                         players = [player1; player2];
                         added_words = [];
-                        current_player = player1}
+                        current_player = player1;
+                        sp_consec = 0}
 
 let basic_state_2bag = {board = init_board 15;
                         bag = [('z', 10); ('k', 5)];
                         players = [player1; player2];
                         added_words = [];
-                        current_player = player1}
+                        current_player = player1;
+                        sp_consec = 0}
 
 let wildcard_player_state = {board = init_board 15;
                              bag = [('z', 10); ('k', 5);('a', 1)];
                              players = [player_wildcard; player2];
                              added_words = [];
-                             current_player = player_wildcard}
+                             current_player = player_wildcard;
+                             sp_consec = 0}
 
 let move1_h = {word = ['s';'o'];
                mv_coord = (7,7);
@@ -226,7 +229,8 @@ let blank1_state = {board = init_board 15;
                            ('f',4);('f',4);('f',4);('f',4);('f',4);('f',4);('f',4);('f',4);];
                     players = [blank_player];
                     added_words = [];
-                    current_player = blank_player}
+                    current_player = blank_player;
+                    sp_consec = 0}
 let blank2_state = {blank1_state with players = [blank_player2];current_player = blank_player2}
 let basic_state = {blank1_state with players = [camel_player];current_player = camel_player}
 let it_no_state = {blank1_state with players = [it_no_player];current_player = it_no_player}
@@ -307,7 +311,8 @@ let prefix_state = {board = init_board 15;
                     bag = [('n', 1); ('d', 2); ('h', 4); ('v', 4)];
                     players = [prefix_player];
                     added_words = [];
-                    current_player = prefix_player}
+                    current_player = prefix_player;
+                    sp_consec = 0}
 
 let move1_h_hat = {word = ['h'; 'a'; 't'];
                    mv_coord = (7, 7);

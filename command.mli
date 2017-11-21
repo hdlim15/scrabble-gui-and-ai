@@ -23,6 +23,7 @@ type command =
   | Help (* tells the user what commands they can use to play the game *)
   | Quit (* quit the game *)
   | Board (* print current state of board *)
+  | Pass (* make no move and end turn *)
 
 (* [parse str] is the command that represents player input [str]. *)
 val parse : string -> command
