@@ -65,7 +65,7 @@ let cross_check c chr cells st =
       match get_adjacent_word c' st false [] with
       | None -> failwith "impossible"
       | Some (str,_) ->
-        is_word f_dict (chr ^ str) in
+        is_word f_dict ((Char.escaped chr) ^ str) in
   let bool2 =
     match down_cell c with
     | None -> true
@@ -73,7 +73,7 @@ let cross_check c chr cells st =
       match get_adjacent_word c' st false [] with
       | None -> failwith "impossible"
       | Some (str,_) ->
-        is_word f_dict (chr ^ str) in
+        is_word f_dict ((Char.escaped chr) ^ str) in
   bool1 || bool2
 
 let anchor_chars anchor rack cells st =
@@ -91,7 +91,10 @@ let generate_anchor_chars anchors rack cells st =
 let check_extension anchor_rack ext =
   List.fold_left
     (fun (check, rack') x ->
-       check && List.mem x rack', remove x rack'
+       let check_bool = check && List.mem x rack' in
+       if check_bool then check_bool, remove x rack'
+       else false, rack'
+       (*  check && List.mem x rack', remove x rack'  *)
     ) (true,anchor_rack) (explode ext)
 
 let valid_extensions anchor_rack extensions =
@@ -100,6 +103,13 @@ let valid_extensions anchor_rack extensions =
        let check = check_extension anchor_rack x in
        if fst check then x::acc else acc
     ) [] extensions
+
+    (*
+let get_all_valid_extensions anchor_pairs =
+  List.fold_left
+    (fun acc x ->
+       (valid_extensions (fst x) (snd x))::acc
+    ) [] anchor_pairs   *)
 
 let reverse_str s =
   List.fold_right (fun x acc -> acc ^ Char.escaped x ) (explode s) ""
@@ -158,7 +168,7 @@ let make_move c rack st =
 let all_moves anchors st =
   List.fold_left
     (fun acc x ->
-       (x,(make_move (fst x) (snd x) st))::acc
+       (fst x,(make_move (fst x) (snd x) st))::acc
     ) [] anchors
 
 let get_start_cell anchor word dir =
@@ -173,29 +183,41 @@ let get_start_cell anchor word dir =
 
 let get_all_start_cells anchor word_lst st =
   let left =
-    List.fold_left
-      (fun acc x ->
-         let updated_cell = (get_start_cell anchor (snd x) Left) in
-         (updated_cell, fst x)::acc
-      ) [] (List.nth word_lst 0) in
+    match List.nth word_lst 0 with
+    | None -> []
+    | Some pair ->
+      (List.fold_left
+        (fun acc x ->
+           let updated_cell = (get_start_cell anchor (snd pair) Left) in
+           (updated_cell, x)::acc
+        ) [] (fst pair)) in
   let right =
-    List.fold_left
-      (fun acc x ->
-         let updated_cell = (get_start_cell anchor (snd x) Right) in
-         (updated_cell, fst x)::acc
-      ) [] (List.nth word_lst 1) in
+    match List.nth word_lst 1 with
+    | None -> []
+    | Some pair ->
+      (List.fold_left
+          (fun acc x ->
+             let updated_cell = (get_start_cell anchor (snd pair) Right) in
+             (updated_cell, x)::acc
+          ) [] (fst pair)) in
   let up =
-    List.fold_left
-      (fun acc x ->
-         let updated_cell = (get_start_cell anchor (snd x) Up) in
-         (updated_cell, fst x)::acc
-      ) [] (List.nth word_lst 2) in
+    match List.nth word_lst 2 with
+    | None -> []
+    | Some pair ->
+      (List.fold_left
+        (fun acc x ->
+           let updated_cell = (get_start_cell anchor (snd pair) Up) in
+           (updated_cell, x)::acc
+        ) [] (fst pair)) in
   let down =
-    List.fold_left
-      (fun acc x ->
-         let updated_cell = (get_start_cell anchor (snd x) Down) in
-         (updated_cell, fst x)::acc
-      ) [] (List.nth word_lst 3) in
+    match List.nth word_lst 3 with
+    | None -> []
+    | Some pair ->
+      (List.fold_left
+        (fun acc x ->
+           let updated_cell = (get_start_cell anchor (snd pair) Down) in
+           (updated_cell, x)::acc
+        ) [] (fst pair)) in
   [left@right;up@down]
 
 let update_all_anchor_pairs anchor_pair_lst st =
@@ -282,10 +304,22 @@ let evaluate_rack rack =
 let pick_best_move moves =
   match moves with
   | [] -> failwith "swap"
-  | _ -> List.sort score_cmp moves |> List.hd
+  | _ ->
+    PlaceWord (fst (List.sort score_cmp moves |> List.rev |> List.hd))
 
 let eval_move st mv =
   failwith "todo"
 
+let get_letters_rack rack =
+  List.map(fun (letter,_) -> letter) rack
+
 let best_move st =
-  failwith "todo"
+  let letters_rack = st.current_player.rack |> get_letters_rack in
+  let all_cells = get_all_cells st in
+  let empty_cells = get_empty_cells all_cells in
+  let anchors = get_anchors empty_cells st in
+  let anchor_pairs = generate_anchor_chars anchors letters_rack all_cells st in
+  let anchor_moves = all_moves anchor_pairs st in
+  let updated_anchors = update_all_anchor_pairs anchor_moves st in
+  let moves = generate_all_moves updated_anchors in
+  get_all_move_points moves st |> pick_best_move
