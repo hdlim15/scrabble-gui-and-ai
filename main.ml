@@ -119,7 +119,8 @@ let rec play_game st =
           match (Ai.best_move st) with
           | PlaceWord mv ->
             List.fold_right (fun x acc -> (Char.escaped x) ^ acc) mv.word ""
-          | _ -> "you should swap" in
+          | Swap _ -> "you should swap"
+          | _ -> failwith "update hint if new commands are added" in
         print_endline hint; st
       | AddWord str -> print_endline ("Added word to dictionary"); do' command st
       | Help -> print_endline ((str_of_help ())^"\n"); st
