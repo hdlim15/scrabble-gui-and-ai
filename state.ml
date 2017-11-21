@@ -126,14 +126,16 @@ and num_tiles_of_char n c p =
 let rec gen_human_players num names =
   match num, names with
   | _, [] -> []
-  | i, name::t -> {name=name;score=0;rack=[];player_type=Human;order_num=i}
-                  :: gen_human_players (num+1) t
+  | i, name::t -> {name = name; score = 0; rack = [];
+                   player_type = Human; order_num = i}
+                  :: gen_human_players (num + 1) t
 
 (* [gen_ai_players num_ai difficulty] is a list of ai players *)
 let rec gen_ai_players num_players num_ai difficulty =
   match num_ai, difficulty with
   | _, [] -> []
-  | i, diff::t -> {name="AI_"^(string_of_int i);score=0;rack=[];player_type=AI diff;order_num=(num_players-i+1)}
+  | i, diff::t -> {name = "AI_"^(string_of_int i); score = 0; rack = [];
+                   player_type = AI diff; order_num = (num_players-i+1)}
                   :: gen_ai_players num_players (num_ai - 1) t
 
 (* [init_players init_data] is the initial players list (both human and AI) *)

@@ -144,18 +144,23 @@ let rec play_game st =
 
 (* [init_player_names num_players] is a list of player names. *)
 let rec init_player_names num_players =
-  print_endline
-    "\nEnter player names separated by spaces, in the order you want the turns to go.";
-  print_string "> ";
-  let player_names_str = read_line () in
-  let player_name_lst = player_names_str |> Str.split (Str.regexp "[ \t]+") in
-  if List.length player_name_lst <> num_players then
-    (print_endline "Invalid number of names."; init_player_names num_players)
+  if num_players <> 0 then
+    begin
+      print_endline
+        "\nEnter player names separated by spaces, in the order you want the turns to go.";
+      print_string "> ";
+      let player_names_str = read_line () in
+      let player_name_lst = player_names_str |> Str.split (Str.regexp "[ \t]+") in
+      if List.length player_name_lst <> num_players then
+        (print_endline "Invalid number of names."; init_player_names num_players)
+      else
+      if List.length (List.sort_uniq Pervasives.compare player_name_lst) <> List.length player_name_lst then
+          (print_endline "Player names must be unique."; init_player_names num_players)
+        else
+          player_name_lst
+    end
   else
-  if List.length (List.sort_uniq Pervasives.compare player_name_lst) <> List.length player_name_lst then
-      (print_endline "Player names must be unique."; init_player_names num_players)
-    else
-      player_name_lst
+    []
 
 (* [init_num_players ()] is the number of players (between 1 and 4). *)
 let rec init_num_players () =
