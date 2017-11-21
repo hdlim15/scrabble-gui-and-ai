@@ -130,11 +130,11 @@ let rec gen_human_players num names =
                   :: gen_human_players (num+1) t
 
 (* [gen_ai_players num_ai difficulty] is a list of ai players *)
-let rec gen_ai_players num_ai difficulty =
+let rec gen_ai_players num_players num_ai difficulty =
   match num_ai, difficulty with
   | _, [] -> []
-  | i, diff::t -> {name="AI_"^(string_of_int i);score=0;rack=[];player_type=AI diff;order_num=i}
-                  :: gen_ai_players (num_ai+1) t
+  | i, diff::t -> {name="AI_"^(string_of_int i);score=0;rack=[];player_type=AI diff;order_num=(num_players-i+1)}
+                  :: gen_ai_players num_players (num_ai - 1) t
 
 (* [init_players init_data] is the initial players list (both human and AI) *)
 let init_players init_data =
@@ -142,7 +142,7 @@ let init_players init_data =
   let num_humans = init_data.num_humans in
   let human_players = gen_human_players 1 init_data.human_names in
   let ai_players =
-    gen_ai_players (num_players-num_humans+1) init_data.ai_difficulty in
+    gen_ai_players num_players (num_players - num_humans) init_data.ai_difficulty in
   human_players @ ai_players
 
 (* [update_rack_and_bag chars_from_rack rack bag] adds letters from [bag] to
