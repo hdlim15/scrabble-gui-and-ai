@@ -222,7 +222,7 @@ let concat_moves str exts =
 
 let concat_moves_rev str exts =
   List.fold_left
-    (fun acc x -> (x ^ str)::acc ) [] exts
+    (fun acc x -> ((reverse_str x) ^ str)::acc ) [] exts
 
 let make_move c rack st =
   let left =
