@@ -92,7 +92,7 @@ let update_board b =
     match b' with
     | [] -> ()
     | cell::t ->
-      draw_string_in_box Center (Char.escaped (fst cell.letter))
+      draw_string_in_box Center (String.capitalize_ascii (Char.escaped (fst cell.letter)))
         vb.(coord_to_array_index (cell.cell_coord)) Graphics.black;
       update_board_helper t
   in
