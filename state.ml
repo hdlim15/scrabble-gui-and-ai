@@ -435,8 +435,8 @@ let check_word word st =
 (* [check_bounds mv st] is true if [mv.word] fits on the board *)
 let check_bounds mv st =
   let word = List.fold_right (fun c acc -> (Char.escaped c)^acc) mv.word "" in
-  if mv.is_horizontal then (snd mv.mv_coord) + String.length word < 15
-  else (fst mv.mv_coord) + String.length word < 15
+  if mv.is_horizontal then (snd mv.mv_coord) + String.length word <= 15
+  else (fst mv.mv_coord) + String.length word <= 15
 
 (* [check_endpoints mv st] is true if the cell to left/top and cell to right/bottom
  * (depending on if mv is horizontal or vertical) is either empty or nonexistant. *)
