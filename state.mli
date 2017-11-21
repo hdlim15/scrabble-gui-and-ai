@@ -105,6 +105,8 @@ val point_moves : Command.move -> int
 (* [check_bounds mv st] is true if [mv.word] fits on the board *)
 val check_bounds : Command.move -> state -> bool
 
+val check_word : string -> state -> bool
+
 (* [check_endpoints mv st] is true if the cell to left/top and cell to right/bottom
  * (depending on if mv is horizontal or vertical) is either empty or nonexistant. *)
 val check_endpoints : Command.move -> state -> bool
@@ -123,6 +125,8 @@ val update_board : Command.move -> state -> cell list list
  * the cells adjacent to [c] are empty or [c] is empty, then false is returned.
  *)
 val has_adj_new_chars : coordinate -> bool -> state -> bool
+
+
 
 (* [get_values_from_opt_list opt_lst acc] returns a list containing the
  * extracted values from [opt_lst]. [None] doesn't add anything to the returned
