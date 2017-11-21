@@ -243,7 +243,7 @@ let make_move c rack st =
     | None -> None
     | Some (str,_) ->
       let extensions = get_extensions (reverse_str str) r_dict in
-      let words = (valid_extensions rack extensions) |> concat_moves_rev str in
+      let words = (valid_extensions rack extensions) in
       Some (words,str) in
   let up =
   match up_cell c with
@@ -263,7 +263,7 @@ let make_move c rack st =
     | None -> None
     | Some (str,_) ->
       let extensions = get_extensions (reverse_str str) r_dict in
-      let words = (valid_extensions rack extensions) |> concat_moves_rev str in
+      let words = (valid_extensions rack extensions) in
       Some (words,str) in
   [left;right;up;down]
 
@@ -275,12 +275,17 @@ let all_moves anchors st =
 
 let get_start_cell anchor word dir =
   match dir with
-  | Right | Down -> anchor.cell_coord
   | Left ->
     let subtract = String.length (word) in
     ((fst (anchor.cell_coord )), (snd (anchor.cell_coord )) - subtract)
   | Up ->
     let subtract = String.length (word) in
+    ((fst (anchor.cell_coord ) - subtract), snd (anchor.cell_coord ))
+  | Right ->
+    let subtract = String.length (word) - 1 in
+    ((fst (anchor.cell_coord )), (snd (anchor.cell_coord )) - subtract)
+  | Down ->
+    let subtract = String.length (word) - 1  in
     ((fst (anchor.cell_coord ) - subtract), snd (anchor.cell_coord ))
 
 let get_all_start_cells anchor word_lst st =
@@ -297,11 +302,18 @@ let get_all_start_cells anchor word_lst st =
     match List.nth word_lst 1 with
     | None -> []
     | Some pair ->
-      (List.fold_left
+      List.fold_left
+        (fun acc x ->
+           let updated_cell = (get_start_cell anchor x Right) in
+           let new_word = (reverse_str x ^ (snd pair)) in
+           (updated_cell, new_word)::acc
+        ) [] (fst pair) in
+
+      (* (List.fold_left
           (fun acc x ->
              let updated_cell = (get_start_cell anchor (snd pair) Right) in
              (updated_cell, x)::acc
-          ) [] (fst pair)) in
+          ) [] (fst pair)) in *)
   let up =
     match List.nth word_lst 2 with
     | None -> []
@@ -315,11 +327,12 @@ let get_all_start_cells anchor word_lst st =
     match List.nth word_lst 3 with
     | None -> []
     | Some pair ->
-      (List.fold_left
+      List.fold_left
         (fun acc x ->
-           let updated_cell = (get_start_cell anchor (snd pair) Down) in
-           (updated_cell, x)::acc
-        ) [] (fst pair)) in
+           let updated_cell = (get_start_cell anchor x Down) in
+           let new_word = (reverse_str x ^ (snd pair)) in
+           (updated_cell, new_word)::acc
+        ) [] (fst pair) in
   [left@right;up@down]
 
 let update_all_anchor_pairs anchor_pair_lst st =
