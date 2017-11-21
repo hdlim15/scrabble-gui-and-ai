@@ -100,7 +100,8 @@ let end_turn st end_type =
     print_endline "Press 'ENTER' to end your turn.";
     let _ = read_line () in
     clear ();
-    print_endline (st.current_player.name ^ "'s turn.")
+    print_endline (st.current_player.name ^ "'s turn.");
+    print_endline (str_of_rack st.current_player.rack)
 
 (* [play_game st] plays the game represented by [st]. *)
 let rec play_game st =
