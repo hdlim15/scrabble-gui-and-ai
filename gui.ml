@@ -1,5 +1,5 @@
-#require "graphics"
-open Graphics
+(* #require "graphics" *)
+open State
 
 type relief = Top | Bot | Flat
 
@@ -11,7 +11,7 @@ type box_config =
 
 let draw_box_outline bcf col =
   Graphics.set_color col;
-  draw_rect bcf.x bcf.y bcf.w bcf.h
+  Graphics.draw_rect bcf.x bcf.y bcf.w bcf.h
 
 
 let draw_box bcf =
@@ -81,18 +81,29 @@ let vb =
            b1_col=gray1; b2_col=gray3; b_col=gray2; r=Top} in
   Array.of_list (create_grid 15 224 0 b [])
 
-let rec loop () = loop ()
+let board_to_graph_row x =
+  14 - x
 
-let rec main () =
+let coord_to_array_index coord =
+  match coord with
+  | (x, y) -> 15 * (board_to_graph_row x) + y
+
+let update_board b =
+  Array.iter draw_box vb;
+  let rec update_board_helper b' =
+    match b' with
+    | [] -> ()
+    | cell::t ->
+      draw_string_in_box Center (Char.escaped (fst cell.letter))
+        vb.(coord_to_array_index (cell.cell_coord)) Graphics.black;
+      update_board_helper t
+  in update_board_helper b
+
+let init_gui () =
   try
-    Graphics.open_graph " 6500x600";
+    Graphics.open_graph " 1000x600";
+    Graphics.set_window_title "Scrabble";
     Array.iter draw_box vb;
-    draw_string_in_box Center "X" vb.(5) Graphics.black;
-    draw_string_in_box Center "X" vb.(8) Graphics.black;
-    draw_string_in_box Center "O" vb.(12) Graphics.yellow;
-    draw_string_in_box Center "O" vb.(11) Graphics.yellow;
-    draw_string_in_box Center "ABB" vb.(20) Graphics.yellow;
-    loop ()
   with
-  | Graphic_failure("fatal I/O error") ->
+  | Graphics.Graphic_failure("fatal I/O error") ->
     print_endline "Thanks for playing!"

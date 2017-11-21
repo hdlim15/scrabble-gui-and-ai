@@ -1,6 +1,7 @@
 open State
 open Command
 open Char
+open Gui
 
 (* [get_scores players] returns a string of player, score information *)
 let rec get_scores players =
@@ -100,6 +101,7 @@ let end_turn st end_type =
 
 (* [play_game st] plays the game represented by [st]. *)
 let rec play_game st =
+  init_gui ();
   let command = get_command () in
   let new_state =
     try
