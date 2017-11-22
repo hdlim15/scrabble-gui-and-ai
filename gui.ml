@@ -100,17 +100,51 @@ let draw_string_in_box pos str bcf col =
 let set_rgb x y z = (Graphics.rgb x y z)
 
 let beige1 = set_rgb 185 185 165
-and beige2 = set_rgb 205 205 185
-and beige3 = set_rgb 245 245 220
+let beige2 = set_rgb 205 205 185
+let beige3 = set_rgb 245 245 220
+
+let red1 = set_rgb 255 50 50
+let red2 = set_rgb 215 50 50
+let red3 = set_rgb 185 50 50
+
+let green1 = set_rgb 35 185 35
+let green2 = set_rgb 35 185 35
+let green3 = set_rgb 35 185 35
+
+let blue1 = set_rgb 35 85 185
+let blue2 = set_rgb 35 85 185
+let blue3 = set_rgb 35 85 185
+
+let orange1 = set_rgb 255 170 60
+let orange2 = set_rgb 255 170 60
+let orange3 = set_rgb 255 170 60
+
+
+let tws_indeces = [0; 7; 14; 105; 119; 210; 217; 224]
+let dls_indeces = [3; 11; 36; 38; 45; 52; 59; 92; 96; 98; 102; 108; 116; 122;
+                   126; 128; 132; 165; 172; 179; 186; 188; 213; 221]
+let dws_indeces = [16; 28; 32; 42; 48; 56; 64; 70; 154; 160; 168; 176; 182; 192; 196; 208]
+let tls_indeces = [20; 24; 76; 80; 84; 88; 136; 140; 144; 148; 200; 204]
 
 let rec create_grid nb_col n sep b acc =
   if n < 0 then acc
   else
     let px = n mod nb_col in
     let py = n / nb_col in
-    let nx = b.x + sep + px * (b.w + sep)
-    and ny = b.y + sep + py * (b.h + sep) in
-    let b1 = {b with x = nx; y = ny} in
+    let nx = b.x + sep + px * (b.w + sep) in
+    let ny = b.y + sep + py * (b.h + sep) in
+    let b1 =
+      if List.mem n tws_indeces then
+        {b with x = nx; y = ny; b1_col = orange1; b2_col = orange3; b_col = orange2}
+      else if List.mem n dls_indeces then
+        {b with x = nx; y = ny; b1_col = blue1; b2_col = blue3; b_col = blue2}
+      else if List.mem n dws_indeces then
+        {b with x = nx; y = ny; b1_col = red1; b2_col = red3; b_col = red2}
+      else if List.mem n tls_indeces then
+        {b with x = nx; y = ny; b1_col = green1; b2_col = green3; b_col = green2}
+      else
+        {b with x = nx; y = ny}
+    in
     (create_grid nb_col (n - 1) sep b (b1 :: acc))
 
 let vb =
@@ -125,14 +159,47 @@ let coord_to_array_index coord =
   match coord with
   | (x, y) -> 15 * (board_to_graph_row x) + y
 
+let update_vb b =
+  let rec update_vb_helper b' =
+    match b' with
+    | [] -> ()
+    | cell::t ->
+      if fst cell.letter <> ' ' then
+        begin
+          let array_idx = coord_to_array_index cell.cell_coord in
+          let array_cell = Array.get vb array_idx in
+          let array_cell' = {array_cell with b1_col = beige1;
+                                             b2_col = beige3;
+                                             b_col = beige2}
+          in
+          Array.set vb array_idx array_cell';
+          update_vb_helper t
+        end
+      else
+        update_vb_helper t
+  in
+  Array.iter draw_box vb;
+  update_vb_helper b
+
 let update_board b =
   let rec update_board_helper b' =
     match b' with
     | [] -> ()
     | cell::t ->
-      draw_string_in_box Center (String.capitalize_ascii (Char.escaped (fst cell.letter)))
+      if fst cell.letter <> ' ' then
+        begin
+          let array_idx = coord_to_array_index cell.cell_coord in
+          let array_cell = Array.get vb array_idx in
+          let array_cell' = {array_cell with b1_col = beige1; b2_col = beige3; b_col = beige2} in
+          Array.set vb array_idx array_cell';
+          draw_string_in_box Center (String.capitalize_ascii (Char.escaped (fst cell.letter)))
+            vb.(coord_to_array_index (cell.cell_coord)) Graphics.black;
+          update_board_helper t
+        end
+      else
+        draw_string_in_box Center (String.capitalize_ascii (Char.escaped (fst cell.letter)))
         vb.(coord_to_array_index (cell.cell_coord)) Graphics.black;
-      update_board_helper t
+        update_board_helper t
   in
   Array.iter draw_box vb;
   update_board_helper b
