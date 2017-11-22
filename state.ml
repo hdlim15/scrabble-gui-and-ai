@@ -356,7 +356,12 @@ let get_adjacent_word c st is_h new_coords =
           else
             (snd_triple acc) + (snd h.letter)
         in
-        let word_multiplier = (trd_triple acc) * h.word_multiplier in
+        let word_multiplier =
+          if List.mem h.cell_coord new_coords then
+            (trd_triple acc) * h.word_multiplier
+          else
+            trd_triple acc
+        in
         adjacent_helper t (new_string, points, word_multiplier)
     in
     let word_triple = adjacent_helper word_cells ("", 0, 1) in

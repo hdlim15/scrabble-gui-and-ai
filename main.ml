@@ -232,7 +232,7 @@ let init_game rdy =
                          ai_difficulty = ai_difficulty_lst}) in
     clear ();
     print_endline (s.current_player.name ^ "'s turn.");
-    init_gui ();
+    init_gui s;
     play_game s
 
 (* [main ()] starts the REPL *)
