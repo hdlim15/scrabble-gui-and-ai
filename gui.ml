@@ -188,10 +188,6 @@ let update_board b =
     | cell::t ->
       if fst cell.letter <> ' ' then
         begin
-          let array_idx = coord_to_array_index cell.cell_coord in
-          let array_cell = Array.get vb array_idx in
-          let array_cell' = {array_cell with b1_col = beige1; b2_col = beige3; b_col = beige2} in
-          Array.set vb array_idx array_cell';
           draw_string_in_box Center (String.capitalize_ascii (Char.escaped (fst cell.letter)))
             vb.(coord_to_array_index (cell.cell_coord)) Graphics.black;
           update_board_helper t
@@ -204,18 +200,52 @@ let update_board b =
   Array.iter draw_box vb;
   update_board_helper b
 
+let draw_logo () =
+  let bar_height = snd (Graphics.text_size "|") in
+  draw_string "                                _       _       _        " 625 575 true;
+  draw_string "  ___     ___    _ __    __ _  | |__   | |__   | |   ___ " 625 (575 - bar_height) true;
+  draw_string " / __|   / __|  | '__| / _` | | '_\\ | '_\\ | |  / _ \\ " 625 (575 - 2 * bar_height) true;
+  draw_string " \\__\\ | (__   | |    | (_| | | |_) | | |_) | | | |  __/" 625 (575 - 3 * bar_height) true;
+  draw_string " |___/   \\___| |_|    \\__,_| |_.__/  |_.__/  |_|  \\___|" 625 (575 - 4 * bar_height) true
+
+let compare_players p1 p2 =
+  if p1.order_num < p2.order_num then 1 else -1
+
+let update_scores ps =
+  let sorted_ps = List.sort compare_players ps in
+  let h = snd (Graphics.text_size "|") in
+  let w = fst (Graphics.text_size "w") in
+  draw_string "Scores:" 625 (575 - 7 * h) true;
+  let rec helper ps' =
+    match ps' with
+    | [] -> ()
+    | p::t -> draw_string (p.name ^ ": " ^ (string_of_int p.score))
+                632 (575 - (8+(List.length t))*h) true;
+              helper t
+  in helper sorted_ps;
+  let max_name_len = List.fold_left
+      (fun acc p -> if String.length p.name > acc then
+                      String.length p.name
+                    else acc) 0 ps in
+  let box_width = w * max_name_len + 40 in
+  let box_height = h * (List.length ps + 1) + 5 in
+  Graphics.draw_rect 620 (575 - box_height - 6 * h) box_width box_height;
+  Graphics.set_color Graphics.blue
+
+let update_gui st =
+  Graphics.clear_graph ();
+  draw_logo ();
+  update_vb (List.flatten st.board);
+  update_board (List.flatten st.board);
+  update_scores st.players
+
+
 let init_gui () =
   try
     Graphics.open_graph " 1000x600";
     Graphics.set_window_title "Scrabble";
     Array.iter draw_box vb;
-    let bar_height = snd (Graphics.text_size "|") in
-    draw_string "                                _       _       _        " 625 575 true;
-    draw_string "  ___     ___    _ __    __ _  | |__   | |__   | |   ___ " 625 (575 - bar_height) true;
-    draw_string " / __|   / __|  | '__| / _` | | '_\\ | '_\\ | |  / _ \\ " 625 (575 - 2 * bar_height) true;
-    draw_string " \\__\\ | (__   | |    | (_| | | |_) | | |_) | | | |  __/" 625 (575 - 3 * bar_height) true;
-    draw_string " |___/   \\___| |_|    \\__,_| |_.__/  |_.__/  |_|  \\___|" 625 (575 - 4 * bar_height) true;
-
+    draw_logo ();
   with
   | Graphics.Graphic_failure("fatal I/O error") ->
     print_endline "Thanks for playing!"
