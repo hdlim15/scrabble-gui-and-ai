@@ -198,11 +198,11 @@ let update_board b =
 
 let draw_logo () =
   let bar_height = snd (Graphics.text_size "|") in
-  draw_string "                                _       _       _        " 625 575 true;
-  draw_string "  ___     ___    _ __    __ _  | |__   | |__   | |   ___ " 625 (575 - bar_height) true;
-  draw_string " / __|   / __|  | '__| / _` | | '_\\ | '_\\ | |  / _ \\ " 625 (575 - 2 * bar_height) true;
-  draw_string " \\__\\ | (__   | |    | (_| | | |_) | | |_) | | | |  __/" 625 (575 - 3 * bar_height) true;
-  draw_string " |___/   \\___| |_|    \\__,_| |_.__/  |_.__/  |_|  \\___|" 625 (575 - 4 * bar_height) true
+  draw_string "                               _       _       _        " 625 575 true;
+  draw_string "  ___    ___    _ __    __ _  | |__   | |__   | |   ___ " 625 (575 - bar_height) true;
+  draw_string " / __|  / __|  | '__| / _` | |  _ \\ |  _ \\ | |  / _ \\ " 625 (575 - 2 * bar_height) true;
+  draw_string " \\__\\| (__   | |    | (_| | | |_) | | |_) | | | |  __/" 625 (575 - 3 * bar_height) true;
+  draw_string " |___/  \\___| |_|    \\__,_| |_.__/  |_.__/  |_|  \\___|" 625 (575 - 4 * bar_height) true
 
 let compare_players p1 p2 =
   if p1.order_num < p2.order_num then 1 else -1
