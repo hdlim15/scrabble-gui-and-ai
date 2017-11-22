@@ -1,5 +1,6 @@
 open State
 
+
 type relief = Top | Bot | Flat
 
 type box_config =
@@ -13,10 +14,37 @@ type box_config =
    b2_col : Graphics.color;
    b_col : Graphics.color}
 
+(* [get_chars s] splits [s] into a list of its characters. *)
+let get_chars s =
+  let rec split_helper s' acc =
+    match s' with
+    | "" -> acc
+    | s'' -> split_helper (String.sub s'' 1 ((String.length s'') - 1))
+               (String.get s'' 0 :: acc)
+  in List.rev (split_helper s [])
+
+let draw_string s x y is_h =
+  let rec draw_string_helper lst x y =
+    match lst with
+    | [] -> ()
+    | h::t ->
+      begin
+        if is_h then
+          let text_width = fst (Graphics.text_size (Char.escaped h)) in
+          Graphics.moveto x y;
+          Graphics.draw_char h;
+          draw_string_helper t (x + text_width) y
+        else
+          let text_height = snd (Graphics.text_size (Char.escaped h)) in
+          Graphics.moveto x y;
+          Graphics.draw_char h;
+          draw_string_helper t x (y - text_height)
+      end
+  in draw_string_helper (get_chars s) x y
+
 let draw_box_outline bcf col =
   Graphics.set_color col;
   Graphics.draw_rect bcf.x bcf.y bcf.w bcf.h
-
 
 let draw_box bcf =
   let x1 = bcf.x in
@@ -114,6 +142,13 @@ let init_gui () =
     Graphics.open_graph " 1000x600";
     Graphics.set_window_title "Scrabble";
     Array.iter draw_box vb;
+    let bar_height = snd (Graphics.text_size "|") in
+    draw_string "                                _       _       _        " 625 575 true;
+    draw_string "  ___     ___    _ __    __ _  | |__   | |__   | |   ___ " 625 (575 - bar_height) true;
+    draw_string " / __|   / __|  | '__| / _` | | '_\\ | '_\\ | |  / _ \\ " 625 (575 - 2 * bar_height) true;
+    draw_string " \\__\\ | (__   | |    | (_| | | |_) | | |_) | | | |  __/" 625 (575 - 3 * bar_height) true;
+    draw_string " |___/   \\___| |_|    \\__,_| |_.__/  |_.__/  |_|  \\___|" 625 (575 - 4 * bar_height) true;
+
   with
   | Graphics.Graphic_failure("fatal I/O error") ->
     print_endline "Thanks for playing!"
