@@ -139,7 +139,9 @@ let rec play_game st =
     | InvalidSwap -> print_endline ("Invalid Swap\n"); st
     | InvalidAdd -> print_endline ("Invalid Add\n"); st
   in
-  update_board (List.flatten new_state.board);
+  let flat_board = List.flatten new_state.board in
+  update_vb flat_board;
+  update_board flat_board;
   if no_empty_rack new_state && new_state.sp_consec <= 12 then
     play_game new_state
   else
