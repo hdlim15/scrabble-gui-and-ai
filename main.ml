@@ -122,11 +122,10 @@ let rec play_game st =
       | Rack -> print_endline (str_of_rack st.current_player.rack); st
       | Hint ->
         let hint =
-          match (Ai.best_move st) with
+          match (Ai.get_hint st) with
           | PlaceWord mv ->
             List.fold_right (fun x acc -> (Char.escaped x) ^ acc) mv.word ""
-          | Swap _ -> "you should swap"
-          | _ -> failwith "update hint if new commands are added" in
+          | _ -> "you should swap/pass" in
         print_endline hint; st
       | AddWord str -> print_endline ("Added word to dictionary"); do' command st
       | Help -> print_endline ((str_of_help ())^"\n"); st

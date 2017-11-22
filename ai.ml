@@ -508,7 +508,8 @@ let get_first_move_points mv st =
       let new_chars = check_fit_and_new_entries mv st in
       let new_coords = List.map (fun (_,coord) -> coord) new_chars in
       let word_score_opt =
-        get_adjacent_word mv.mv_coord {st with board = board'} mv.is_horizontal new_coords in
+        get_adjacent_word mv.mv_coord {st with board = board'}
+          mv.is_horizontal new_coords in
       let word_score = List.hd (get_values_from_opt_list [word_score_opt] []) in
       snd word_score
 
@@ -586,6 +587,11 @@ let pick_best_move rack st moves =
          (fun x acc -> (Char.escaped x) ^ acc) pr ""); *)
     PlaceWord (fst (List.sort score_cmp moves |> List.rev |> List.hd))
 
+let pick_worst_move rack st moves =
+  match moves with
+  | [] -> do_swap rack st
+  | _ -> PlaceWord (fst (List.sort score_cmp moves |> List.hd))
+
 let get_letters_rack rack =
   List.map(fun (letter,_) -> letter) rack
 
@@ -598,16 +604,26 @@ let first_move st =
   (* print_endline (string_of_int (List.length moves)); *)
   get_all_first_move_points moves st |> pick_best_move letters_rack st
 
+let best_move_helper st =
+  let letters_rack = st.current_player.rack |> get_letters_rack in
+  let all_cells = get_all_cells st in
+  let empty_cells = get_empty_cells all_cells in
+  let anchors = get_anchors empty_cells st in
+  let anchor_pairs = generate_anchor_chars anchors letters_rack st in
+  let anchor_moves = all_moves anchor_pairs st in
+  let updated_anchors = update_all_anchor_pairs anchor_moves st in
+  let moves = generate_all_moves updated_anchors in
+  (* print_endline (string_of_int (List.length moves)); *)
+  get_all_move_points moves st
+
+let get_hint st =
+  if List.for_all (fun p -> p.score = 0) st.players then first_move st
+  else
+    let letters_rack = st.current_player.rack |> get_letters_rack in
+    best_move_helper st |> pick_worst_move letters_rack st
+
 let best_move st =
   if List.for_all (fun p -> p.score = 0) st.players then first_move st
   else
     let letters_rack = st.current_player.rack |> get_letters_rack in
-    let all_cells = get_all_cells st in
-    let empty_cells = get_empty_cells all_cells in
-    let anchors = get_anchors empty_cells st in
-    let anchor_pairs = generate_anchor_chars anchors letters_rack st in
-    let anchor_moves = all_moves anchor_pairs st in
-    let updated_anchors = update_all_anchor_pairs anchor_moves st in
-    let moves = generate_all_moves updated_anchors in
-    (* print_endline (string_of_int (List.length moves)); *)
-    get_all_move_points moves st |> pick_best_move letters_rack st
+    best_move_helper st |> pick_best_move letters_rack st
