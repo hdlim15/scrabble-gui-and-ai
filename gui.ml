@@ -103,22 +103,21 @@ let beige1 = set_rgb 185 185 165
 let beige2 = set_rgb 205 205 185
 let beige3 = set_rgb 245 245 220
 
-let red1 = set_rgb 255 50 50
-let red2 = set_rgb 215 50 50
-let red3 = set_rgb 185 50 50
+let red1 = set_rgb 255 20 20
+let red2 = set_rgb 250 65 65
+let red3 = set_rgb 250 100 100
 
-let green1 = set_rgb 35 185 35
-let green2 = set_rgb 35 185 35
-let green3 = set_rgb 35 185 35
+let green1 = set_rgb 20 140 20
+let green2 = set_rgb 80 190 80
+let green3 = set_rgb 120 230 120
 
 let blue1 = set_rgb 35 85 185
-let blue2 = set_rgb 35 85 185
-let blue3 = set_rgb 35 85 185
+let blue2 = set_rgb 65 115 215
+let blue3 = set_rgb 130 170 255
 
-let orange1 = set_rgb 255 170 60
+let orange1 = set_rgb 240 140 15
 let orange2 = set_rgb 255 170 60
-let orange3 = set_rgb 255 170 60
-
+let orange3 = set_rgb 255 195 110
 
 let tws_indeces = [0; 7; 14; 105; 119; 210; 217; 224]
 let dls_indeces = [3; 11; 36; 38; 45; 52; 59; 92; 96; 98; 102; 108; 116; 122;
@@ -224,7 +223,7 @@ let update_scores ps =
       (fun acc p -> if String.length p.name > acc then
                       String.length p.name
                     else acc) 0 ps in
-  let box_width = w * max_name_len + 40 in
+  let box_width = w * max_name_len + 50 in
   let box_height = h * (List.length ps + 1) + 5 in
   Graphics.draw_rect 620 (575 - box_height - 6 * h) box_width box_height;
   Graphics.set_color Graphics.blue
