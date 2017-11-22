@@ -26,6 +26,12 @@ let get_all_cells st =
 let get_empty_cells lst =
   List.filter (fun c -> (cell_is_empty c)) lst
 
+let get_7th_row_cells st =
+  get_row (7,7) st
+
+let get_7th_column_cells st =
+  get_column (7,7) st
+
 (* [up_cell c] returns [Some c'] if [c'] is the cell coordinate
  * directly above [c], and [None] if the cell coordinate directly above [c]
  * is out of bounds.
@@ -173,17 +179,17 @@ let get_all_adj_words c st =
         is_word f_dict ((Char.escaped chr) ^ str) in
   bool1 || bool2 *)
 
-let anchor_chars anchor rack cells st =
+let anchor_chars anchor rack st =
   List.fold_left
     (fun acc x ->
        x::acc
        (* if cross_check anchor x cells st then x::acc else acc *)
     ) [] rack
 
-let generate_anchor_chars anchors rack cells st =
+let generate_anchor_chars anchors rack st =
   List.fold_left
     (fun acc x ->
-       (x, anchor_chars x rack cells st )::acc
+       (x, anchor_chars x rack st )::acc
     ) [] anchors
 
 (* [check_extension anchor_rack ext] returns [true] if [ext] can be formed
@@ -416,7 +422,8 @@ let update_all_anchor_pairs anchor_pair_lst st =
 let get_points mv st =
   let word = List.fold_right (fun c acc -> (Char.escaped c)^acc) mv.word "" in
   if not (is_word f_dict word) then raise (InvalidPlace "invalid word")
-  else if not (check_bounds mv st) then raise (InvalidPlace "cannot place off board")
+  else if not (check_bounds mv st)
+  then raise (InvalidPlace "cannot place off board")
   else if not (check_endpoints mv st)
   then raise (InvalidPlace "not complete word")
   else
@@ -443,7 +450,8 @@ let get_points mv st =
       let word_score_lst = get_values_from_opt_list word_score_lst_opt [] in
       let valid_words =
         List.fold_left (fun acc (s, i) ->
-            (fst acc  && check_word s st, snd acc + i)) (true, 0) word_score_lst in
+            (fst acc  && check_word s st, snd acc + i)) (true, 0) word_score_lst
+      in
       if fst valid_words then snd valid_words
       else
         raise (InvalidPlace "invalid newly-formed word")
@@ -493,36 +501,43 @@ let evaluate_rack rack =
        else (fst acc, snd acc + 1)
     ) (0,0) rack
 
-let do_swap rack =
-  Swap [List.hd rack]
+let do_swap rack st =
+  if List.length (st.bag) <> 0 then Swap [List.hd rack]
+  else Pass
 
 let print_points lst =
   List.fold_right
     (fun x acc -> acc ^ (string_of_int (snd x )) ^ " " ) lst ""
 
-let pick_best_move rack moves =
+let pick_best_move rack st moves =
   match moves with
-  | [] -> do_swap rack
+  | [] -> do_swap rack st
   | _ ->
-    let p = fst (List.sort score_cmp moves |> List.rev |> List.hd) in
+    (* let p = fst (List.sort score_cmp moves |> List.rev |> List.hd) in
     let pr = p.word in
     print_endline
       ( string_of_int(fst p.mv_coord) ^ "," ^ string_of_int(snd p.mv_coord) ^ " " ^
         string_of_bool(p.is_horizontal) ^ " " ^
           List.fold_right
-         (fun x acc -> (Char.escaped x) ^ acc) pr "");
+         (fun x acc -> (Char.escaped x) ^ acc) pr ""); *)
     PlaceWord (fst (List.sort score_cmp moves |> List.rev |> List.hd))
 
 let get_letters_rack rack =
   List.map(fun (letter,_) -> letter) rack
+
+(* let first_move st =
+  let letters_rack = st.current_player.rack |> get_letters_rack in
+  let row_cells = get_7th_row_cells st in
+  let anchor_pairs = generate_anchor_chars row_cells letters_rack st in *)
+
 
 let best_move st =
   let letters_rack = st.current_player.rack |> get_letters_rack in
   let all_cells = get_all_cells st in
   let empty_cells = get_empty_cells all_cells in
   let anchors = get_anchors empty_cells st in
-  let anchor_pairs = generate_anchor_chars anchors letters_rack all_cells st in
+  let anchor_pairs = generate_anchor_chars anchors letters_rack st in
   let anchor_moves = all_moves anchor_pairs st in
   let updated_anchors = update_all_anchor_pairs anchor_moves st in
   let moves = generate_all_moves updated_anchors in
-  get_all_move_points moves st |> pick_best_move letters_rack
+  get_all_move_points moves st |> pick_best_move letters_rack st

@@ -79,6 +79,11 @@ val init_state : init_game_data -> state
  * raises: [InvalidPlace] if (fst c) is greater than the number of rows. *)
 val get_row : coordinate -> state -> cell list
 
+(* [get_column c st] returns a list of cells representing the column that
+ * coordinate [c] lies in.
+ * raises: [InvalidPlace] if (snd c) is greater than the number of columns. *)
+val get_column : coordinate -> state -> cell list
+
 (* [get_cell_from_coordinate c st] returns the cell at coordinate [c] on the
  * board in [st].
  * raises: [InvalidPlace] if [c] does not correspond to a cell in the board. *)
@@ -106,6 +111,8 @@ val get_adjacent_word : coordinate -> state -> bool -> coordinate list -> (strin
 (* [check_bounds mv st] is true if [mv.word] fits on the board *)
 val check_bounds : Command.move -> state -> bool
 
+(* [check_word word st] returns true if [word] is a valid word in dict or in the
+ * list of added words, otherwise returns false. *)
 val check_word : string -> state -> bool
 
 (* [check_endpoints mv st] is true if the cell to left/top and cell to right/bottom
