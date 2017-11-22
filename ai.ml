@@ -200,9 +200,11 @@ let check_extension anchor_rack ext =
   let check =
   List.fold_left
     (fun (check, rack') x ->
-       let check_bool = check && List.mem x rack' in
-       if check_bool then check_bool, remove x rack'
-       else false, rack'
+       if not check then false, rack'
+       else
+         if List.mem x rack' then (true, remove x rack')
+         else if List.mem '*' rack' then (true, remove '*' rack')
+         else false, rack'
     ) (true, anchor_rack) (explode ext) in
   fst check
 
@@ -212,16 +214,10 @@ let check_extension anchor_rack ext =
  *)
 let valid_extensions anchor_rack extension_lst =
   List.filter (fun x -> check_extension anchor_rack x) extension_lst
-  (* List.fold_left
-    (fun acc x ->
-       let check = check_extension anchor_rack x in
-       if fst check then x::acc else acc
-    ) [] extensions *)
 
 (* [reverse_str s ] reverses [s]. *)
 let reverse_str s =
   List.fold_right (fun x acc -> acc ^ Char.escaped x ) (explode s) ""
-
 
 let concat_moves str exts =
   List.fold_left
