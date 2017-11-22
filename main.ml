@@ -94,14 +94,15 @@ let end_turn st end_type =
     print_endline "Press 'ENTER' to end your turn.";
     let _ = read_line () in
     clear ();
-    print_endline (st.current_player.name ^ "'s turn.")
+    print_endline (st.current_player.name ^ "'s turn.");
+    (* print_endline (str_of_rack st.current_player.rack)  *)
   | `Swap ->
     print_endline (str_of_rack (get_prev_player st.current_player.order_num st.players).rack);
     print_endline "Press 'ENTER' to end your turn.";
     let _ = read_line () in
     clear ();
     print_endline (st.current_player.name ^ "'s turn.");
-    print_endline (str_of_rack st.current_player.rack)
+    (* print_endline (str_of_rack st.current_player.rack) *)
   | `Pass ->
     print_endline "Press 'ENTER' to end your turn.";
     let _ = read_line () in
@@ -122,11 +123,10 @@ let rec play_game st =
       | Rack -> print_endline (str_of_rack st.current_player.rack); st
       | Hint ->
         let hint =
-          match (Ai.best_move st) with
+          match (Ai.get_hint st) with
           | PlaceWord mv ->
             List.fold_right (fun x acc -> (Char.escaped x) ^ acc) mv.word ""
-          | Swap _ -> "you should swap"
-          | _ -> failwith "update hint if new commands are added" in
+          | _ -> "you should swap/pass" in
         print_endline hint; st
       | AddWord str -> print_endline ("Added word to dictionary"); do' command st
       | Help -> print_endline ((str_of_help ())^"\n"); st
