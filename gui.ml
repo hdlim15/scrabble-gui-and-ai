@@ -178,7 +178,6 @@ let update_vb b =
       else
         update_vb_helper t
   in
-  Array.iter draw_box vb;
   update_vb_helper b
 
 let update_board b =
@@ -193,8 +192,6 @@ let update_board b =
           update_board_helper t
         end
       else
-        draw_string_in_box Center (String.capitalize_ascii (Char.escaped (fst cell.letter)))
-        vb.(coord_to_array_index (cell.cell_coord)) Graphics.black;
         update_board_helper t
   in
   Array.iter draw_box vb;
