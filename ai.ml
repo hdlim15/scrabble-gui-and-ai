@@ -861,8 +861,8 @@ let get_all_first_move_points moves st =
     ) [] moves
 
 let score_cmp mv1 mv2 =
-  if snd mv1 > snd mv2 then 1
-  else if snd mv1 < snd mv2 then -1 else 0
+  if snd mv1 > snd mv2 then -1
+  else if snd mv1 < snd mv2 then 1 else 0
 
 let sort_moves moves =
   List.sort score_cmp moves
@@ -886,14 +886,14 @@ let pick_best_move rack st moves =
   match moves with
   | [] -> do_swap rack st
   | _ ->
-    let p = fst (List.sort score_cmp moves |> List.rev |> List.hd) in
+    (* let p = fst (List.sort score_cmp moves |> List.rev |> List.hd) in
     let pr = p.word in
     print_endline
       ( string_of_int(fst p.mv_coord) ^ "," ^ string_of_int(snd p.mv_coord) ^ " " ^
         string_of_bool(p.is_horizontal) ^ " " ^
           List.fold_right
-         (fun x acc -> (Char.escaped x) ^ acc) pr "");
-    PlaceWord (fst (List.sort score_cmp moves |> List.rev |> List.hd))
+         (fun x acc -> (Char.escaped x) ^ acc) pr ""); *)
+    PlaceWord (fst (List.sort score_cmp moves |> List.hd))
 
 let pick_worst_move rack st moves =
   match moves with
@@ -933,7 +933,7 @@ let best_move_helper st =
         List.fold_right
          (fun x acc -> (Char.escaped x) ^ acc)  pr.word "");
   else print_endline ""; *)
-  let hel = get_all_move_points (moves) st in
+  let hel = get_all_move_points (moves ) st in
   print_endline (string_of_int (List.length hel));
   hel
 
