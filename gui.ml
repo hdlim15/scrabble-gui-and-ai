@@ -294,12 +294,22 @@ let update_board b =
     | [] -> ()
     | cell::t ->
       if fst cell.letter <> ' ' then
-        begin
-          draw_string_in_box Center (String.capitalize_ascii (Char.escaped (fst cell.letter)))
-            vb.(coord_to_array_index (cell.cell_coord)) Graphics.black;
-          update_board_helper t
-        end
+        (draw_string_in_box Center (String.capitalize_ascii (Char.escaped (fst cell.letter)))
+          vb.(coord_to_array_index (cell.cell_coord)) Graphics.black;
+         update_board_helper t)
       else
+        let str_mult =
+          if cell.cell_coord <> (7,7) then
+            match cell.letter_multiplier, cell.word_multiplier with
+            | 2, 1 -> "DL"
+            | 3, 1 -> "TL"
+            | 1, 2 -> "DW"
+            | 1, 3 -> "TW"
+            | 1, 1 -> ""
+            | _ -> failwith "impossible"
+          else "" in
+        draw_string_in_box Center (String.capitalize_ascii str_mult)
+          vb.(coord_to_array_index (cell.cell_coord)) Graphics.black;
         update_board_helper t
   in
   Array.iter draw_box vb;
@@ -365,6 +375,7 @@ let init_gui st =
     Array.iter draw_box vb;
     Array.iter draw_box (rack 7);
     update_scores (st.players);
+    update_board (List.flatten st.board);
     update_rack (st.current_player);
     draw_string_in_box Center "START" vb.(112) Graphics.black;
     draw_logo ();
