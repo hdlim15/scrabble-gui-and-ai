@@ -54,10 +54,38 @@ let rec get_prev_player n p =
   in
   List.hd (List.filter (fun p -> p.order_num = n') p)
 
+(* [finalize_scores players] is the list of players, with their respective scores
+ * updated based on the tiles left in their rack. Each player's score is reduced
+ * by the sum of their unplayed letters. If a player played all their letters,
+ * the sum of the other players' unplayed letters is added to thta player's
+ * score. *)
+let finalize_scores players =
+  let empty_rack_player =
+    List.hd (List.filter (fun p -> List.length p.rack = 0) players) in
+  let other_players = List.filter (fun p -> List.length p.rack <> 0) players in
+  let score_helper s r =
+    List.fold_left (fun acc (l,p) -> acc - p) s r in
+  let other_players'_w_sumDeductedPts =
+    List.fold_left (fun acc p ->
+      let deducted_ps = p.score - score_helper p.score p.rack in
+      ({p with score = p.score - deducted_ps}::(fst acc)), snd acc + deducted_ps) ([],0) other_players in
+  let empty_rack_player' = {empty_rack_player
+     with score = empty_rack_player.score + snd other_players'_w_sumDeductedPts} in
+  empty_rack_player' :: fst other_players'_w_sumDeductedPts
+
 (* [get_winner st] is the player with the highest score *)
 let get_winner st =
-  List.fold_left
-    (fun acc p -> if p.score > acc.score then p else acc) st.current_player st.players
+  let players' = finalize_scores st.players in
+  let winner_s = List.fold_left
+      (fun acc p ->
+         if p.score > (List.hd acc).score then [p]
+         else
+         if p.score = (List.hd acc).score then
+             p::acc
+           else acc) [List.hd players'] players' in
+  if List.length winner_s = 1 then List.hd winner_s
+  else List.fold_left (fun acc p ->
+      if p.score > acc.score then p else acc) st.current_player st.players
 
 (* [no_empty_rack st] is true if no player has an empty rack *)
 let no_empty_rack st =

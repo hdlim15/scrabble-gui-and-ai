@@ -336,13 +336,14 @@ let has_adj_new_chars c is_h st =
         cell_right.letter <> (' ', -1) || cell_left.letter <> (' ', -1)
     end
 
-(* [get_adjacent_word c st is_h new_chars] returns a pair option with the
- * adjacent word at coordinate [c] on the board in [st] and the points
- * associated with it. Only coordinates in [new_coord] have their scores multiplied
- * by their letter multiplier. [is_h] determines whether the adjacent word is
- * searched for horizontally or vertically. None is returned if [c] is empty or
- * there are no adjacent characters to [c] in the direction specified by [is_h].
-*)
+(* [get_adjacent_word c st is_h new_chars] returns a triple option with the
+ * adjacent word at coordinate [c] on the board in [st], the points
+ * associated with it, and the word multiplier applied to it, used later for
+ * correcting blank tile scoring. Only coordinates in [new_coord] have their
+ * scores multiplied by their letter multiplier. [is_h] determines whether the
+ * adjacent word is searched for horizontally or vertically. None is returned if
+ * [c] is empty or there are no adjacent characters to [c] in the direction
+ * specified by [is_h]. *)
 let get_adjacent_word c st is_h new_coords =
   if has_adj_new_chars c is_h st then
     let word_cells = get_adjacent_cells c st is_h in
@@ -366,7 +367,7 @@ let get_adjacent_word c st is_h new_coords =
         adjacent_helper t (new_string, points, word_multiplier)
     in
     let word_triple = adjacent_helper word_cells ("", 0, 1) in
-    Some (fst_triple word_triple, (snd_triple word_triple) * (trd_triple word_triple))
+    Some (fst_triple word_triple, (snd_triple word_triple) * (trd_triple word_triple), trd_triple word_triple)
   else
     None
 
@@ -553,7 +554,7 @@ let rec get_values_from_opt_list opt_lst acc =
   | (None)::t -> get_values_from_opt_list t acc
 
 (* [refresh_rack new_chars rack] swaps blank tiles in [rack] with the subset of
- * letters in new_chars that are not explicitely present in the rack. *)
+ * letters in new_chars that are not explicitly present in the rack. *)
 let refresh_rack new_chars rack =
   let new_chars' = List.map (fun (c,coord) -> c) new_chars in
   let rack_chars = List.map (fun (c,_) -> c) rack in
@@ -573,12 +574,12 @@ let refresh_rack new_chars rack =
   fixed_rack @ fixed_chars
 
 (* [fix_score curr_player players rack'] is the list of players, with the current
- * player's ()[curr_player]) score adjusted for any possible use of blank tiles *)
-let fix_score curr_player players rack' =
+ * player's ([curr_player]) score adjusted for any possible use of blank tiles *)
+let fix_score curr_player players rack' word_mult =
   let rec helper r =
     match r with
     | [] -> 0
-    | (c,0)::t -> if c <> '*' then get_points c + (helper t) else helper t
+    | (c,0)::t -> if c <> '*' then (word_mult * get_points c) + (helper t) else helper t
     | _::t -> helper t in
   let points_to_deduct = helper rack' in
   let p = List.hd (List.filter (fun p -> p.name = curr_player) players) in
@@ -589,7 +590,6 @@ let fix_score curr_player players rack' =
  * raises: [InvalidPlace] if one cannot place [w] at coordinate [c]. *)
 let rec place mv st =
   let word = List.fold_right (fun c acc -> (Char.escaped c)^acc) mv.word "" in
-
   if not (check_word word st) then raise (InvalidPlace "invalid word")
   else if not (check_bounds mv st) then raise (InvalidPlace "cannot place off board")
   else if not (check_endpoints mv st) then raise (InvalidPlace "not complete word")
@@ -600,9 +600,7 @@ let rec place mv st =
     if not (check_rack st.current_player.rack new_chars) then
       raise (InvalidPlace "letters not in rack")
     else
-
       let rack' = refresh_rack new_chars st.current_player.rack in
-
       let board' = update_board mv st in
       let row7 = List.nth board' 7 in
       let cell7 = List.nth row7 7 in
@@ -616,11 +614,11 @@ let rec place mv st =
         let word_score_opt =
           get_adjacent_word mv.mv_coord {st with board = board'} mv.is_horizontal new_coords in
         let word_score = List.hd (get_values_from_opt_list [word_score_opt] []) in
-        let score' =
-          if List.length new_chars = 7 then (snd word_score + 50) else (snd word_score) in
+        let score' = (* score adjusted for bingo rule *)
+          if List.length new_chars = 7 then (snd_triple word_score + 50) else (snd_triple word_score) in
         let updated_players =
           update_players current_player (fst rack_bag) st.players score' in
-        let updated_players' = fix_score current_player.name updated_players rack' in
+        let updated_players' = fix_score current_player.name updated_players rack' (trd_triple word_score) in
         let next_player = get_next_player current_player.order_num updated_players' in
         {st with players = updated_players';
                  board = board';
@@ -635,7 +633,6 @@ let rec place mv st =
     else
       (* assuming place is valid... *)
       let rack' = refresh_rack new_chars st.current_player.rack in
-
       let board' = update_board mv st in
       let just_new_chars = List.map (fun (c,coord) -> c) new_chars in
       let new_coords = List.map (fun (_,coord) -> coord) new_chars in
@@ -657,17 +654,15 @@ let rec place mv st =
           :: word_score_opp_dir_opt in
         let word_score_lst = get_values_from_opt_list word_score_lst_opt [] in
         let valid_words =
-          List.fold_left (fun acc (s, i) ->
-              (fst acc && check_word s st, snd acc + i)) (true, 0) word_score_lst in
-        let score' =
-          if List.length new_chars = 7 then (snd valid_words + 50) else (snd valid_words) in
-        if fst valid_words then
+          List.fold_left (fun acc (s, i, wm) ->
+              (fst_triple acc && check_word s st, snd_triple acc + i, trd_triple acc * wm)) (true, 0, 1) word_score_lst in
+        let score' = (* score adjusted for bingo rule *)
+          if List.length new_chars = 7 then (snd_triple valid_words + 50) else (snd_triple valid_words) in
+        if fst_triple valid_words then
           let updated_players =
             update_players current_player (fst rack_bag) st.players score' in
-          let updated_players' = fix_score current_player.name updated_players rack' in
-
+          let updated_players' = fix_score current_player.name updated_players rack' (trd_triple valid_words) in
           let next_player = get_next_player current_player.order_num updated_players' in
-          (* update score, change turn, update player rack and bag etc *)
           {st_board with players = updated_players';
                          current_player = next_player;
                          bag = (snd rack_bag);

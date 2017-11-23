@@ -97,13 +97,15 @@ val cell_is_empty  : cell -> bool
  * not in [lst], [lst] is returned. *)
 val remove : 'a -> 'a list -> 'a list
 
-(* [get_adjacent_word c st is_h] returns a pair option with the adjacent word at
- * coordinate [c] on the board in [st] and the points associated with it. [is_h]
- * determines whether the adjacent word is searched for horizontally or
- * vertically. If the cell at [c] is empty, the empty string is returned with 0
- * points. None is returned if [c] is empty or there are no adjacent characters
- * to [c] in the direction specified by [is_h]. *)
-val get_adjacent_word : coordinate -> state -> bool -> coordinate list -> (string*int) option
+(* [get_adjacent_word c st is_h new_chars] returns a triple option with the
+ * adjacent word at coordinate [c] on the board in [st], the points
+ * associated with it, and the word multiplier applied to it, used later for
+ * correcting blank tile scoring. Only coordinates in [new_coord] have their
+ * scores multiplied by their letter multiplier. [is_h] determines whether the
+ * adjacent word is searched for horizontally or vertically. None is returned if
+ * [c] is empty or there are no adjacent characters to [c] in the direction
+ * specified by [is_h]. *)
+val get_adjacent_word : coordinate -> state -> bool -> coordinate list -> (string*int*int) option
 
 (* [point_moves m] is the number of points earned by the move [m] *)
 (* val point_moves : Command.move -> int *)
@@ -138,6 +140,10 @@ val has_adj_new_chars : coordinate -> bool -> state -> bool
  * extracted values from [opt_lst]. [None] doesn't add anything to the returned
  * list. *)
 val get_values_from_opt_list : 'a option list -> 'a list -> 'a list
+
+(* [snd_triple t] returns the second element from tuple [t] with three
+ * elements. *)
+val snd_triple : 'a * 'b * 'c -> 'b
 
 (* [do' c st] is [st'] if doing command [c] in state [st] results
  * in a new state [st']. *)

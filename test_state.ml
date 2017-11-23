@@ -124,7 +124,7 @@ let rec check_order_nums players =
  * [c] in the direction specified by [is_h] is equal to [word]. *)
 let verify_board c st is_h word =
   match (get_adjacent_word c st is_h []) with
-  | Some (s, _) -> s = word
+  | Some (s, _,_) -> s = word
   | None -> false
 
 let init_state_tests = [
@@ -340,25 +340,25 @@ let move2_v_chat = {word = ['c'; 'h'; 'a'; 't'];
 let place_tests = [
   (* Blank tile tests *)
   "blank_score_1" >:: (fun _ ->
-      assert_equal 5 (do' (PlaceWord blank_mv1) blank1_state).current_player.score);
+      assert_equal 10 (do' (PlaceWord blank_mv1) blank1_state).current_player.score);
   "blank_score_2" >:: (fun _ ->
-      assert_equal 5 (do' (PlaceWord blank_mv2) blank1_state).current_player.score);
+      assert_equal 10 (do' (PlaceWord blank_mv2) blank1_state).current_player.score);
   "blank_rack_no_blank" >:: (fun _ ->
       assert_equal false (let r = ((do' (PlaceWord blank_mv2) blank1_state).current_player.rack) in
                           List.mem '*' (List.map (fun (c,_)->c) r)));
   "blank_score_3" >:: (fun _ ->
-      assert_equal 1 (do' (PlaceWord blank_mv3) blank2_state).current_player.score);
+      assert_equal 2 (do' (PlaceWord blank_mv3) blank2_state).current_player.score);
   "blank_score_4" >:: (fun _ ->
-      assert_equal 1 (do' (PlaceWord blank_mv4) blank2_state).current_player.score);
+      assert_equal 2 (do' (PlaceWord blank_mv4) blank2_state).current_player.score);
   "blank_rack_no_blanks" >:: (fun _ ->
       assert_equal false (let r = ((do' (PlaceWord blank_mv2) blank2_state).current_player.rack) in
                           List.mem '*' (List.map (fun (c,_)->c) r)));
 
   (* Score tests *)
   "basic_score_hor" >:: (fun _ ->
-      assert_equal 10 (do' (PlaceWord basic_mv1) basic_state).current_player.score);
+      assert_equal 20 (do' (PlaceWord basic_mv1) basic_state).current_player.score);
   "basic_score_vert" >:: (fun _ ->
-      assert_equal 10
+      assert_equal 20
         (do' (PlaceWord {basic_mv1 with is_horizontal=false}) basic_state).current_player.score);
   "score_vert_intersect_hor" >:: (fun _ ->
       assert_equal 25 (do' (PlaceWord basic_mv2) camel_hor_st).current_player.score);

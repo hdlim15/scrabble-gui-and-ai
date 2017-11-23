@@ -106,14 +106,14 @@ let extends_both_directions c st is_h =
     | Some c' ->
       match get_adjacent_word c' st true [] with
       | None -> false, ""
-      | Some (word,_) -> true, word in
+      | Some (word,_,_) -> true, word in
     let right =
     match right_cell c with
     | None -> false, ""
     | Some c' ->
       match get_adjacent_word c' st true [] with
       | None -> false, ""
-      | Some (word,_) -> true, word in
+      | Some (word,_,_) -> true, word in
     left, right
   else
     let up =
@@ -122,14 +122,14 @@ let extends_both_directions c st is_h =
     | Some c' ->
       match get_adjacent_word c' st false [] with
       | None -> false, ""
-      | Some (word,_) -> true, word in
+      | Some (word,_,_) -> true, word in
     let down =
       match down_cell c with
     | None -> false, ""
     | Some c' ->
       match get_adjacent_word c' st false [] with
       | None -> false, ""
-      | Some (word,_) -> true, word in
+      | Some (word,_,_) -> true, word in
     up, down
 
 let get_all_adj_words c st =
@@ -139,28 +139,28 @@ let get_all_adj_words c st =
     | Some c' ->
       match get_adjacent_word c' st true [] with
       | None -> ""
-      | Some (word,_) -> word in
+      | Some (word,_,_) -> word in
   let right =
     match right_cell c with
     | None -> ""
     | Some c' ->
       match get_adjacent_word c' st true [] with
       | None -> ""
-      | Some (word,_) -> word in
+      | Some (word,_,_) -> word in
   let up =
     match up_cell c with
     | None -> ""
     | Some c' ->
       match get_adjacent_word c' st false [] with
       | None -> ""
-      | Some (word,_) -> word in
+      | Some (word,_,_) -> word in
   let down =
     match up_cell c with
     | None -> ""
     | Some c' ->
       match get_adjacent_word c' st false [] with
       | None -> ""
-      | Some (word,_) -> word in
+      | Some (word,_,_) -> word in
   [left;right;up;down]
 
 let rec get_coord_cell_next_word c st dir =
@@ -217,7 +217,7 @@ let cross_check c chr st =
         let cell' = get_cell_from_coordinate c' st  in
         if not (cell' |> cell_is_empty) then (fst cell'.letter) |> Char.escaped
         else ""
-      | Some (word,_) -> word in
+      | Some (word,_,_) -> word in
   let right =
     match right_cell c with
     | None -> ""
@@ -227,7 +227,7 @@ let cross_check c chr st =
         let cell' = get_cell_from_coordinate c' st  in
         if not (cell' |> cell_is_empty) then (fst cell'.letter) |> Char.escaped
         else ""
-      | Some (word,_) -> word in
+      | Some (word,_,_) -> word in
   let up =
     match up_cell c with
     | None -> ""
@@ -237,7 +237,7 @@ let cross_check c chr st =
         let cell' = get_cell_from_coordinate c' st  in
         if not (cell' |> cell_is_empty) then (fst cell'.letter) |> Char.escaped
         else ""
-      | Some (word,_) -> word in
+      | Some (word,_,_) -> word in
   let down =
     match down_cell c with
     | None -> ""
@@ -247,7 +247,7 @@ let cross_check c chr st =
         let cell' = get_cell_from_coordinate c' st  in
         if not (cell' |> cell_is_empty) then (fst cell'.letter) |> Char.escaped
         else ""
-      | Some (word,_) -> word in
+      | Some (word,_,_) -> word in
   let bool1 =
     let hor = left ^ (Char.escaped chr) ^ right in
     if hor = (Char.escaped chr) then true
@@ -428,7 +428,7 @@ let make_move c rack st =
   | Some c' ->
       match get_adjacent_word c' st true [] with
     | None -> None
-    | Some (str,_) ->
+    | Some (str,_,_) ->
       let extensions = get_extensions str f_dict in
       let words = (valid_extensions rack extensions) |> concat_moves str in
       Some (words,str)in
@@ -449,7 +449,7 @@ let make_move c rack st =
   | Some c' ->
       match get_adjacent_word c' st true [] with
     | None -> None
-    | Some (str,_) ->
+    | Some (str,_,_) ->
       let extensions = get_extensions (reverse_str str) r_dict in
       let words = (valid_extensions rack extensions) in
       Some (words,str) in
@@ -469,7 +469,7 @@ let make_move c rack st =
   | Some c' ->
       match get_adjacent_word c' st false [] with
     | None -> None
-    | Some (str,_) ->
+    | Some (str,_,_) ->
       let extensions = get_extensions str f_dict in
       let words = (valid_extensions rack extensions) |> concat_moves str in
       Some (words,str)in
@@ -490,7 +490,7 @@ let make_move c rack st =
     | Some c' ->
         match get_adjacent_word c' st false [] with
       | None -> None
-      | Some (str,_) ->
+      | Some (str,_,_) ->
         let extensions = get_extensions (reverse_str str) r_dict in
         let words = (valid_extensions rack extensions) in
         Some (words,str) in
@@ -794,7 +794,7 @@ let get_points mv st =
         :: word_score_opp_dir_opt in
       let word_score_lst = get_values_from_opt_list word_score_lst_opt [] in
       let valid_words =
-        List.fold_left (fun acc (s, i) ->
+        List.fold_left (fun acc (s, i, _) ->
             (fst acc  && check_word s st, snd acc + i)) (true, 0) word_score_lst
       in
       let score' =
@@ -818,7 +818,7 @@ let get_first_move_points mv st =
           mv.is_horizontal new_coords in
       let word_score = List.hd (get_values_from_opt_list [word_score_opt] []) in
       let score' =
-        if List.length new_chars = 7 then (snd word_score + 50) else (snd word_score) in
+        if List.length new_chars = 7 then (snd_triple word_score + 50) else (snd_triple word_score) in
       score'
 
 let generate_move cell str dir =
