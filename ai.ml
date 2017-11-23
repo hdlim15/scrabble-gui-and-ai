@@ -489,7 +489,9 @@ let get_points mv st =
         List.fold_left (fun acc (s, i) ->
             (fst acc  && check_word s st, snd acc + i)) (true, 0) word_score_lst
       in
-      if fst valid_words then snd valid_words
+      let score' =
+        if List.length new_chars = 7 then (snd valid_words + 50) else (snd valid_words) in
+      if fst valid_words then score'
       else
         raise (InvalidPlace "invalid newly-formed word")
 
@@ -507,7 +509,9 @@ let get_first_move_points mv st =
         get_adjacent_word mv.mv_coord {st with board = board'}
           mv.is_horizontal new_coords in
       let word_score = List.hd (get_values_from_opt_list [word_score_opt] []) in
-      snd word_score
+      let score' =
+        if List.length new_chars = 7 then (snd word_score + 50) else (snd word_score) in
+      score'
 
 let generate_move cell str dir =
   match dir with

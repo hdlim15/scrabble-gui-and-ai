@@ -616,8 +616,10 @@ let rec place mv st =
         let word_score_opt =
           get_adjacent_word mv.mv_coord {st with board = board'} mv.is_horizontal new_coords in
         let word_score = List.hd (get_values_from_opt_list [word_score_opt] []) in
+        let score' =
+          if List.length new_chars = 7 then (snd word_score + 50) else (snd word_score) in
         let updated_players =
-          update_players current_player (fst rack_bag) st.players (snd word_score) in
+          update_players current_player (fst rack_bag) st.players score' in
         let updated_players' = fix_score current_player.name updated_players rack' in
         let next_player = get_next_player current_player.order_num updated_players' in
         {st with players = updated_players';
@@ -657,9 +659,11 @@ let rec place mv st =
         let valid_words =
           List.fold_left (fun acc (s, i) ->
               (fst acc && check_word s st, snd acc + i)) (true, 0) word_score_lst in
+        let score' =
+          if List.length new_chars = 7 then (snd valid_words + 50) else (snd valid_words) in
         if fst valid_words then
           let updated_players =
-            update_players current_player (fst rack_bag) st.players (snd valid_words) in
+            update_players current_player (fst rack_bag) st.players score' in
           let updated_players' = fix_score current_player.name updated_players rack' in
 
           let next_player = get_next_player current_player.order_num updated_players' in
