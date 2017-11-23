@@ -165,7 +165,7 @@ let dls_indeces =
 (* [dws_indeces] are the array indices that correspond to cells with double
  * word multipliers. *)
 let dws_indeces =
-  [16; 28; 32; 42; 48; 56; 64; 70; 154; 160; 168; 176; 182; 192; 196; 208]
+  [16; 28; 32; 42; 48; 56; 64; 70; 112; 154; 160; 168; 176; 182; 192; 196; 208]
 
 (* [tls_indeces] are the array indices that correspond to cells with triple
  * letter multipliers. *)
