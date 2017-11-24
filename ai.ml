@@ -98,40 +98,6 @@ let has_adjacent_word_tile c st =
 let get_anchors empty_cells st =
   List.filter (fun c -> has_adjacent_word_tile c st ) empty_cells
 
-(* let extends_both_directions c st is_h =
-  if is_h then
-    let left =
-    match left_cell c with
-    | None -> false, ""
-    | Some c' ->
-      match get_adjacent_word c' st true [] with
-      | None -> false, ""
-      | Some (word,_,_) -> true, word in
-    let right =
-    match right_cell c with
-    | None -> false, ""
-    | Some c' ->
-      match get_adjacent_word c' st true [] with
-      | None -> false, ""
-      | Some (word,_,_) -> true, word in
-    left, right
-  else
-    let up =
-    match up_cell c with
-    | None -> false, ""
-    | Some c' ->
-      match get_adjacent_word c' st false [] with
-      | None -> false, ""
-      | Some (word,_,_) -> true, word in
-    let down =
-      match down_cell c with
-    | None -> false, ""
-    | Some c' ->
-      match get_adjacent_word c' st false [] with
-      | None -> false, ""
-      | Some (word,_,_) -> true, word in
-    up, down *)
-
 let get_all_adj_words c st =
   let left =
     match left_cell c with
