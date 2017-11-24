@@ -933,7 +933,7 @@ let best_move_helper st =
         List.fold_right
          (fun x acc -> (Char.escaped x) ^ acc)  pr.word "");
   else print_endline ""; *)
-  let hel = get_all_move_points (moves ) st in
+  let hel = get_all_move_points (moves) st in
   print_endline (string_of_int (List.length hel));
   hel
 
