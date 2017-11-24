@@ -259,11 +259,24 @@ let update_rack cp =
   Array.iter draw_box r_array;
   update_rack_helper cp.rack 0
 
-let init_pass () =
-  let b = {x = 630; y = 30; w = 60; h = 60; bw = 2;
-           b1_col = gray1; b2_col = gray3; b_col = gray2; r = Top} in
-  draw_box b;
-  draw_string_in_box Center "Pass" b Graphics.black
+let init_buttons () =
+  let b_pass = {x = 632; y = 30; w = 60; h = 60; bw = 2;
+                b1_col = gray1; b2_col = gray3; b_col = gray2; r = Top} in
+  draw_box b_pass;
+  draw_string_in_box Center "Pass" b_pass Graphics.black;
+  let b_help = {x = 724; y = 30; w = 60; h = 60; bw = 2;
+                b1_col = gray1; b2_col = gray3; b_col = gray2; r = Top} in
+  draw_box b_help;
+  draw_string_in_box Center "Help" b_help Graphics.black;
+  let b_hint = {x = 816; y = 30; w = 60; h = 60; bw = 2;
+                b1_col = gray1; b2_col = gray3; b_col = gray2; r = Top} in
+  draw_box b_hint;
+  draw_string_in_box Center "Hint" b_hint Graphics.black;
+  let b_quit = {x = 908; y = 30; w = 60; h = 60; bw = 2;
+                b1_col = gray1; b2_col = gray3; b_col = gray2; r = Top} in
+  draw_box b_quit;
+  draw_string_in_box Center "Quit" b_quit Graphics.black
+
 
 (* [update_vb b] takes a flattened board [b] and replaces any colored cells with
  * letters in them with standard beige colors in [vb]. This represents a
@@ -366,7 +379,7 @@ let update_gui st =
   update_board (List.flatten st.board);
   update_scores st.players;
   update_rack st.current_player;
-  init_pass ()
+  init_buttons ()
 
 (* [init_gui st] initializes the GUI when the game starts with initial state
  * [st]. The graphics window is opened and the empty board, logo, scoreboard,
@@ -382,7 +395,7 @@ let init_gui st =
     update_rack (st.current_player);
     draw_string_in_box Center "START" vb.(112) Graphics.black;
     draw_logo ();
-    init_pass ()
+    init_buttons ()
   with
   | Graphics.Graphic_failure("fatal I/O error") ->
     print_endline "Thanks for playing!"
