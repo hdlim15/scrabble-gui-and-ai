@@ -293,6 +293,8 @@ let update_board b =
     match b' with
     | [] -> ()
     | cell::t ->
+      if fst cell.letter = ' ' && cell.cell_coord = (7,7) then
+        draw_string_in_box Center "START" vb.(112) Graphics.black;
       if fst cell.letter <> ' ' then
         (draw_string_in_box Center (String.capitalize_ascii (Char.escaped (fst cell.letter)))
           vb.(coord_to_array_index (cell.cell_coord)) Graphics.black;
@@ -307,7 +309,8 @@ let update_board b =
             | 1, 3 -> "TW"
             | 1, 1 -> ""
             | _ -> failwith "impossible"
-          else "" in
+          else ""
+        in
         draw_string_in_box Center (String.capitalize_ascii str_mult)
           vb.(coord_to_array_index (cell.cell_coord)) Graphics.black;
         update_board_helper t
