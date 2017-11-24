@@ -98,7 +98,7 @@ let has_adjacent_word_tile c st =
 let get_anchors empty_cells st =
   List.filter (fun c -> has_adjacent_word_tile c st ) empty_cells
 
-let extends_both_directions c st is_h =
+(* let extends_both_directions c st is_h =
   if is_h then
     let left =
     match left_cell c with
@@ -130,7 +130,7 @@ let extends_both_directions c st is_h =
       match get_adjacent_word c' st false [] with
       | None -> false, ""
       | Some (word,_,_) -> true, word in
-    up, down
+    up, down *)
 
 let get_all_adj_words c st =
   let left =
@@ -449,7 +449,7 @@ let make_move c rack st =
   | Some c' ->
       match get_adjacent_word c' st true [] with
     | None -> None
-    | Some (str,_,_) ->
+    | Some (str,_,__) ->
       let extensions = get_extensions (reverse_str str) r_dict in
       let words = (valid_extensions rack extensions) in
       Some (words,str) in
