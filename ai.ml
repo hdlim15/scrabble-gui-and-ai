@@ -836,7 +836,7 @@ let pick_best_move rack st moves =
         with
         _ -> acc
     ) ({word = [];mv_coord = (0,0);is_horizontal = false}, -1) moves in
-  if ( (fst best_move).word = []) then do_swap rack st
+  if ( (snd best_move) = -1) then do_swap rack st
   else PlaceWord (fst best_move)
 
 let pick_worst_move rack st moves =
@@ -868,7 +868,7 @@ let best_first_move moves rack st =
           with
             _ -> acc
       ) ({word = [];mv_coord = (0,0);is_horizontal = false}, -1) moves in
-    if ( (fst best_move).word = []) then do_swap rack st
+    if ( (snd best_move) = -1) then do_swap rack st
     else PlaceWord (fst best_move)
 
 let get_letters_rack rack =
