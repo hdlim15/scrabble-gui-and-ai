@@ -259,7 +259,9 @@ let update_rack cp =
   Array.iter draw_box r_array;
   update_rack_helper cp.rack 0
 
-let init_buttons () =
+(* [draw_buttons ()] draws all of the buttons used to perform different actions
+ * in the game. *)
+let draw_buttons () =
   let b_pass = {x = 632; y = 30; w = 60; h = 60; bw = 2;
                 b1_col = gray1; b2_col = gray3; b_col = gray2; r = Top} in
   draw_box b_pass;
@@ -275,8 +277,23 @@ let init_buttons () =
   let b_quit = {x = 908; y = 30; w = 60; h = 60; bw = 2;
                 b1_col = gray1; b2_col = gray3; b_col = gray2; r = Top} in
   draw_box b_quit;
-  draw_string_in_box Center "Quit" b_quit Graphics.black
-
+  draw_string_in_box Center "Quit" b_quit Graphics.black;
+  let b_show_rack = {x = 632; y = 120; w = 60; h = 60; bw = 2;
+                b1_col = gray1; b2_col = gray3; b_col = gray2; r = Top} in
+  draw_box b_show_rack;
+  draw_string_in_box Center "Show Rack" b_show_rack Graphics.black;
+  let b_hide_rack = {x = 724; y = 120; w = 60; h = 60; bw = 2;
+                b1_col = gray1; b2_col = gray3; b_col = gray2; r = Top} in
+  draw_box b_hide_rack;
+  draw_string_in_box Center "Hide Rack" b_hide_rack Graphics.black;
+  let b_swap = {x = 816; y = 120; w = 60; h = 60; bw = 2;
+                b1_col = gray1; b2_col = gray3; b_col = gray2; r = Top} in
+  draw_box b_swap;
+  draw_string_in_box Center "Swap" b_swap Graphics.black;
+  let b_place = {x = 908; y = 120; w = 60; h = 60; bw = 2;
+                b1_col = gray1; b2_col = gray3; b_col = gray2; r = Top} in
+  draw_box b_place;
+  draw_string_in_box Center "Place" b_place Graphics.black
 
 (* [update_vb b] takes a flattened board [b] and replaces any colored cells with
  * letters in them with standard beige colors in [vb]. This represents a
@@ -379,7 +396,7 @@ let update_gui st =
   update_board (List.flatten st.board);
   update_scores st.players;
   update_rack st.current_player;
-  init_buttons ()
+  draw_buttons ()
 
 (* [init_gui st] initializes the GUI when the game starts with initial state
  * [st]. The graphics window is opened and the empty board, logo, scoreboard,
@@ -395,7 +412,7 @@ let init_gui st =
     update_rack (st.current_player);
     draw_string_in_box Center "START" vb.(112) Graphics.black;
     draw_logo ();
-    init_buttons ()
+    draw_buttons ()
   with
   | Graphics.Graphic_failure("fatal I/O error") ->
     print_endline "Thanks for playing!"
