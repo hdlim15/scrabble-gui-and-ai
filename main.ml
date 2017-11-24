@@ -61,7 +61,9 @@ let rec get_prev_player n p =
  * score. *)
 let finalize_scores players =
   let empty_rack_player =
-    List.hd (List.filter (fun p -> List.length p.rack = 0) players) in
+  if List.length (List.filter (fun p -> List.length p.rack = 0) players) <> 0 then
+    Some (List.hd (List.filter (fun p -> List.length p.rack = 0) players))
+  else None in
   let other_players = List.filter (fun p -> List.length p.rack <> 0) players in
   let score_helper s r =
     List.fold_left (fun acc (l,p) -> acc - p) s r in
@@ -69,9 +71,11 @@ let finalize_scores players =
     List.fold_left (fun acc p ->
       let deducted_ps = p.score - score_helper p.score p.rack in
       ({p with score = p.score - deducted_ps}::(fst acc)), snd acc + deducted_ps) ([],0) other_players in
-  let empty_rack_player' = {empty_rack_player
-     with score = empty_rack_player.score + snd other_players'_w_sumDeductedPts} in
-  empty_rack_player' :: fst other_players'_w_sumDeductedPts
+  match empty_rack_player with
+  | Some p ->
+    let empty_rack_player' = {p with score = p.score + snd other_players'_w_sumDeductedPts} in
+    empty_rack_player' :: fst other_players'_w_sumDeductedPts
+  | None -> fst other_players'_w_sumDeductedPts
 
 (* [get_winner st] is the player with the highest score *)
 let get_winner st =
@@ -93,18 +97,17 @@ let no_empty_rack st =
 
 (* [get_command ()] is a command, generated from user input *)
 let rec get_command st =
-  try
-    match st.current_player.player_type with
-    | Human ->
-      print_string "> ";
-      let command = try (parse (read_line ())) with
-        | InvalidCommand ->
-          (print_endline "Invalid action, type 'help' for a list of valid actions";
-           get_command st)
-      in command
-    | AI diff -> Ai.best_move st
-  with
-    Graphics.Graphic_failure _ -> print_endline "\nThanks for playing."; exit 0
+  match st.current_player.player_type with
+  | Human ->
+    (* print_string "> ";
+    let command = try (parse (read_line ())) with
+      | InvalidCommand ->
+        (print_endline "Invalid action, type 'help' for a list of valid actions";
+         get_command st)
+       in command *)
+    gui_cmd st
+  | AI diff -> Ai.best_move st
+
 
 (* [clear ()] wipes the terminal window so players can't see other players' racks *)
 let rec clear () =
@@ -123,7 +126,7 @@ let end_turn st end_type =
   | `Place ->
     print_endline (string_of_board st.board);
     print_endline "Press 'ENTER' to end your turn.";
-    let _ = read_line () in
+    (* let _ = read_line () in *)
     clear ();
     print_endline (st.current_player.name ^ "'s turn.");
     (* print_endline (str_of_rack st.current_player.rack)  *)
@@ -167,7 +170,10 @@ let rec play_game st =
         let st' = do' command st in end_turn st' `Pass; st'
     with
     | InvalidPlace s -> print_endline ("Invalid Place: " ^ s ^ "\n"); st
-    | InvalidSwap -> print_endline ("Invalid Swap\n"); st
+    | InvalidSwap ->
+      if List.length st.bag = 0 then
+        (print_endline "Cannot swap, bag is empty\n"; st)
+      else (print_endline "Invalid swap\n"; st)
     | InvalidAdd -> print_endline ("Invalid Add\n"); st
   in
   update_gui new_state;
@@ -268,11 +274,14 @@ let init_game rdy =
 
 (* [main ()] starts the REPL *)
 let main () =
-  print_endline "\n\nWelcome to Scrabble!\n";
-  print_endline "Ready to play? (yes/no)";
-  print_string "> ";
-  match read_line () with
-  | exception End_of_file -> ()
-  | ready -> init_game ready
+  try
+    print_endline "\n\nWelcome to Scrabble!\n";
+    print_endline "Ready to play? (yes/no)";
+    print_string "> ";
+    match read_line () with
+    | exception End_of_file -> ()
+    | ready -> init_game ready
+  with
+    Graphics.Graphic_failure _ -> print_endline "\nThanks for playing."; exit 0
 
 let () = main ()

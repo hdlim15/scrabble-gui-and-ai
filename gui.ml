@@ -1,4 +1,6 @@
 open State
+open Command
+open Graphics
 
 (* [relief] represents a particular area of a scrabble board tile. Different
  * areas are shaded differently to provide a 3D effect. *)
@@ -257,7 +259,7 @@ let update_rack cp =
   in
   draw_string (cp.name ^ "'s rack:") 660 400 true;
   Array.iter draw_box r_array;
-  update_rack_helper cp.rack 0
+  update_rack_helper (List.rev cp.rack) 0
 
 (* [draw_buttons ()] draws all of the buttons used to perform different actions
  * in the game. *)
@@ -397,6 +399,87 @@ let update_gui st =
   update_scores st.players;
   update_rack st.current_player;
   draw_buttons ()
+
+(* [mem (x,y) (x0,y0,w,h)] is true if (x,y) is within the rectangle specified
+ * by (x0,y0,w,h) and false otherwise *)
+let mem (x,y) (x0,y0,w,h) =
+  (x >= x0) && (x< x0+w) && (y>=y0) && ( y<y0+h)
+
+(* coordinates of rectangle representing the pass button *)
+let pass_btn = (632, 30, 60, 60)
+
+(* coordinates of rectangle representing the help button *)
+let help_btn = (724, 30, 60, 60)
+
+(* coordinates of rectangle representing the hint button *)
+let hint_btn = (816, 30, 60, 60)
+
+(* coordinates of rectangle representing the quit button *)
+let quit_btn = (908, 30, 60, 60)
+
+(* coordinates of rectangle representing the show rack button *)
+let show_rack_btn = (632, 120, 60, 60)
+
+(* coordinates of rectangle representing the hide rack button *)
+let hide_rack_btn = (724, 120, 60, 60)
+
+(* coordinates of rectangle representing the swap button *)
+let swap_btn = (816, 120, 60, 60)
+
+(* coordinates of rectangle representing the place button *)
+let place_btn = (908, 120, 60, 60)
+
+(* [get_rack_coords rack_len] is the list of lower-left corners of boxes
+ * corresponding to the characters in the players rack. *)
+let rec get_rack_coords rack_len =
+  match rack_len with
+  | 0 -> []
+  | _ -> (580 + rack_len * 40, 350) :: get_rack_coords (rack_len - 1)
+
+(* [get_idx_from_coord x] is the rack index corresponding to a given x coord in
+ * the gui. *)
+let get_idx_from_coord x =
+  (x - 620) / 40 - 1
+
+(* [swap_helper rack] is a character list corresponding to rack boxes in the gui
+ * that are clicked on prior to clicking the 'swap' button to finalize the swap
+ * command.
+ * requires: 'swap' button was clicked prior to initial function call *)
+let rec swap_helper rack =
+  let s = wait_next_event [Button_down] in
+  if mem (s.mouse_x, s.mouse_y) swap_btn then []
+  else
+    let rack_len = List.length rack in
+    let rack_coords = get_rack_coords rack_len in
+    let rack_index = List.fold_left
+        (fun acc (r_x, r_y) ->
+           if mem (s.mouse_x, s.mouse_y) (r_x, r_y, 40, 40) then
+             (get_idx_from_coord r_x) else acc) (-1) rack_coords in
+    if rack_index = -1 then swap_helper rack
+    else fst (List.nth rack rack_index) :: swap_helper rack
+
+(* [gui_cmd st] is the command received from user input via the gui *)
+let rec gui_cmd st =
+  let curr_status = wait_next_event [Button_down] in
+  let x = curr_status.mouse_x in
+  let y = curr_status.mouse_y in
+  if mem (x, y) pass_btn then
+    Pass
+  else if mem (x, y) help_btn then
+    failwith "help command"
+  else if mem (x, y) hint_btn then
+    Hint
+  else if mem (x, y) quit_btn then
+    Quit
+  else if mem (x, y) show_rack_btn then
+    failwith "show rack"
+  else if mem (x, y) hide_rack_btn then
+    failwith "hide rack"
+  else if mem (x, y) swap_btn then
+    Swap (swap_helper st.current_player.rack)
+  else if mem (x, y) place_btn then
+    failwith "place"
+  else gui_cmd st
 
 (* [init_gui st] initializes the GUI when the game starts with initial state
  * [st]. The graphics window is opened and the empty board, logo, scoreboard,
