@@ -766,6 +766,7 @@ let get_points mv st =
       let score' =
         if List.length new_chars = 7 then (snd valid_words + 50) else (snd valid_words) in
       if fst valid_words then score'
+
       else
         raise (InvalidPlace "invalid newly-formed word")
 
@@ -810,29 +811,6 @@ let generate_all_moves all_moves =
     (fun acc x -> (generate_moves_for_anchor x)::acc) [] all_moves
   |> List.flatten
 
-let get_all_move_points moves st =
-  List.fold_left
-    (fun acc x ->
-       try
-         ( x, get_points x st)::acc with
-         _ -> acc
-    ) [] moves
-
-let get_all_first_move_points moves st =
-  List.fold_left
-    (fun acc x ->
-       try
-         ( x, get_first_move_points x st)::acc with
-         _ -> acc
-    ) [] moves
-
-let score_cmp mv1 mv2 =
-  if snd mv1 > snd mv2 then -1
-  else if snd mv1 < snd mv2 then 1 else 0
-
-let sort_moves moves =
-  List.sort score_cmp moves
-
 let evaluate_rack rack =
   List.fold_left
     (fun acc x ->
@@ -844,14 +822,25 @@ let do_swap rack st =
   if List.length (st.bag) <> 0 then Swap [List.hd rack]
   else Pass
 
-let print_points lst =
+(* let print_points lst =
   List.fold_right
-    (fun x acc -> acc ^ (string_of_int (snd x )) ^ " " ) lst ""
+    (fun x acc -> acc ^ (string_of_int (snd x )) ^ " " ) lst "" *)
 
 let pick_best_move rack st moves =
   match moves with
   | [] -> do_swap rack st
   | _ ->
+  let best_move =
+    List.fold_left (
+      fun acc x ->
+        try
+          let new_points = get_points x st in
+          if new_points > snd acc then x, new_points else acc
+        with
+        _ -> acc
+    ) ({word = [];mv_coord = (0,0);is_horizontal = false}, -1) moves in
+  if ( (fst best_move).word = []) then do_swap rack st
+  else PlaceWord (fst best_move)
     (* let p = fst (List.sort score_cmp moves |> List.rev |> List.hd) in
     let pr = p.word in
     print_endline
@@ -859,12 +848,39 @@ let pick_best_move rack st moves =
         string_of_bool(p.is_horizontal) ^ " " ^
           List.fold_right
          (fun x acc -> (Char.escaped x) ^ acc) pr ""); *)
-    PlaceWord (fst (List.sort score_cmp moves |> List.hd))
+    (* PlaceWord (fst (List.sort score_cmp moves |> List.hd)) *)
 
 let pick_worst_move rack st moves =
   match moves with
   | [] -> do_swap rack st
-  | _ -> PlaceWord (fst (List.sort score_cmp moves |> List.hd))
+  | _ ->
+    let best_move =
+      List.fold_left (
+        fun acc x ->
+          try
+            let new_points = get_points x st in
+            if new_points < snd acc then x, new_points else acc
+          with
+            _ -> acc
+      ) ({word = [];mv_coord = (0,0);is_horizontal = false}, 100000) moves in
+    if ( (snd best_move)= 100000) then do_swap rack st
+    else PlaceWord (fst best_move)
+
+let best_first_move moves rack st =
+  match moves with
+  | [] -> do_swap rack st
+  | _ ->
+    let best_move =
+      List.fold_left (
+        fun acc x ->
+          try
+            let new_points = get_first_move_points x st in
+            if new_points > snd acc then x, new_points else acc
+          with
+            _ -> acc
+      ) ({word = [];mv_coord = (0,0);is_horizontal = false}, -1) moves in
+    if ( (fst best_move).word = []) then do_swap rack st
+    else PlaceWord (fst best_move)
 
 let get_letters_rack rack =
   List.map(fun (letter,_) -> letter) rack
@@ -876,7 +892,7 @@ let first_move st =
   let updated_anchors = update_all_first_move_anchor_pairs anchor_moves st in
   let moves = generate_all_moves updated_anchors in
   (* print_endline (string_of_int (List.length moves)); *)
-  get_all_first_move_points moves st |> pick_best_move letters_rack st
+  best_first_move moves letters_rack st
 
 let best_move_helper st =
   let letters_rack = st.current_player.rack |> get_letters_rack in
@@ -889,6 +905,7 @@ let best_move_helper st =
   let updated_anchors = update_all_anchor_pairs anchor_moves st in
   (* let more_updates = update_all_more_anchor_pairs more_moves st in *)
   let moves = generate_all_moves updated_anchors in
+  moves
   (* let new_moves = generate_all_moves more_updates in *)
   (* if List.length new_moves > 0 then
 
@@ -898,10 +915,10 @@ let best_move_helper st =
         string_of_bool(pr.is_horizontal) ^ " " ^
         List.fold_right
          (fun x acc -> (Char.escaped x) ^ acc)  pr.word "");
-  else print_endline ""; *)
-  let hel = get_all_move_points (moves) st in
+  else print_endline "";  *)
+  (* let hel = get_all_move_points (moves) st in
   print_endline (string_of_int (List.length hel));
-  hel
+  hel *)
 
 let get_hint st =
   if List.for_all (fun p -> p.score = 0) st.players then first_move st
