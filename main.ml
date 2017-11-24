@@ -247,8 +247,8 @@ let rec init_ai_diff num_ai =
         match h' with
         | "easy" -> Easy :: helper t
         | "hard" -> Hard :: helper t
-        | _ -> (print_endline "Invalid difficulty entry."; init_ai_diff num_ai) in
-    helper ai_diff_lst
+        | _ -> (print_endline "Invalid difficulty entry."; failwith "") in
+    try helper ai_diff_lst with Failure _ -> init_ai_diff num_ai
 
 (* [init_game rdy], assuming rdy = "yes", gathers game state information from
  * user, generates an initial state [st], and then calls [play_game st]. *)
