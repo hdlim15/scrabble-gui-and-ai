@@ -93,15 +93,18 @@ let no_empty_rack st =
 
 (* [get_command ()] is a command, generated from user input *)
 let rec get_command st =
-  match st.current_player.player_type with
-  | Human ->
-    print_string "> ";
-    let command = try (parse (read_line ())) with
-      | InvalidCommand ->
-        (print_endline "Invalid action, type 'help' for a list of valid actions";
-         get_command st)
-    in command
-  | AI diff -> Ai.best_move st
+  try
+    match st.current_player.player_type with
+    | Human ->
+      print_string "> ";
+      let command = try (parse (read_line ())) with
+        | InvalidCommand ->
+          (print_endline "Invalid action, type 'help' for a list of valid actions";
+           get_command st)
+      in command
+    | AI diff -> Ai.best_move st
+  with
+    Graphics.Graphic_failure _ -> print_endline "\nThanks for playing."; exit 0
 
 (* [clear ()] wipes the terminal window so players can't see other players' racks *)
 let rec clear () =
