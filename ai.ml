@@ -172,7 +172,6 @@ let rec get_coord_cell_next_word c st dir =
         else get_coord_cell_next_word new_cell st Down
     end
 
-
 let cross_check c chr st =
   let left =
     match left_cell c with
@@ -287,7 +286,7 @@ let make_more_moves c rack st =
              let words = (valid_extensions (remove x rack) extensions)
                          |> concat_moves chr in
              (words,chr)::acc
-        ) [] rack) in
+        ) [] (List.sort_uniq compare rack)) in
   let left_up =
     match left_cell c with
     | None -> None
@@ -298,12 +297,9 @@ let make_more_moves c rack st =
         (fun acc x ->
            let chr = (Char.escaped x) in
            let extensions = get_extensions chr r_dict |> cut_extensions in
-           (* if chr = "s" then print_endline (
-               List.fold_left (fun acc x -> x ^ ", " ^ acc) ""
-                 (valid_extensions (remove x rack) extensions)); *)
 let words = (valid_extensions (remove x rack) extensions) in
              (words,chr)::acc
-        ) [] rack) in
+        ) [] (List.sort_uniq compare rack)) in
   let right_down =
     match right_cell c with
     | None -> None
@@ -317,7 +313,7 @@ let words = (valid_extensions (remove x rack) extensions) in
              let words = (valid_extensions (remove x rack) extensions)
                          |> concat_moves chr in
              (words,chr)::acc
-        ) [] rack) in
+        ) [] (List.sort_uniq compare rack)) in
   let right_up =
     match right_cell c with
     | None -> None
@@ -328,9 +324,9 @@ let words = (valid_extensions (remove x rack) extensions) in
         (fun acc x ->
            let chr = (Char.escaped x) in
              let extensions = get_extensions chr r_dict |> cut_extensions in
-             let words = (valid_extensions (remove x rack) extensions) in
+           let words = (valid_extensions (remove x rack) extensions) in
              (words,chr)::acc
-        ) [] rack) in
+        ) [] (List.sort_uniq compare rack)) in
   let up_right =
     match up_cell c with
     | None -> None
@@ -344,7 +340,7 @@ let words = (valid_extensions (remove x rack) extensions) in
              let words = (valid_extensions (remove x rack) extensions)
                          |> concat_moves chr in
              (words,chr)::acc
-        ) [] rack) in
+        ) [] (List.sort_uniq compare rack)) in
   let up_left =
     match up_cell c with
     | None -> None
@@ -357,7 +353,7 @@ let words = (valid_extensions (remove x rack) extensions) in
              let extensions = get_extensions chr r_dict |> cut_extensions in
              let words = (valid_extensions (remove x rack) extensions) in
              (words,chr)::acc
-        ) [] rack) in
+        ) [] (List.sort_uniq compare rack)) in
   let down_right =
     match down_cell c with
     | None -> None
@@ -371,7 +367,7 @@ let words = (valid_extensions (remove x rack) extensions) in
              let words = (valid_extensions (remove x rack) extensions)
                          |> concat_moves chr in
              (words,chr)::acc
-        ) [] rack) in
+        ) [] (List.sort_uniq compare rack)) in
   let down_left =
     match down_cell c with
     | None -> None
@@ -384,8 +380,8 @@ let words = (valid_extensions (remove x rack) extensions) in
              let extensions = get_extensions chr r_dict |> cut_extensions in
              let words = (valid_extensions (remove x rack) extensions) in
              (words,chr)::acc
-        ) [] rack) in
-  [left_up;left_down;right_up;right_down;up_left;up_right;down_left;down_right]
+        ) [] (List.sort_uniq compare rack)) in
+  [left_down;left_up;right_down;right_up;up_right;up_left;down_right;down_left]
 
 let make_move c rack st =
   let left =
@@ -766,7 +762,6 @@ let get_points mv st =
       let score' =
         if List.length new_chars = 7 then (snd valid_words + 50) else (snd valid_words) in
       if fst valid_words then score'
-
       else
         raise (InvalidPlace "invalid newly-formed word")
 
@@ -785,7 +780,8 @@ let get_first_move_points mv st =
           mv.is_horizontal new_coords in
       let word_score = List.hd (get_values_from_opt_list [word_score_opt] []) in
       let score' =
-        if List.length new_chars = 7 then (snd_triple word_score + 50) else (snd_triple word_score) in
+        if List.length new_chars = 7 then (snd_triple word_score + 50)
+        else (snd_triple word_score) in
       score'
 
 let generate_move cell str dir =
@@ -822,6 +818,7 @@ let do_swap rack st =
   if List.length (st.bag) <> 0 then Swap [List.hd rack]
   else Pass
 
+
 (* let print_points lst =
   List.fold_right
     (fun x acc -> acc ^ (string_of_int (snd x )) ^ " " ) lst "" *)
@@ -841,14 +838,6 @@ let pick_best_move rack st moves =
     ) ({word = [];mv_coord = (0,0);is_horizontal = false}, -1) moves in
   if ( (fst best_move).word = []) then do_swap rack st
   else PlaceWord (fst best_move)
-    (* let p = fst (List.sort score_cmp moves |> List.rev |> List.hd) in
-    let pr = p.word in
-    print_endline
-      ( string_of_int(fst p.mv_coord) ^ "," ^ string_of_int(snd p.mv_coord) ^ " " ^
-        string_of_bool(p.is_horizontal) ^ " " ^
-          List.fold_right
-         (fun x acc -> (Char.escaped x) ^ acc) pr ""); *)
-    (* PlaceWord (fst (List.sort score_cmp moves |> List.hd)) *)
 
 let pick_worst_move rack st moves =
   match moves with
@@ -891,7 +880,6 @@ let first_move st =
   let anchor_moves = all_first_moves anchor letters_rack st in
   let updated_anchors = update_all_first_move_anchor_pairs anchor_moves st in
   let moves = generate_all_moves updated_anchors in
-  (* print_endline (string_of_int (List.length moves)); *)
   best_first_move moves letters_rack st
 
 let best_move_helper st =
@@ -901,24 +889,12 @@ let best_move_helper st =
   let anchors = get_anchors empty_cells st in
   let anchor_pairs = generate_anchor_chars anchors letters_rack st in
   let anchor_moves = all_moves anchor_pairs st in
-  (* let more_moves = all_more_moves anchor_pairs st in *)
+  let more_moves = all_more_moves anchor_pairs st in
   let updated_anchors = update_all_anchor_pairs anchor_moves st in
-  (* let more_updates = update_all_more_anchor_pairs more_moves st in *)
+  let more_updates = update_all_more_anchor_pairs more_moves st in
   let moves = generate_all_moves updated_anchors in
-  moves
-  (* let new_moves = generate_all_moves more_updates in *)
-  (* if List.length new_moves > 0 then
-
-    let pr = (List.nth new_moves 0) in
-    print_endline
-      (string_of_int(fst pr.mv_coord) ^ "," ^ string_of_int(snd pr.mv_coord) ^ " " ^
-        string_of_bool(pr.is_horizontal) ^ " " ^
-        List.fold_right
-         (fun x acc -> (Char.escaped x) ^ acc)  pr.word "");
-  else print_endline "";  *)
-  (* let hel = get_all_move_points (moves) st in
-  print_endline (string_of_int (List.length hel));
-  hel *)
+  let new_moves = generate_all_moves more_updates in
+  moves @ new_moves
 
 let get_hint st =
   if List.for_all (fun p -> p.score = 0) st.players then first_move st
