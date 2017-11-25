@@ -189,6 +189,14 @@ let rec get_next_word c st dir =
           | Some (word,_,_) -> c',word
     end
 
+let cross_check_helper cell st is_h =
+  match get_adjacent_word cell st is_h [] with
+  | None ->
+    let cell' = get_cell_from_coordinate cell st  in
+    if not (cell' |> cell_is_empty) then (fst cell'.letter) |> Char.escaped
+    else ""
+  | Some (word,_,_) -> word
+
 (* [cross_check c chr st] returns true if, when placed on tile [c],
  * [chr] forms valid forms with the adjacent tiles on the board in state [st].
  *)
@@ -196,43 +204,19 @@ let cross_check c chr st =
   let left =
     match left_cell c with
     | None -> ""
-    | Some c' ->
-      match get_adjacent_word c' st true [] with
-      | None ->
-        let cell' = get_cell_from_coordinate c' st  in
-        if not (cell' |> cell_is_empty) then (fst cell'.letter) |> Char.escaped
-        else ""
-      | Some (word,_,_) -> word in
+    | Some c' -> cross_check_helper c' st true in
   let right =
     match right_cell c with
     | None -> ""
-    | Some c' ->
-      match get_adjacent_word c' st true [] with
-      | None ->
-        let cell' = get_cell_from_coordinate c' st  in
-        if not (cell' |> cell_is_empty) then (fst cell'.letter) |> Char.escaped
-        else ""
-      | Some (word,_,_) -> word in
+    | Some c' -> cross_check_helper c' st true in
   let up =
     match up_cell c with
     | None -> ""
-    | Some c' ->
-      match get_adjacent_word c' st false [] with
-      | None ->
-        let cell' = get_cell_from_coordinate c' st  in
-        if not (cell' |> cell_is_empty) then (fst cell'.letter) |> Char.escaped
-        else ""
-      | Some (word,_,_) -> word in
+    | Some c' -> cross_check_helper c' st false in
   let down =
     match down_cell c with
     | None -> ""
-    | Some c' ->
-      match get_adjacent_word c' st false [] with
-      | None ->
-        let cell' = get_cell_from_coordinate c' st  in
-        if not (cell' |> cell_is_empty) then (fst cell'.letter) |> Char.escaped
-        else ""
-      | Some (word,_,_) -> word in
+    | Some c' -> cross_check_helper c' st false in
   let bool1 =
     let hor = left ^ (Char.escaped chr) ^ right in
     if hor = (Char.escaped chr) then true
@@ -331,7 +315,7 @@ let move_forward cell rack st is_h across_bool =
 
 let move_backward cell rack st is_h across_bool =
   if not across_bool then
-    match get_adjacent_word cell st true [] with
+    match get_adjacent_word cell st is_h [] with
   | None -> None
   | Some (str,_,__) ->
     let extensions = get_extensions (reverse_str str) r_dict in
@@ -501,9 +485,9 @@ let  get_all_first_move_start_cells anchor word_lst st =
         ) [] (fst pair) in
   [left;right]
 
-  let update_all_first_move_anchor_pairs anchor_pair_lst st =
-    List.map (fun x -> get_all_first_move_start_cells
-                 (fst x) (snd x) st) anchor_pair_lst
+let update_all_first_move_anchor_pairs anchor_pair_lst st =
+  List.map (fun x -> get_all_first_move_start_cells
+               (fst x) (snd x) st) anchor_pair_lst
 
 let get_forward_start_cell anchor str exts dir =
   (List.fold_left
@@ -552,120 +536,74 @@ let get_all_start_cells anchor word_lst st =
   let down_across =
     match List.nth word_lst 7 with
     | None -> []
-    | Some pair -> get_backward_start_cell anchor (snd pair) (fst pair) Up in
+    | Some pair -> get_backward_start_cell anchor (snd pair) (fst pair) Down in
   [left @ right @ left_across @ right_across;
    up @ down @ up_across @ down_across]
 
 let update_all_anchor_pairs anchor_pair_lst st =
   List.map (fun x -> get_all_start_cells (fst x) (snd x) st) anchor_pair_lst
 
-let get_all_more_cells anchor word_lst st =
+let more_start_cells_forward anchor lst =
+  (List.fold_left
+     (fun accu elm ->
+        (List.fold_left
+           (fun acc x ->
+              let updated_cell =
+                (fst anchor.cell_coord, snd anchor.cell_coord) in
+              (updated_cell, x) :: acc
+           ) [] (fst elm))::accu
+     ) [] lst) |> List.flatten
+
+let more_start_cells_backward anchor lst dir =
+  (List.fold_left
+     (fun accu elm ->
+        (List.fold_left
+           (fun acc x ->
+              let updated_cell = (get_start_cell anchor (x) dir) in
+              let new_word = (reverse_str x ^ (snd elm)) in
+              (updated_cell, new_word ) :: acc
+           ) [] (fst elm))::accu
+     ) [] lst) |> List.flatten
+
+let get_all_more_start_cells anchor word_lst st =
   let left_down =
     match List.nth word_lst 0 with
     | None -> []
-    | Some lst ->
-      (List.fold_left
-         (fun accu elm ->
-            (List.fold_left
-               (fun acc x ->
-                  let updated_cell = (fst anchor.cell_coord, snd anchor.cell_coord) in
-                  (updated_cell, x) :: acc
-               ) [] (fst elm))::accu
-         ) [] lst) |> List.flatten  in
+    | Some lst -> more_start_cells_forward anchor lst in
   let left_up =
     match List.nth word_lst 1 with
     | None -> []
-    | Some lst ->
-      (List.fold_left
-         (fun accu elm ->
-            (List.fold_left
-               (fun acc x ->
-                  let updated_cell = (get_start_cell anchor (x) Up) in
-                  let new_word = (reverse_str x ^ (snd elm)) in
-                  (updated_cell, new_word ) :: acc
-               ) [] (fst elm))::accu
-         ) [] lst) |> List.flatten  in
+    | Some lst -> more_start_cells_backward anchor lst Up in
   let right_down =
     match List.nth word_lst 2 with
     | None -> []
-    | Some lst ->
-      (List.fold_left
-         (fun accu elm ->
-            (List.fold_left
-               (fun acc x ->
-                  let updated_cell = (fst anchor.cell_coord, snd anchor.cell_coord) in
-                  (updated_cell, x) :: acc
-               ) [] (fst elm))::accu
-         ) [] lst) |> List.flatten  in
+    | Some lst -> more_start_cells_forward anchor lst in
   let right_up =
     match List.nth word_lst 3 with
     | None -> []
-    | Some lst ->
-      (List.fold_left
-         (fun accu elm ->
-            (List.fold_left
-               (fun acc x ->
-                  let updated_cell = (get_start_cell anchor (x) Up) in
-                  let new_word = (reverse_str x ^ (snd elm)) in
-                  (updated_cell, new_word ) :: acc
-               ) [] (fst elm))::accu
-         ) [] lst) |> List.flatten  in
+    | Some lst -> more_start_cells_backward anchor lst Up in
   let up_right =
     match List.nth word_lst 4 with
     | None -> []
-    | Some lst ->
-      (List.fold_left
-         (fun accu elm ->
-            (List.fold_left
-               (fun acc x ->
-                  let updated_cell = (fst anchor.cell_coord, snd anchor.cell_coord) in
-                  (updated_cell, x) :: acc
-               ) [] (fst elm))::accu
-         ) [] lst) |> List.flatten  in
+    | Some lst -> more_start_cells_forward anchor lst in
   let up_left =
     match List.nth word_lst 5 with
     | None -> []
-    | Some lst ->
-      (List.fold_left
-         (fun accu elm ->
-            (List.fold_left
-               (fun acc x ->
-                  let updated_cell = (get_start_cell anchor (x) Left) in
-                  let new_word = (reverse_str x ^ (snd elm)) in
-                  (updated_cell, new_word ) :: acc
-               ) [] (fst elm))::accu
-         ) [] lst) |> List.flatten  in
+    | Some lst -> more_start_cells_backward anchor lst Left in
   let down_right =
     match List.nth word_lst 6 with
     | None -> []
-    | Some lst ->
-      (List.fold_left
-         (fun accu elm ->
-            (List.fold_left
-               (fun acc x ->
-                  let updated_cell = (fst anchor.cell_coord, snd anchor.cell_coord) in
-                  (updated_cell, x) :: acc
-               ) [] (fst elm))::accu
-         ) [] lst) |> List.flatten  in
+    | Some lst -> more_start_cells_forward anchor lst in
   let down_left =
     match List.nth word_lst 7 with
     | None -> []
-    | Some lst ->
-      (List.fold_left
-         (fun accu elm ->
-            (List.fold_left
-               (fun acc x ->
-                  let updated_cell = (get_start_cell anchor (x) Left) in
-                  let new_word = (reverse_str x ^ (snd elm)) in
-                  (updated_cell, new_word ) :: acc
-               ) [] (fst elm))::accu
-         ) [] lst) |> List.flatten  in
+    | Some lst -> more_start_cells_backward anchor lst Left in
   [up_left @ up_right @ down_right @ down_left;
    left_up @ left_down @ right_up @ right_down]
 
 let update_all_more_anchor_pairs anchor_pair_lst st =
   List.map (fun x ->
-      get_all_more_cells (fst x) (snd x) st) anchor_pair_lst
+      get_all_more_start_cells (fst x) (snd x) st) anchor_pair_lst
 
 let get_points mv st =
   let word = List.fold_right (fun c acc -> (Char.escaped c)^acc) mv.word "" in
@@ -803,8 +741,8 @@ let best_first_move moves rack st =
             if new_points > snd acc then x, new_points else acc
           with
             _ -> acc
-      ) ({word = [];mv_coord = (0,0);is_horizontal = false}, -1) moves in
-    if ( (snd best_move) = -1) then do_swap rack st
+      ) ({word = [];mv_coord = (0,0);is_horizontal = false}, -1000) moves in
+    if ( (snd best_move) = -1000) then do_swap rack st
     else PlaceWord (fst best_move)
 
 let get_letters_rack rack =
