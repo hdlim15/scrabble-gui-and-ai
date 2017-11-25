@@ -7,14 +7,14 @@ the game!
 
 Scrabble Rules: https://scrabble.hasbro.com/en-us/rules
 
-Commands:
+Buttons:
 - Quit: quits the current game.
 - Help: displays useful information on how to play the game.
 - Hint: provides a potential move that could be made.
-- Show Rack: displays the letters one has in their rack.
-- Hide Rack: hides the letters one has in their rack.
-- Add: adds a new word to the dictionary of allowed words.
-  Ex: "Add ExampleWord" adds exampleword to the dictionary.
+- Toggle rack: displays/hides the letters one has in their
+  rack.
+- Add word: adds a new word to the dictionary of allowed words.
+  Click the button, type the word, and then press 'ENTER'.
 - Swap: swaps tiles on one's rack with tiles in the bag. You
   must first click swap, followed by the letters in your rack
   you wish to swap, and finally click swap once more to

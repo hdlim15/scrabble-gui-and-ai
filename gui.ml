@@ -283,11 +283,11 @@ let draw_buttons () =
   let b_show_rack = {x = 632; y = 120; w = 60; h = 60; bw = 2;
                 b1_col = gray1; b2_col = gray3; b_col = gray2; r = Top} in
   draw_box b_show_rack;
-  draw_string_in_box Center "Show Rack" b_show_rack Graphics.black;
+  draw_string_in_box Center "Toggle rack" b_show_rack Graphics.black;
   let b_hide_rack = {x = 724; y = 120; w = 60; h = 60; bw = 2;
                 b1_col = gray1; b2_col = gray3; b_col = gray2; r = Top} in
   draw_box b_hide_rack;
-  draw_string_in_box Center "Hide Rack" b_hide_rack Graphics.black;
+  draw_string_in_box Center "Add word" b_hide_rack Graphics.black;
   let b_swap = {x = 816; y = 120; w = 60; h = 60; bw = 2;
                 b1_col = gray1; b2_col = gray3; b_col = gray2; r = Top} in
   draw_box b_swap;
@@ -361,6 +361,8 @@ let draw_logo () =
   draw_string " |___/  \\___| |_|    \\__,_| |_.__/  |_.__/  |_|  \\___|" 625 (575 - 4 * bar_height) true;
   draw_string " ________________________________________________________" 625 (575 - 5 * bar_height) true
 
+let draw_io_box () =
+  draw_rect 620 210 360 100
 
 (* [compare_players p1 p2] compares the order numbers of players [p1] and [p2]. *)
 let compare_players p1 p2 =
@@ -398,7 +400,8 @@ let update_gui st =
   update_board (List.flatten st.board);
   update_scores st.players;
   update_rack st.current_player;
-  draw_buttons ()
+  draw_buttons ();
+  draw_io_box ()
 
 (* [mem (x,y) (x0,y0,w,h)] is true if (x,y) is within the rectangle specified
  * by (x0,y0,w,h) and false otherwise *)
@@ -418,10 +421,10 @@ let hint_btn = (816, 30, 60, 60)
 let quit_btn = (908, 30, 60, 60)
 
 (* coordinates of rectangle representing the show rack button *)
-let show_rack_btn = (632, 120, 60, 60)
+let toggle_rack_btn = (632, 120, 60, 60)
 
 (* coordinates of rectangle representing the hide rack button *)
-let hide_rack_btn = (724, 120, 60, 60)
+let add_btn = (724, 120, 60, 60)
 
 (* coordinates of rectangle representing the swap button *)
 let swap_btn = (816, 120, 60, 60)
@@ -487,6 +490,56 @@ let help_helper st =
     else loop ()
   in loop ()
 
+let rec remove_last_elt lst =
+  match lst with
+  | [] -> []
+  | h::[] -> []
+  | h::t -> h :: remove_last_elt t
+
+(* add_word_clear *)
+let add_word_delete st =
+  update_gui st;
+  moveto 625 290;
+  Graphics.draw_string "Type the word you wish to add to the dictionary, followed";
+  moveto 625 275;
+  Graphics.draw_string "by 'ENTER':"
+
+(* [str_of_keyboard_events st io_op] is the string result of keyboard input for
+ * a given io_op. *)
+let rec str_of_keyboard_events st io_op =
+  let w = fst (text_size "w") in
+  let rec helper w' history =
+    let curr_status = wait_next_event [Key_pressed] in
+    let c = curr_status.key in
+    if Char.code c = 13 then
+      List.fold_right (fun (c,_) acc -> (Char.escaped c)^acc) history ""
+    else if Char.code c = 8 then
+      (let _ = match io_op with
+       | `AddWord -> add_word_delete st
+       | _ -> failwith "unneeded rn" in
+       moveto 625 260;
+       let h' = remove_last_elt history in
+       let w'' = List.fold_right
+           (fun (c,w') acc ->
+              moveto w' 260; Graphics.draw_string (Char.escaped c); acc + w) h' 0 in
+       helper w'' h')
+    else if Char.code c < 26 || Char.code c > 126 then
+      helper w' history
+    else
+      (moveto (625+w') 260;
+       Graphics.draw_string (Char.escaped c);
+       helper (w'+w) (history @ [(c ,625+w')]))
+  in helper 0 []
+
+(* [addword_helper st] is a string corresponding to a word that a user wishes to
+ * add to the dictionary. The string is received by keyboard input *)
+let addword_helper st =
+  moveto 625 290;
+  Graphics.draw_string "Type the word you wish to add to the dictionary, followed";
+  moveto 625 275;
+  Graphics.draw_string "by 'ENTER':";
+  str_of_keyboard_events st `AddWord
+
 (* [gui_cmd st] is the command received from user input via the gui *)
 let rec gui_cmd st =
   let curr_status = wait_next_event [Button_down] in
@@ -500,10 +553,10 @@ let rec gui_cmd st =
     Hint
   else if mem (x, y) quit_btn then
     Quit
-  else if mem (x, y) show_rack_btn then
-    failwith "show rack"
-  else if mem (x, y) hide_rack_btn then
-    failwith "hide rack"
+  else if mem (x, y) toggle_rack_btn then
+    failwith "toggle rack"
+  else if mem (x, y) add_btn then
+    AddWord (addword_helper st)
   else if mem (x, y) swap_btn then
     Swap (swap_helper st.current_player.rack)
   else if mem (x, y) place_btn then
@@ -524,7 +577,8 @@ let init_gui st =
     update_rack (st.current_player);
     draw_string_in_box Center "START" vb.(112) Graphics.black;
     draw_logo ();
-    draw_buttons ()
+    draw_buttons ();
+    draw_io_box ()
   with
   | Graphics.Graphic_failure("fatal I/O error") ->
     print_endline "Thanks for playing!"
