@@ -26,13 +26,12 @@ let get_all_cells st =
 let get_empty_cells lst =
   List.filter (fun c -> (cell_is_empty c)) lst
 
+(* [get_7th_row_cells st returns a list of all cells in the row with index 7. *)
 let get_7th_row_cells st =
   get_row (7,7) st
 
-let get_7th_column_cells st =
-  get_column (7,7) st
-
-(* [reverse_str s ] reverses [s]. *)
+(* [reverse_str s ] reverses [s].
+ *  If [s] is the empty string, then the empty string is returned *)
 let reverse_str s =
   List.fold_right (fun x acc -> acc ^ Char.escaped x ) (explode s) ""
 
@@ -92,12 +91,22 @@ let has_adjacent_word_tile c st =
     false (adjacent_coordinates c)
 
 (* [get_anchors empty_cells st] returns a list of all anchors currently on the
- * board in state [st], where an anchor is an empty tile with
+ * board in state [st], where an anchor is an empty tile
  * having at least one non-empty adjacent tile.
  *)
 let get_anchors empty_cells st =
   List.filter (fun c -> has_adjacent_word_tile c st ) empty_cells
 
+(* [get_all_adj_words c st] returns a list of length 4 in which
+ * the first element is the word to the left of [c],
+ * the second element is the word to the right of [c],
+ * the third element is the word above [c],
+ * the fourth element is the word below [c].
+ * If the cell in the corresponding direction is out of bounds of the board,
+ * the word is taken to be the empty string.
+ * If instead of a word, there is a single letter, then that letter
+ * is taken to be the word.
+ *)
 let get_all_adj_words c st =
   let left =
     match left_cell c with
@@ -172,6 +181,9 @@ let rec get_coord_cell_next_word c st dir =
         else get_coord_cell_next_word new_cell st Down
     end
 
+(* [cross_check c chr st] returns true if, when placed on tile [c],
+ * [chr] forms valid forms with the adjacent tiles on the board in state [st].
+ *)
 let cross_check c chr st =
   let left =
     match left_cell c with
@@ -227,12 +239,23 @@ let cross_check c chr st =
       extends_reverse (reverse_str vert) in
   bool1 && bool2
 
+(* [anchor_chars anchor rack st] returns the new rack obtained after
+ * throwing out all characters from [rack] that don't form valid words
+ * with the surrounding tiles when placed on the anchor cell [anchor].
+ *)
 let anchor_chars anchor rack st =
   List.fold_left
     (fun acc x ->
        if cross_check anchor x st then x::acc else acc
     ) [] rack
 
+(* [generate_anchor_chars anchors rack st ] returns a list of pairs
+ * in which the first item in pair is an anchor cell,
+ * and the second item is that anchor's corresponding rack after
+ * calculating the new rack obtained after throwing out all characters from
+ * [rack] that don't form valid words with the surrounding tiles when placed on
+ * that anchor cell.
+ *)
 let generate_anchor_chars anchors rack st =
   List.fold_left
     (fun acc x ->
