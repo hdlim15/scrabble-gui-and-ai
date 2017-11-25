@@ -458,6 +458,35 @@ let rec swap_helper rack =
     if rack_index = -1 then swap_helper rack
     else fst (List.nth rack rack_index) :: swap_helper rack
 
+(* [str_of_help ()] is a reversed list of strings of gui_help.txt *)
+let rec str_lst_of_help () =
+  let rec helper channel str =
+    match (Pervasives.input_line channel) with
+    | exception End_of_file -> Pervasives.close_in channel; [str]
+    | s -> str :: helper channel (s)
+  in
+  helper (Pervasives.open_in "gui_help.txt") ""
+
+(* [help_helper st] deals with the displaying of the help message in the gui *)
+let help_helper st =
+  Graphics.clear_graph ();
+  draw_logo ();
+  update_vb (List.flatten st.board);
+  update_board (List.flatten st.board);
+  let done_btn = {x = 770; y = 20; w = 40; h = 40; bw = 2;
+                b1_col = gray1; b2_col = gray3; b_col = gray2; r = Top} in
+  draw_box done_btn;
+  draw_string_in_box Center "Done" done_btn Graphics.black;
+  let h = snd (Graphics.text_size "|") in
+  let help_str_lst = str_lst_of_help () in
+  let _ = List.fold_left
+      (fun acc s -> moveto 620 acc; Graphics.draw_string s; acc-h) 495 help_str_lst in
+  let rec loop () =
+    let s = wait_next_event [Button_down] in
+    if mem (s.mouse_x, s.mouse_y) (770, 20, 40, 40) then ()
+    else loop ()
+  in loop ()
+
 (* [gui_cmd st] is the command received from user input via the gui *)
 let rec gui_cmd st =
   let curr_status = wait_next_event [Button_down] in
@@ -466,7 +495,7 @@ let rec gui_cmd st =
   if mem (x, y) pass_btn then
     Pass
   else if mem (x, y) help_btn then
-    failwith "help command"
+    (help_helper st; Help)
   else if mem (x, y) hint_btn then
     Hint
   else if mem (x, y) quit_btn then
