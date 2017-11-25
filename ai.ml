@@ -312,117 +312,6 @@ let concat_moves_rev str exts =
 let cut_extensions lst =
   List.filter (fun x -> String.length x < 7) lst
 
-let make_more_moves c rack st =
-  let left_down =
-    match left_cell c with
-    | None -> None
-    | Some c' ->
-      if (get_cell_from_coordinate c' st |> cell_is_empty) then None
-      else Some(
-      List.fold_left
-        (fun acc x ->
-           let chr = (Char.escaped x) in
-           let extensions = get_extensions chr f_dict |> cut_extensions in
-             let words = (valid_extensions (remove x rack) extensions)
-                         |> concat_moves chr in
-             (words,chr)::acc
-        ) [] (List.sort_uniq compare rack)) in
-  let left_up =
-    match left_cell c with
-    | None -> None
-    | Some c' ->
-      if (get_cell_from_coordinate c' st |> cell_is_empty) then None
-      else Some(
-      List.fold_left
-        (fun acc x ->
-           let chr = (Char.escaped x) in
-           let extensions = get_extensions chr r_dict |> cut_extensions in
-let words = (valid_extensions (remove x rack) extensions) in
-             (words,chr)::acc
-        ) [] (List.sort_uniq compare rack)) in
-  let right_down =
-    match right_cell c with
-    | None -> None
-    | Some c' ->
-      if (get_cell_from_coordinate c' st |> cell_is_empty) then None
-      else Some(
-      List.fold_left
-        (fun acc x ->
-           let chr = (Char.escaped x) in
-             let extensions = get_extensions chr f_dict |> cut_extensions in
-             let words = (valid_extensions (remove x rack) extensions)
-                         |> concat_moves chr in
-             (words,chr)::acc
-        ) [] (List.sort_uniq compare rack)) in
-  let right_up =
-    match right_cell c with
-    | None -> None
-    | Some c' ->
-      if (get_cell_from_coordinate c' st |> cell_is_empty) then None
-      else Some(
-      List.fold_left
-        (fun acc x ->
-           let chr = (Char.escaped x) in
-             let extensions = get_extensions chr r_dict |> cut_extensions in
-           let words = (valid_extensions (remove x rack) extensions) in
-             (words,chr)::acc
-        ) [] (List.sort_uniq compare rack)) in
-  let up_right =
-    match up_cell c with
-    | None -> None
-    | Some c' ->
-      if (get_cell_from_coordinate c' st |> cell_is_empty) then None
-      else Some(
-      List.fold_left
-        (fun acc x ->
-           let chr = (Char.escaped x) in
-             let extensions = get_extensions chr f_dict |> cut_extensions in
-             let words = (valid_extensions (remove x rack) extensions)
-                         |> concat_moves chr in
-             (words,chr)::acc
-        ) [] (List.sort_uniq compare rack)) in
-  let up_left =
-    match up_cell c with
-    | None -> None
-    | Some c' ->
-      if (get_cell_from_coordinate c' st |> cell_is_empty) then None
-      else Some(
-      List.fold_left
-        (fun acc x ->
-           let chr = (Char.escaped x) in
-             let extensions = get_extensions chr r_dict |> cut_extensions in
-             let words = (valid_extensions (remove x rack) extensions) in
-             (words,chr)::acc
-        ) [] (List.sort_uniq compare rack)) in
-  let down_right =
-    match down_cell c with
-    | None -> None
-    | Some c' ->
-      if (get_cell_from_coordinate c' st |> cell_is_empty) then None
-      else Some(
-      List.fold_left
-        (fun acc x ->
-           let chr = (Char.escaped x) in
-             let extensions = get_extensions chr f_dict |> cut_extensions in
-             let words = (valid_extensions (remove x rack) extensions)
-                         |> concat_moves chr in
-             (words,chr)::acc
-        ) [] (List.sort_uniq compare rack)) in
-  let down_left =
-    match down_cell c with
-    | None -> None
-    | Some c' ->
-      if (get_cell_from_coordinate c' st |> cell_is_empty) then None
-      else Some(
-      List.fold_left
-        (fun acc x ->
-           let chr = (Char.escaped x) in
-             let extensions = get_extensions chr r_dict |> cut_extensions in
-             let words = (valid_extensions (remove x rack) extensions) in
-             (words,chr)::acc
-        ) [] (List.sort_uniq compare rack)) in
-  [left_down;left_up;right_down;right_up;up_right;up_left;down_right;down_left]
-
 let move_forward cell rack st is_h across_bool =
   if not across_bool then
   match get_adjacent_word cell st is_h [] with
@@ -496,6 +385,64 @@ let all_moves anchors st =
     (fun acc x ->
        (fst x,(make_move (fst x) (snd x) st))::acc
     ) [] anchors
+
+let start_forward cell rack st =
+  if (get_cell_from_coordinate cell st |> cell_is_empty) then None
+  else Some(
+      List.fold_left
+        (fun acc x ->
+           let chr = (Char.escaped x) in
+           let extensions = get_extensions chr f_dict |> cut_extensions in
+           let words = (valid_extensions (remove x rack) extensions)
+                       |> concat_moves chr in
+           (words,chr)::acc
+        ) [] (List.sort_uniq compare rack))
+
+let start_backward cell rack st =
+  if (get_cell_from_coordinate cell st |> cell_is_empty) then None
+  else Some(
+      List.fold_left
+        (fun acc x ->
+           let chr = (Char.escaped x) in
+           let extensions = get_extensions chr r_dict |> cut_extensions in
+           let words = (valid_extensions (remove x rack) extensions) in
+           (words,chr)::acc
+        ) [] (List.sort_uniq compare rack))
+
+let make_more_moves c rack st =
+  let left_down =
+    match left_cell c with
+    | None -> None
+    | Some c' -> start_forward c' rack st in
+  let left_up =
+    match left_cell c with
+    | None -> None
+    | Some c' -> start_backward c' rack st in
+  let right_down =
+    match right_cell c with
+    | None -> None
+    | Some c' -> start_forward c' rack st in
+  let right_up =
+    match right_cell c with
+    | None -> None
+    | Some c' -> start_backward c' rack st in
+  let up_right =
+    match up_cell c with
+    | None -> None
+    | Some c' -> start_forward c' rack st in
+  let up_left =
+    match up_cell c with
+    | None -> None
+    | Some c' -> start_backward c' rack st in
+  let down_right =
+    match down_cell c with
+    | None -> None
+    | Some c' -> start_forward c' rack st in
+  let down_left =
+    match down_cell c with
+    | None -> None
+    | Some c' -> start_backward c' rack st in
+  [left_down;left_up;right_down;right_up;up_right;up_left;down_right;down_left]
 
 let all_more_moves anchors st =
   List.fold_left
