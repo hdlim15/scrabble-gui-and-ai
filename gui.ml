@@ -490,13 +490,15 @@ let help_helper st =
     else loop ()
   in loop ()
 
+(* [remove_last_elt lst] removes the last element of [lst] *)
 let rec remove_last_elt lst =
   match lst with
   | [] -> []
   | h::[] -> []
   | h::t -> h :: remove_last_elt t
 
-(* add_word_clear *)
+(* [add_word_delete st] redraws the window to deal with backspaces during keyboard
+ * entry in str_of_keyboard_events *)
 let add_word_delete st =
   update_gui st;
   moveto 625 290;
