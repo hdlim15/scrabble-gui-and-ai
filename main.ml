@@ -119,8 +119,7 @@ let rec clear () =
   print_endline "For gameplay manual, type 'help'.\n";
   ()
 
-(* [end_turn next_player end_type] ends a given turn and sets up the UI for the
- * next player. *)
+(* [end_turn st end_type] ends a given turn and sets up the UI for the next player. *)
 let end_turn st end_type =
   match end_type with
   | `Place ->
@@ -143,6 +142,34 @@ let end_turn st end_type =
     clear ();
     print_endline (st.current_player.name ^ "'s turn.")
 
+(* [end_turn_gui st end_type] ends a given turn in the gui *)
+let end_turn_gui st end_type =
+  match end_type with
+  | `Place ->
+
+    (* ensure redraw board *)
+
+  Graphics.moveto 625 220;
+  Graphics.draw_string "Press any key to end your turn";
+  let _ = Graphics.wait_next_event [Graphics.Key_pressed] in ()
+  | `Swap ->
+
+    (* redraw rack so player can see it before ending turn *)
+
+  Graphics.moveto 625 220;
+  Graphics.draw_string "Press any key to end your turn";
+  let _ = Graphics.wait_next_event [Graphics.Key_pressed] in ()
+  | `Pass -> ()
+
+(* [end_nonturn_command str] prints some output [str] to the gui and prompts the user
+ * to press any key to continue their turn *)
+let end_nonturn_command str =
+  Graphics.moveto 625 240;
+  Graphics.draw_string str;
+  Graphics.moveto 625 220;
+  Graphics.draw_string "Press any key to continue your turn";
+  let _ = Graphics.wait_next_event [Graphics.Key_pressed] in ()
+
 (* [play_game st] plays the game represented by [st]. *)
 let rec play_game st =
   let command = get_command st in
@@ -152,29 +179,30 @@ let rec play_game st =
       | PlaceWord mv ->
         let st' = do' command st in end_turn st' `Place; st'
       | Swap chars ->
-        let st' = do' command st in end_turn st' `Swap; st'
+        let st' = do' command st in end_turn_gui st' `Swap; st'
       | Score -> print_endline (get_scores st.players); st
       | Rack -> print_endline (str_of_rack st.current_player.rack); st
       | Hint ->
         let hint =
           match (Ai.get_hint st) with
           | PlaceWord mv ->
-            List.fold_right (fun x acc -> (Char.escaped x) ^ acc) mv.word ""
-          | _ -> "you should swap/pass" in
-        print_endline hint; st
-      | AddWord str -> print_endline ("Added word to dictionary"); do' command st
+            "Hint: " ^ List.fold_right (fun x acc -> (Char.escaped x) ^ acc) mv.word ""
+          | _ -> "Hint: you should swap or pass" in
+        end_nonturn_command hint; st
+      | AddWord str ->
+        let st' = do' command st in end_nonturn_command ("Added word to dictionary"); st'
       | Help -> print_endline ((str_of_help ())^"\n"); st
       | Quit -> print_endline "Thanks for playing!\n"; exit 0;
       | Board -> print_endline (string_of_board st.board); st
       | Pass ->
-        let st' = do' command st in end_turn st' `Pass; st'
+        let st' = do' command st in end_turn_gui st' `Pass; st'
     with
-    | InvalidPlace s -> print_endline ("Invalid Place: " ^ s ^ "\n"); st
+    | InvalidPlace s -> end_nonturn_command ("Invalid Place: " ^ s); st
     | InvalidSwap ->
       if List.length st.bag = 0 then
-        (print_endline "Cannot swap, bag is empty\n"; st)
-      else (print_endline "Invalid swap\n"; st)
-    | InvalidAdd -> print_endline ("Invalid Add\n"); st
+        (end_nonturn_command "Cannot swap, bag is emptn"; st)
+      else (end_nonturn_command "Invalid swap"; st)
+    | InvalidAdd -> end_nonturn_command ("Invalid Add"); st
   in
   update_gui new_state;
   if no_empty_rack new_state && new_state.sp_consec <= 12 then
