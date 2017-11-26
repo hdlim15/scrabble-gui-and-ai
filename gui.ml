@@ -480,12 +480,7 @@ let get_input lst st =
     if List.length lst = 0 then failwith "no letters were placed"
     else if List.length lst > 1 then
       if fst (fst (List.nth lst 0)) <> fst (fst (List.nth lst 1)) then
-      let update_coord =
-        List.fold_left
-          (fun acc ((x,y),letter) ->
-             ((14-x, y),letter)::acc
-          ) [] (lst) in
-      let update_cells = List.sort sort_vertical update_coord in
+      let update_cells = List.sort sort_vertical lst in
       let leftmost_input = List.nth update_cells 0 in
       let col = get_column (fst leftmost_input) st
                 |> List.filter (fun c' ->
@@ -512,12 +507,7 @@ let get_input lst st =
             let new_cell = fst c' + 1 - String.length str , (snd c') in
             new_cell, str ^ added_str, false
       else
-      let update_coord =
-        List.fold_left
-          (fun acc ((x,y),letter) ->
-             ((14-x, y),letter)::acc
-          ) [] (lst) in
-      let update_cells = List.sort sort_horizontal update_coord in
+      let update_cells = List.sort sort_horizontal lst in
       let leftmost_input = List.nth update_cells 0 in
       let row = get_row (fst leftmost_input) st
                 |> List.filter (fun c' ->
