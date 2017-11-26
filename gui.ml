@@ -659,7 +659,7 @@ let rec refresh_cell c b =
 let rec remove_from_rack l r =
   match r with
   | [] -> []
-  | (l',p)::t -> if l' = l then remove_from_rack l t else (l',p) :: remove_from_rack l t
+  | (l',p)::t -> if l' = l then t else (l',p) :: remove_from_rack l t
 
 (* [place_helper rack st] is a list of (cell, coord, st) entries corresponding to
  * new letters placed onto the board, forming a potentially-valid place command *)
