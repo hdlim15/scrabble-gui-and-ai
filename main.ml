@@ -200,7 +200,7 @@ let rec play_game st =
     | InvalidPlace s -> end_nonturn_command ("Invalid Place: " ^ s); st
     | InvalidSwap ->
       if List.length st.bag = 0 then
-        (end_nonturn_command "Cannot swap, bag is emptn"; st)
+        (end_nonturn_command "Cannot swap, bag is empty"; st)
       else (end_nonturn_command "Invalid swap"; st)
     | InvalidAdd -> end_nonturn_command ("Invalid Add"); st
   in
