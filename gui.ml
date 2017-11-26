@@ -459,151 +459,17 @@ let get_idx_from_coord x =
   (x - 620) / 40 - 1
 
 let get_cell_from_pixel (x, y) =
-  (x / 40), (y / 40)
+  ((y / 40), x / 40)
 
-(* [swap_helper rack] is a character list corresponding to rack boxes in the gui
- * that are clicked on prior to clicking the 'swap' button to finalize the swap
- * command.
- * requires: 'swap' button was clicked prior to initial function call *)
-let rec swap_helper rack =
-  let s = wait_next_event [Button_down] in
-  if mem (s.mouse_x, s.mouse_y) swap_btn then []
-  else
-    let rack_len = List.length rack in
-    let rack_coords = get_rack_coords rack_len in
-    let rack_index = List.fold_left
-        (fun acc (r_x, r_y) ->
-           if mem (s.mouse_x, s.mouse_y) (r_x, r_y, 40, 40) then
-             (get_idx_from_coord r_x) else acc) (-1) rack_coords in
-    if rack_index = -1 then swap_helper rack
-    else fst (List.nth rack rack_index) :: swap_helper rack
+let sort_horizontal ((_,y1),_) ((_,y2),_) =
+  if y1 < y2 then -1
+  else if y1 > y2 then 1
+  else 0
 
-let rec place_helper board =
-  let s = wait_next_event [Button_down] in
-  if mem (s.mouse_x, s.mouse_y) place_btn then []
-  else
-    let board_coordinates = all_cells 0 in
-    let cell_index = List.fold_left
-        (fun acc (r_x, r_y) ->
-           if mem (s.mouse_x, s.mouse_y) (r_x, r_y, 40, 40) then
-             (get_cell_from_pixel (r_x, r_y)) else acc)
-        (-1,-1) board_coordinates in
-    if cell_index = (-1, -1) then place_helper board
-    else (cell_index) :: place_helper board
-
-(* [str_of_help ()] is a reversed list of strings of gui_help.txt *)
-let rec str_lst_of_help () =
-  let rec helper channel str =
-    match (Pervasives.input_line channel) with
-    | exception End_of_file -> Pervasives.close_in channel; [str]
-    | s -> str :: helper channel (s)
-  in
-  helper (Pervasives.open_in "gui_help.txt") ""
-
-(* [help_helper st] deals with the displaying of the help message in the gui *)
-let help_helper st =
-  Graphics.clear_graph ();
-  draw_logo ();
-  update_vb (List.flatten st.board);
-  update_board (List.flatten st.board);
-  let done_btn = {x = 770; y = 20; w = 40; h = 40; bw = 2;
-                b1_col = gray1; b2_col = gray3; b_col = gray2; r = Top} in
-  draw_box done_btn;
-  draw_string_in_box Center "Done" done_btn Graphics.black;
-  let h = snd (Graphics.text_size "|") in
-  let help_str_lst = str_lst_of_help () in
-  let _ = List.fold_left
-      (fun acc s -> moveto 620 acc; Graphics.draw_string s; acc-h) 495 help_str_lst in
-  let rec loop () =
-    let s = wait_next_event [Button_down] in
-    if mem (s.mouse_x, s.mouse_y) (770, 20, 40, 40) then ()
-    else loop ()
-  in loop ()
-
-(* [remove_last_elt lst] removes the last element of [lst] *)
-let rec remove_last_elt lst =
-  match lst with
-  | [] -> []
-  | h::[] -> []
-  | h::t -> h :: remove_last_elt t
-
-(* [add_word_delete st] redraws the window to deal with backspaces during keyboard
- * entry in str_of_keyboard_events *)
-let add_word_delete st =
-  update_gui st;
-  moveto 625 290;
-  Graphics.draw_string "Type the word you wish to add to the dictionary, followed";
-  moveto 625 275;
-  Graphics.draw_string "by 'ENTER':"
-
-(* [str_of_keyboard_events st io_op] is the string result of keyboard input for
- * a given io_op. *)
-let rec str_of_keyboard_events st io_op =
-  let w = fst (text_size "w") in
-  let rec helper w' history =
-    let curr_status = wait_next_event [Key_pressed] in
-    let c = curr_status.key in
-    if Char.code c = 13 then
-      List.fold_right (fun (c,_) acc -> (Char.escaped c)^acc) history ""
-    else if Char.code c = 8 then
-      (let _ = match io_op with
-       | `AddWord -> add_word_delete st
-       | _ -> failwith "unneeded rn" in
-       moveto 625 260;
-       let h' = remove_last_elt history in
-       let w'' = List.fold_right
-           (fun (c,w') acc ->
-              moveto w' 260; Graphics.draw_string (Char.escaped c); acc + w) h' 0 in
-       helper w'' h')
-    else if Char.code c < 26 || Char.code c > 126 then
-      helper w' history
-    else
-      (moveto (625+w') 260;
-       Graphics.draw_string (Char.escaped c);
-       helper (w'+w) (history @ [(c ,625+w')]))
-  in helper 0 []
-
-(* [addword_helper st] is a string corresponding to a word that a user wishes to
- * add to the dictionary. The string is received by keyboard input *)
-let addword_helper st =
-  moveto 625 290;
-  Graphics.draw_string "Type the word you wish to add to the dictionary, followed";
-  moveto 625 275;
-  Graphics.draw_string "by 'ENTER':";
-  str_of_keyboard_events st `AddWord
-
-(* [gui_cmd st] is the command received from user input via the gui *)
-let rec gui_cmd st =
-  let curr_status = wait_next_event [Button_down] in
-  let x = curr_status.mouse_x in
-  let y = curr_status.mouse_y in
-  if mem (x, y) pass_btn then
-    Pass
-  else if mem (x, y) help_btn then
-    (help_helper st; Help)
-  else if mem (x, y) hint_btn then
-    Hint
-  else if mem (x, y) quit_btn then
-    Quit
-  else if mem (x, y) toggle_rack_btn then
-    failwith "toggle rack"
-  else if mem (x, y) add_btn then
-    AddWord (addword_helper st)
-  else if mem (x, y) swap_btn then
-    Swap (swap_helper st.current_player.rack)
-  else if mem (x, y) place_btn then
-    failwith "place"
-  else gui_cmd st
-
-  let sort_horizontal ((_,y1),_) ((_,y2),_) =
-    if y1 < y2 then -1
-    else if y1 > y2 then 1
-    else 0
-
-  let sort_vertical ((x1,_),_) ((x2,_),_) =
-    if x1 < x2 then -1
-    else if x1 > x2 then 1
-    else 0
+let sort_vertical ((x1,_),_) ((x2,_),_) =
+  if x1 < x2 then -1
+  else if x1 > x2 then 1
+  else 0
 
 let get_input lst st =
     if List.length lst = 0 then failwith "no letters were placed"
@@ -752,6 +618,156 @@ let convert_to_move lst st =
      is_horizontal = trd_triple mv
     }
   with _ -> failwith "no letters were added"
+
+(* [swap_helper rack] is a character list corresponding to rack boxes in the gui
+ * that are clicked on prior to clicking the 'swap' button to finalize the swap
+ * command.
+ * requires: 'swap' button was clicked prior to initial function call *)
+let rec swap_helper rack =
+  let s = wait_next_event [Button_down] in
+  if mem (s.mouse_x, s.mouse_y) swap_btn then []
+  else
+    let rack_len = List.length rack in
+    let rack_coords = get_rack_coords rack_len in
+    let rack_index = List.fold_left
+        (fun acc (r_x, r_y) ->
+           if mem (s.mouse_x, s.mouse_y) (r_x, r_y, 40, 40) then
+             (get_idx_from_coord r_x) else acc) (-1) rack_coords in
+    if rack_index = -1 then swap_helper rack
+    else fst (List.nth rack rack_index) :: swap_helper rack
+
+let rec place_helper rack st =
+  let s = wait_next_event [Button_down] in
+  if mem (s.mouse_x, s.mouse_y) place_btn then []
+  else
+    let rack_len = List.length rack in
+    let rack_coords = get_rack_coords rack_len in
+    let rack_index = List.fold_left
+        (fun acc (r_x, r_y) ->
+           if mem (s.mouse_x, s.mouse_y) (r_x, r_y, 40, 40) then
+             (get_idx_from_coord r_x) else acc) (-1) rack_coords in
+    let letter =
+      if rack_index = -1 then failwith "no letter from rack chosen"
+      else fst (List.nth rack rack_index) in
+    let s' = wait_next_event [Button_down] in
+    if mem (s'.mouse_x, s'.mouse_y) (0,0,600,600) then
+      let board_coordinates = all_cells 0 in
+      let cell_index = List.fold_left
+          (fun acc (r_x, r_y) ->
+             if mem (s'.mouse_x, s'.mouse_y) (r_x, r_y, 40, 40) then
+               (get_cell_from_pixel (r_x, r_y), letter)
+             else acc)
+          ((-1,-1), ' ') board_coordinates in
+      (* print_endline (((fst (fst cell_index)) |> string_of_int) ^ ", " ^
+                     ((snd (fst cell_index)) |> string_of_int)); *)
+      if cell_index = ((-1,-1), ' ') then place_helper rack st
+      else (cell_index) :: place_helper rack st
+    else failwith "did not click on board after clicking on rack"
+
+(* [str_of_help ()] is a reversed list of strings of gui_help.txt *)
+let rec str_lst_of_help () =
+  let rec helper channel str =
+    match (Pervasives.input_line channel) with
+    | exception End_of_file -> Pervasives.close_in channel; [str]
+    | s -> str :: helper channel (s)
+  in
+  helper (Pervasives.open_in "gui_help.txt") ""
+
+(* [help_helper st] deals with the displaying of the help message in the gui *)
+let help_helper st =
+  Graphics.clear_graph ();
+  draw_logo ();
+  update_vb (List.flatten st.board);
+  update_board (List.flatten st.board);
+  let done_btn = {x = 770; y = 20; w = 40; h = 40; bw = 2;
+                b1_col = gray1; b2_col = gray3; b_col = gray2; r = Top} in
+  draw_box done_btn;
+  draw_string_in_box Center "Done" done_btn Graphics.black;
+  let h = snd (Graphics.text_size "|") in
+  let help_str_lst = str_lst_of_help () in
+  let _ = List.fold_left
+      (fun acc s -> moveto 620 acc; Graphics.draw_string s; acc-h) 495 help_str_lst in
+  let rec loop () =
+    let s = wait_next_event [Button_down] in
+    if mem (s.mouse_x, s.mouse_y) (770, 20, 40, 40) then ()
+    else loop ()
+  in loop ()
+
+(* [remove_last_elt lst] removes the last element of [lst] *)
+let rec remove_last_elt lst =
+  match lst with
+  | [] -> []
+  | h::[] -> []
+  | h::t -> h :: remove_last_elt t
+
+(* [add_word_delete st] redraws the window to deal with backspaces during keyboard
+ * entry in str_of_keyboard_events *)
+let add_word_delete st =
+  update_gui st;
+  moveto 625 290;
+  Graphics.draw_string "Type the word you wish to add to the dictionary, followed";
+  moveto 625 275;
+  Graphics.draw_string "by 'ENTER':"
+
+(* [str_of_keyboard_events st io_op] is the string result of keyboard input for
+ * a given io_op. *)
+let rec str_of_keyboard_events st io_op =
+  let w = fst (text_size "w") in
+  let rec helper w' history =
+    let curr_status = wait_next_event [Key_pressed] in
+    let c = curr_status.key in
+    if Char.code c = 13 then
+      List.fold_right (fun (c,_) acc -> (Char.escaped c)^acc) history ""
+    else if Char.code c = 8 then
+      (let _ = match io_op with
+       | `AddWord -> add_word_delete st
+       | _ -> failwith "unneeded rn" in
+       moveto 625 260;
+       let h' = remove_last_elt history in
+       let w'' = List.fold_right
+           (fun (c,w') acc ->
+              moveto w' 260; Graphics.draw_string (Char.escaped c); acc + w) h' 0 in
+       helper w'' h')
+    else if Char.code c < 26 || Char.code c > 126 then
+      helper w' history
+    else
+      (moveto (625+w') 260;
+       Graphics.draw_string (Char.escaped c);
+       helper (w'+w) (history @ [(c ,625+w')]))
+  in helper 0 []
+
+(* [addword_helper st] is a string corresponding to a word that a user wishes to
+ * add to the dictionary. The string is received by keyboard input *)
+let addword_helper st =
+  moveto 625 290;
+  Graphics.draw_string "Type the word you wish to add to the dictionary, followed";
+  moveto 625 275;
+  Graphics.draw_string "by 'ENTER':";
+  str_of_keyboard_events st `AddWord
+
+(* [gui_cmd st] is the command received from user input via the gui *)
+let rec gui_cmd st =
+  let curr_status = wait_next_event [Button_down] in
+  let x = curr_status.mouse_x in
+  let y = curr_status.mouse_y in
+  if mem (x, y) pass_btn then
+    Pass
+  else if mem (x, y) help_btn then
+    (help_helper st; Help)
+  else if mem (x, y) hint_btn then
+    Hint
+  else if mem (x, y) quit_btn then
+    Quit
+  else if mem (x, y) toggle_rack_btn then
+    failwith "toggle rack"
+  else if mem (x, y) add_btn then
+    AddWord (addword_helper st)
+  else if mem (x, y) swap_btn then
+    Swap (swap_helper st.current_player.rack)
+  else if mem (x, y) place_btn then
+    let mv = (place_helper st.current_player.rack st) in
+    PlaceWord (convert_to_move mv st)
+  else gui_cmd st
 
 (* [init_gui st] initializes the GUI when the game starts with initial state
  * [st]. The graphics window is opened and the empty board, logo, scoreboard,
