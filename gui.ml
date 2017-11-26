@@ -306,19 +306,24 @@ let rec update_vb b =
   match b with
   | [] -> ()
   | cell::t ->
-    if fst cell.letter <> ' ' then
-      begin
-        let array_idx = coord_to_array_index cell.cell_coord in
-        let array_cell = Array.get vb array_idx in
-        let array_cell' = {array_cell with b1_col = dark_beige1;
-                                           b2_col = dark_beige3;
-                                           b_col = dark_beige2}
-        in
-        Array.set vb array_idx array_cell';
-        update_vb t
-      end
-    else
-      update_vb t
+   let array_idx = coord_to_array_index cell.cell_coord in
+   let array_cell = Array.get vb array_idx in
+   let array_cell' =
+     if fst cell.letter <> ' ' then
+       {array_cell with b1_col = dark_beige1;b2_col = dark_beige3;b_col = dark_beige2}
+     else if List.mem (coord_to_array_index cell.cell_coord) tws_indeces then
+       {array_cell with b1_col = orange1;b2_col = orange3;b_col = orange2}
+     else if List.mem (coord_to_array_index cell.cell_coord) dls_indeces then
+       {array_cell with b1_col = blue1;b2_col = blue3;b_col = blue2}
+     else if List.mem (coord_to_array_index cell.cell_coord) dws_indeces then
+       {array_cell with b1_col = red1;b2_col = red3;b_col = red2}
+     else if List.mem (coord_to_array_index cell.cell_coord) tls_indeces then
+       {array_cell with b1_col = green1;b2_col = green3;b_col = green2}
+     else
+       {array_cell with b1_col = beige1;b2_col = beige3;b_col = beige2}
+   in
+   Array.set vb array_idx array_cell';
+   update_vb t
 
 (* [update_board b] updates the GUI with changes in the flattened board [b]
  * whenever a move is made. *)
@@ -439,7 +444,7 @@ let place_btn = (908, 120, 60, 60)
 let rec get_rack_coords rack_len =
   match rack_len with
   | 0 -> []
-  | _ -> (580 + rack_len * 40, 350) :: get_rack_coords (rack_len - 1)
+  | _ -> (620 + rack_len * 40, 350) :: get_rack_coords (rack_len - 1)
 
 let rec board_coords row_index len =
   match len with
@@ -456,10 +461,10 @@ let rec all_cells index =
 (* [get_idx_from_coord x] is the rack index corresponding to a given x coord in
  * the gui. *)
 let get_idx_from_coord x =
-  (x - 620) / 40 - 1
+  (x - 660) / 40
 
 let get_cell_from_pixel (x, y) =
-  ((y / 40), x / 40)
+  (14 - (y / 40), x / 40)
 
 let sort_horizontal ((_,y1),_) ((_,y2),_) =
   if y1 < y2 then -1
@@ -541,16 +546,15 @@ let get_input lst st =
     else
       let letter = snd (List.nth lst 0) |> Char.escaped in
       let coord = fst (List.nth lst 0) in
-      let updated_coord = 14 - fst coord, snd coord in
-      let cell = get_cell_from_coordinate updated_coord st in
+      let cell = get_cell_from_coordinate coord st in
       let all_words = get_all_adj_words (cell) st in
       match (left_cell cell, up_cell cell) with
       | Some c', None ->
         let cell' = get_cell_from_coordinate c' st in
         if cell_is_empty cell' then
           if List.nth all_words 1 <> "" then
-            updated_coord, letter ^ (List.nth all_words 1), true
-          else updated_coord, letter ^ (List.nth all_words 3), false
+            coord, letter ^ (List.nth all_words 1), true
+          else coord, letter ^ (List.nth all_words 3), false
         else
           begin
           match get_adjacent_word c' st true [] with
@@ -565,8 +569,8 @@ let get_input lst st =
         let cell' = get_cell_from_coordinate c' st in
         if cell_is_empty cell' then
           if List.nth all_words 1 <> "" then
-            updated_coord, letter ^ (List.nth all_words 1), true
-          else updated_coord, letter ^ (List.nth all_words 3), false
+            coord, letter ^ (List.nth all_words 1), true
+          else coord, letter ^ (List.nth all_words 3), false
         else
           begin
             match get_adjacent_word c' st false [] with
@@ -582,10 +586,10 @@ let get_input lst st =
         let cell'' = get_cell_from_coordinate c'' st in
         if cell_is_empty cell' then
           if List.nth all_words 1 <> "" then
-            updated_coord, letter ^ (List.nth all_words 1), true
+            coord, letter ^ (List.nth all_words 1), true
           else
             if cell_is_empty cell'' then
-              updated_coord, letter ^ (List.nth all_words 3), false
+              coord, letter ^ (List.nth all_words 3), false
             else
               begin
                 match get_adjacent_word c'' st false [] with
@@ -608,8 +612,8 @@ let get_input lst st =
           end
       | None, None ->
         if (List.nth all_words 1) <> "" then
-          updated_coord, letter ^ (List.nth all_words 1), true
-        else updated_coord, letter ^ (List.nth all_words 3), false
+          coord, letter ^ (List.nth all_words 1), true
+        else coord, letter ^ (List.nth all_words 3), false
 
 let convert_to_move lst st =
   try
@@ -634,7 +638,7 @@ let rec swap_helper rack =
   let s = wait_next_event [Button_down] in
   if mem (s.mouse_x, s.mouse_y) swap_btn then []
   else
-    let rack_len = List.length rack + 1 in
+    let rack_len = List.length rack in
     let rack_coords = get_rack_coords rack_len in
     let rack_index = List.fold_left
         (fun acc (r_x, r_y) ->
@@ -643,11 +647,27 @@ let rec swap_helper rack =
     if rack_index = -1 then swap_helper rack
     else fst (List.nth rack rack_index) :: swap_helper rack
 
+(* [refresh_cell c b] is an updated board with a specified cell coordinate's data
+ * updated. *)
+let rec refresh_cell c b =
+  match b with
+  | [] -> []
+  | c'::t -> if c'.cell_coord = c.cell_coord then
+      c :: refresh_cell c t else c' :: refresh_cell c t
+
+(* [remove_from_rack l r] is the updated rack with letter [l] removed *)
+let rec remove_from_rack l r =
+  match r with
+  | [] -> []
+  | (l',p)::t -> if l' = l then remove_from_rack l t else (l',p) :: remove_from_rack l t
+
+(* [place_helper rack st] is a list of (cell, coord, st) entries corresponding to
+ * new letters placed onto the board, forming a potentially-valid place command *)
 let rec place_helper rack st =
   let s = wait_next_event [Button_down] in
   if mem (s.mouse_x, s.mouse_y) place_btn then []
   else
-    let rack_len = List.length rack + 1 in
+    let rack_len = List.length rack in
     let rack_coords = get_rack_coords rack_len in
     let rack_index = List.fold_left
         (fun acc (r_x, r_y) ->
@@ -662,11 +682,26 @@ let rec place_helper rack st =
       let cell_index = List.fold_left
           (fun acc (r_x, r_y) ->
              if mem (s'.mouse_x, s'.mouse_y) (r_x, r_y, 40, 40) then
-               (get_cell_from_pixel (r_x, r_y), letter)
+               (let mv = {word = [letter];
+                          mv_coord = (get_cell_from_pixel (r_x, r_y));
+                          is_horizontal = true} in
+                let b' = State.place_horizontal mv st in
+                Graphics.clear_graph ();
+                draw_logo ();
+                update_vb (List.flatten b');
+                update_board (List.flatten b');
+                let r' = remove_from_rack letter st.current_player.rack in
+                update_rack {st.current_player with rack = r'};
+                draw_buttons ();
+                draw_io_box ();
+                update_scores st.players;
+                let curr_player = st.current_player in
+                let curr_player' = {curr_player with rack = r'} in
+                ((get_cell_from_pixel (r_x, r_y), letter), {st with board = b'; current_player = curr_player'}))
              else acc)
-          ((-1,-1), ' ') board_coordinates in
-      if cell_index = ((-1,-1), ' ') then place_helper rack st
-      else (cell_index) :: place_helper rack st
+          (((-1,-1), ' '), st) board_coordinates in
+      if fst cell_index = ((-1,-1), ' ') then place_helper rack st
+      else (cell_index) :: place_helper (snd cell_index).current_player.rack (snd cell_index)
     else failwith "did not click on board after clicking on rack"
 
 (* [str_of_help ()] is a reversed list of strings of gui_help.txt *)
@@ -770,7 +805,7 @@ let rec gui_cmd st =
   else if mem (x, y) swap_btn then
     Swap (swap_helper st.current_player.rack)
   else if mem (x, y) place_btn then
-    let mv = (place_helper st.current_player.rack st) in
+    let mv = List.map (fun (f,s) -> f) (place_helper st.current_player.rack st) in
     PlaceWord (convert_to_move mv st)
   else gui_cmd st
 

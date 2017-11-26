@@ -71,6 +71,8 @@ val get_points : char -> int
 
 val init_bag : unit -> bag
 
+val place_horizontal : Command.move -> state -> board
+
 (* [init_state j] is the initial state of the game *)
 val init_state : init_game_data -> state
 

@@ -144,6 +144,7 @@ let end_turn st end_type =
 
 (* [end_turn_gui st end_type] ends a given turn in the gui *)
 let end_turn_gui st end_type =
+  Graphics.set_color Graphics.black;
   match end_type with
   | `Place ->
 
@@ -164,6 +165,7 @@ let end_turn_gui st end_type =
 (* [end_nonturn_command str] prints some output [str] to the gui and prompts the user
  * to press any key to continue their turn *)
 let end_nonturn_command str =
+  Graphics.set_color Graphics.black;
   Graphics.moveto 625 240;
   Graphics.draw_string str;
   Graphics.moveto 625 220;
