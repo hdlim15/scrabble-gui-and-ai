@@ -97,6 +97,18 @@ val cell_is_empty  : cell -> bool
  * not in [lst], [lst] is returned. *)
 val remove : 'a -> 'a list -> 'a list
 
+(* [fst_triple t] returns the first element from tuple [t] with three
+ * elements. *)
+val fst_triple : 'a * 'b * 'c -> 'a
+
+(* [snd_triple t] returns the second element from tuple [t] with three
+ * elements. *)
+val snd_triple : 'a * 'b * 'c -> 'b
+
+(* [trd_triple t] returns the third element from tuple [t] with three
+ * elements. *)
+val trd_triple : 'a * 'b * 'c -> 'c
+
 (* [get_adjacent_word c st is_h new_chars] returns a triple option with the
  * adjacent word at coordinate [c] on the board in [st], the points
  * associated with it, and the word multiplier applied to it, used later for

@@ -30,15 +30,9 @@ let get_empty_cells lst =
 let get_7th_row_cells st =
   get_row (7,7) st
 
-(* [reverse_str s ] reverses [s].
- *  If [s] is the empty string, then the empty string is returned *)
 let reverse_str s =
   List.fold_right (fun x acc -> acc ^ Char.escaped x ) (explode s) ""
 
-(* [up_cell c] returns [Some c'] if [c'] is the cell coordinate
- * directly above [c], and [None] if the cell coordinate directly above [c]
- * is out of bounds.
- *)
 let up_cell c =
   if fst (c.cell_coord ) = 0 then None
   else Some((fst (c.cell_coord ) - 1), snd (c.cell_coord ))
@@ -51,10 +45,6 @@ let down_cell c =
   if fst (c.cell_coord ) = 14 then None
   else Some((fst (c.cell_coord ) + 1), snd (c.cell_coord ))
 
-(* [left_cell c] returns [Some c'] if [c'] is the cell coordinate
- * directly to the left of [c], and [None] if the cell coordinate
- * directly to the left of [c] is out of bounds.
- *)
 let left_cell c =
   if snd (c.cell_coord ) = 0 then None
   else Some((fst (c.cell_coord )), (snd (c.cell_coord )) - 1)
@@ -97,44 +87,46 @@ let has_adjacent_word_tile c st =
 let get_anchors empty_cells st =
   List.filter (fun c -> has_adjacent_word_tile c st ) empty_cells
 
-(* [get_all_adj_words c st] returns a list of length 4 in which
- * the first element is the word to the left of [c],
- * the second element is the word to the right of [c],
- * the third element is the word above [c],
- * the fourth element is the word below [c].
- * If the cell in the corresponding direction is out of bounds of the board,
- * the word is taken to be the empty string.
- * If instead of a word, there is a single letter, then that letter
- * is taken to be the word.
- *)
 let get_all_adj_words c st =
   let left =
     match left_cell c with
     | None -> ""
     | Some c' ->
       match get_adjacent_word c' st true [] with
-      | None -> ""
+      | None ->
+        let cell' = get_cell_from_coordinate c' st in
+        if cell_is_empty cell' then ""
+        else fst (cell'.letter) |> Char.escaped
       | Some (word,_,_) -> word in
   let right =
     match right_cell c with
     | None -> ""
     | Some c' ->
       match get_adjacent_word c' st true [] with
-      | None -> ""
+      | None ->
+        let cell' = get_cell_from_coordinate c' st in
+        if cell_is_empty cell' then ""
+        else fst (cell'.letter) |> Char.escaped
       | Some (word,_,_) -> word in
   let up =
     match up_cell c with
     | None -> ""
     | Some c' ->
       match get_adjacent_word c' st false [] with
-      | None -> ""
+      | None ->
+        let cell' = get_cell_from_coordinate c' st in
+        if cell_is_empty cell' then ""
+        else fst (cell'.letter) |> Char.escaped
       | Some (word,_,_) -> word in
   let down =
     match up_cell c with
     | None -> ""
     | Some c' ->
       match get_adjacent_word c' st false [] with
-      | None -> ""
+      | None ->
+        let cell' = get_cell_from_coordinate c' st in
+        if cell_is_empty cell' then ""
+        else fst (cell'.letter) |> Char.escaped
       | Some (word,_,_) -> word in
   [left;right;up;down]
 
@@ -369,6 +361,156 @@ let all_moves anchors st =
     (fun acc x ->
        (fst x,(make_move (fst x) (snd x) st))::acc
     ) [] anchors
+
+let sort_horizontal ((_,y1),_) ((_,y2),_) =
+  if y1 < y2 then -1
+  else if y1 > y2 then 1
+  else 0
+
+let sort_vertical ((x1,_),_) ((x2,_),_) =
+  if x1 < x2 then -1
+  else if x1 > x2 then 1
+  else 0
+
+let get_input lst st =
+  if List.length lst = 0 then failwith "no letters were placed"
+  else if List.length lst > 1 then
+    if fst (fst (List.nth lst 0)) <> fst (fst (List.nth lst 1)) then
+    let update_coord =
+      List.fold_left
+        (fun acc ((x,y),letter) ->
+           ((14-x, y),letter)::acc
+        ) [] (lst) in
+    let update_cells = List.sort sort_vertical update_coord in
+    let leftmost_input = List.nth update_cells 0 in
+    let col = get_column (fst leftmost_input) st
+              |> List.filter (fun c' ->
+                  fst (c'.cell_coord) >= fst (fst leftmost_input)) in
+    let added_str =
+      List.fold_left
+        (fun acc x ->
+           let coord = x.cell_coord in
+           if not (cell_is_empty x) then (fst (x.letter) |> Char.escaped) ^ acc
+           else match List.assoc_opt (coord) update_cells with
+             | None -> acc
+             | Some letter -> (Char.escaped letter) ^ acc
+       ) "" col |> reverse_str in
+    let cell = get_cell_from_coordinate (fst leftmost_input) st in
+    match up_cell cell with
+    | None -> (fst leftmost_input), added_str, false
+    | Some c' ->
+      let cell' = get_cell_from_coordinate c' st in
+      if cell_is_empty cell' then (fst leftmost_input), added_str, false
+      else
+        match get_adjacent_word c' st false [] with
+        | None -> c', (fst (cell'.letter) |> Char.escaped) ^ added_str, false
+        | Some (str,_,_) ->
+          let new_cell = fst c' - String.length str , (snd c')in
+          new_cell, str ^ added_str, false
+    else
+    let update_coord =
+      List.fold_left
+        (fun acc ((x,y),letter) ->
+           ((14-x, y),letter)::acc
+        ) [] (lst) in
+    let update_cells = List.sort sort_horizontal update_coord in
+    let leftmost_input = List.nth update_cells 0 in
+    let row = get_row (fst leftmost_input) st
+              |> List.filter (fun c' ->
+                  snd (c'.cell_coord) >= snd (fst leftmost_input)) in
+    let added_str =
+      List.fold_left
+        (fun acc x ->
+           let coord = x.cell_coord in
+           if not (cell_is_empty x) then (fst (x.letter) |> Char.escaped) ^ acc
+           else match List.assoc_opt (coord) update_cells with
+             | None -> acc
+             | Some letter -> (Char.escaped letter) ^ acc
+        ) "" row  |> reverse_str in
+    let cell = get_cell_from_coordinate (fst leftmost_input) st in
+    match left_cell cell with
+    | None -> (fst leftmost_input), added_str, true
+    | Some c' ->
+      let cell' = get_cell_from_coordinate c' st in
+      if cell_is_empty cell' then (fst leftmost_input), added_str, true
+      else
+        match get_adjacent_word c' st true [] with
+        | None -> c', (fst (cell'.letter) |> Char.escaped) ^ added_str, true
+        | Some (str,_,_) ->
+          let new_cell = fst c', (snd c') - String.length str in
+          new_cell, str ^ added_str, true
+  else
+    let letter = snd (List.nth lst 0) |> Char.escaped in
+    let coord = fst (List.nth lst 0) in
+    let updated_coord = 14 - fst coord, snd coord in
+    let cell = get_cell_from_coordinate updated_coord st in
+    let all_words = get_all_adj_words (cell) st in
+    match (left_cell cell, up_cell cell) with
+    | Some c', None ->
+      let cell' = get_cell_from_coordinate c' st in
+      if cell_is_empty cell' then
+        if List.nth all_words 1 <> "" then
+          updated_coord, letter ^ (List.nth all_words 1), true
+        else updated_coord, letter ^ (List.nth all_words 3), false
+      else
+        begin
+        match get_adjacent_word c' st true [] with
+        | None ->
+          let letter' = fst cell'.letter |> Char.escaped in
+          c', letter' ^ letter ^ (List.nth all_words 1), true
+        | Some (str,_,_) ->
+          let new_cell = fst c', (snd c') + 1 - String.length str in
+          new_cell, str ^ letter ^ (List.nth all_words 1), true
+      end
+    | None, Some c' ->
+      let cell' = get_cell_from_coordinate c' st in
+      if cell_is_empty cell' then
+        if List.nth all_words 1 <> "" then
+          updated_coord, letter ^ (List.nth all_words 1), true
+        else updated_coord, letter ^ (List.nth all_words 3), false
+      else
+        begin
+          match get_adjacent_word c' st false [] with
+          | None ->
+            let letter' = fst cell'.letter |> Char.escaped in
+            c', letter' ^ letter ^ (List.nth all_words 3), false
+          | Some (str,_,_) ->
+            let new_cell = fst c' + 1 - String.length str, snd c' in
+            new_cell, str ^ letter ^ (List.nth all_words 3), false
+        end
+    | Some c', Some c'' ->
+      let cell' = get_cell_from_coordinate c' st in
+      let cell'' = get_cell_from_coordinate c'' st in
+      if cell_is_empty cell' then
+        if List.nth all_words 1 <> "" then
+          updated_coord, letter ^ (List.nth all_words 1), true
+        else
+          if cell_is_empty cell'' then
+            updated_coord, letter ^ (List.nth all_words 3), false
+          else
+            begin
+              match get_adjacent_word c'' st false [] with
+              | None ->
+                let letter' = fst cell'.letter |> Char.escaped in
+                c'', letter' ^ letter ^ (List.nth all_words 3), false
+              | Some (str,_,_) ->
+                let new_cell = fst c' + 1 - String.length str, (snd c') in
+                new_cell, str ^ letter ^ (List.nth all_words 3), false
+            end
+      else
+        begin
+          match get_adjacent_word c' st true [] with
+          | None ->
+            let letter' = fst cell'.letter |> Char.escaped in
+            c', letter' ^ letter ^ (List.nth all_words 1), true
+          | Some (str,_,_) ->
+            let new_cell = fst c', (snd c') + 1 - String.length str in
+            new_cell, str ^ letter ^ (List.nth all_words 1), true
+        end
+    | None, None ->
+      if (List.nth all_words 1) <> "" then
+        updated_coord, letter ^ (List.nth all_words 1), true
+      else updated_coord, letter ^ (List.nth all_words 3), false
 
 let start_forward cell rack st =
   if (get_cell_from_coordinate cell st |> cell_is_empty) then None
