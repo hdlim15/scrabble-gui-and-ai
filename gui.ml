@@ -504,7 +504,7 @@ let get_input lst st =
           match get_adjacent_word c' st false [] with
           | None -> c', (fst (cell'.letter) |> Char.escaped) ^ added_str, false
           | Some (str,_,_) ->
-            let new_cell = fst c' + 1 - String.length str , (snd c')in
+            let new_cell = fst c' + 1 - String.length str , (snd c') in
             new_cell, str ^ added_str, false
       else
       let update_coord =
@@ -634,7 +634,7 @@ let rec swap_helper rack =
   let s = wait_next_event [Button_down] in
   if mem (s.mouse_x, s.mouse_y) swap_btn then []
   else
-    let rack_len = List.length rack in
+    let rack_len = List.length rack + 1 in
     let rack_coords = get_rack_coords rack_len in
     let rack_index = List.fold_left
         (fun acc (r_x, r_y) ->
@@ -647,7 +647,7 @@ let rec place_helper rack st =
   let s = wait_next_event [Button_down] in
   if mem (s.mouse_x, s.mouse_y) place_btn then []
   else
-    let rack_len = List.length rack in
+    let rack_len = List.length rack + 1 in
     let rack_coords = get_rack_coords rack_len in
     let rack_index = List.fold_left
         (fun acc (r_x, r_y) ->
