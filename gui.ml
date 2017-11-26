@@ -445,7 +445,7 @@ let rec board_coords row_index len =
   match len with
   | 15 -> []
   | _ ->
-    (row_index * 40 + (40 * len), row_index * 40 ) :: board_coords row_index (len + 1)
+    (row_index * 40, (40 * len)) :: board_coords row_index (len + 1)
 
 let rec all_cells index =
   match index with
