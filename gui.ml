@@ -567,7 +567,6 @@ let rec gui_cmd st =
     failwith "place"
   else gui_cmd st
 
-
   let sort_horizontal ((_,y1),_) ((_,y2),_) =
     if y1 < y2 then -1
     else if y1 > y2 then 1
