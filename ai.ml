@@ -37,10 +37,6 @@ let up_cell c =
   if fst (c.cell_coord ) = 0 then None
   else Some((fst (c.cell_coord ) - 1), snd (c.cell_coord ))
 
-(* [down_cell c] returns [Some c'] if [c'] is the cell coordinate
- * directly below [c], and [None] if the cell coordinate directly below [c]
- * is out of bounds.
- *)
 let down_cell c =
   if fst (c.cell_coord ) = 14 then None
   else Some((fst (c.cell_coord ) + 1), snd (c.cell_coord ))
@@ -49,10 +45,6 @@ let left_cell c =
   if snd (c.cell_coord ) = 0 then None
   else Some((fst (c.cell_coord )), (snd (c.cell_coord )) - 1)
 
-(* [right_cell c] returns [Some c'] if [c'] is the cell coordinate
- * directly to the right of [c], and [None] if the cell coordinate
- * directly to the right of [c] is out of bounds.
- *)
 let right_cell c =
   if snd (c.cell_coord ) = 14 then None
   else Some((fst (c.cell_coord )), (snd (c.cell_coord )) + 1)

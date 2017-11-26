@@ -482,9 +482,40 @@ let get_input lst st =
       if fst (fst (List.nth lst 0)) <> fst (fst (List.nth lst 1)) then
       let update_cells = List.sort sort_vertical lst in
       let leftmost_input = List.nth update_cells 0 in
+      let leftmost_cell = get_cell_from_coordinate (fst leftmost_input) st in
+      let first_cell =
+      match up_cell (leftmost_cell) with
+      | None -> fst leftmost_input
+      | Some c' ->
+        let cell' = get_cell_from_coordinate c' st in
+        match get_adjacent_word c' st false [] with
+        | None ->
+          if not ( cell_is_empty cell') then
+            fst (fst leftmost_input) - 1, snd (fst leftmost_input)
+          else fst leftmost_input
+        | Some (str,_,_) ->
+          fst (fst leftmost_input) - String.length str,
+          snd (fst leftmost_input)  in
+      let rightmost_input =
+        List.nth update_cells ((List.length update_cells) - 1) in
+      let rightmost_cell = get_cell_from_coordinate (fst rightmost_input) st in
+      let last_cell =
+        match down_cell (rightmost_cell) with
+      | None -> fst rightmost_input
+      | Some c' ->
+        let cell' = get_cell_from_coordinate c' st in
+        match get_adjacent_word c' st false [] with
+        | None ->
+          if not ( cell_is_empty cell') then
+            fst (fst rightmost_input) + 1, snd (fst rightmost_input)
+          else fst rightmost_input
+        | Some (str,_,_) ->
+          fst (fst rightmost_input) + String.length str,
+          snd (fst rightmost_input) in
       let col = get_column (fst leftmost_input) st
                 |> List.filter (fun c' ->
-                    fst (c'.cell_coord) >= fst (fst leftmost_input)) in
+                    fst (c'.cell_coord) >= fst (first_cell) &&
+                    fst (c'.cell_coord) <= fst (last_cell) ) in
       let added_str =
         List.fold_left
           (fun acc x ->
@@ -493,7 +524,8 @@ let get_input lst st =
              else match List.assoc_opt (coord) update_cells with
                | None -> acc
                | Some letter -> (Char.escaped letter) ^ acc
-         ) "" col |> reverse_str in
+          ) "" col |> reverse_str in
+      (* print_endline added_str; *)
       let cell = get_cell_from_coordinate (fst leftmost_input) st in
       match up_cell cell with
       | None -> (fst leftmost_input), added_str, false
@@ -509,9 +541,40 @@ let get_input lst st =
       else
       let update_cells = List.sort sort_horizontal lst in
       let leftmost_input = List.nth update_cells 0 in
+      let leftmost_cell = get_cell_from_coordinate (fst leftmost_input) st in
+      let first_cell =
+      match left_cell (leftmost_cell) with
+      | None -> fst leftmost_input
+      | Some c' ->
+        let cell' = get_cell_from_coordinate c' st in
+        match get_adjacent_word c' st true [] with
+        | None ->
+          if not ( cell_is_empty cell') then
+            fst (fst leftmost_input), snd (fst leftmost_input) - 1
+          else fst leftmost_input
+        | Some (str,_,_) ->
+          fst (fst leftmost_input),
+          snd (fst leftmost_input) - String.length str in
+      let rightmost_input =
+        List.nth update_cells ((List.length update_cells) - 1) in
+      let rightmost_cell = get_cell_from_coordinate (fst rightmost_input) st in
+      let last_cell =
+      match right_cell (rightmost_cell) with
+      | None -> fst rightmost_input
+      | Some c' ->
+        let cell' = get_cell_from_coordinate c' st in
+        match get_adjacent_word c' st true [] with
+        | None ->
+          if not ( cell_is_empty cell') then
+            fst (fst rightmost_input), snd (fst rightmost_input) + 1
+          else fst rightmost_input
+        | Some (str,_,_) ->
+          fst (fst rightmost_input),
+          snd (fst rightmost_input) + String.length str in
       let row = get_row (fst leftmost_input) st
                 |> List.filter (fun c' ->
-                    snd (c'.cell_coord) >= snd (fst leftmost_input)) in
+                    snd (c'.cell_coord) >= snd (first_cell) &&
+                    snd (c'.cell_coord) <= snd (last_cell) ) in
       let added_str =
         List.fold_left
           (fun acc x ->

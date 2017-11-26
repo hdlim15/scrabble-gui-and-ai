@@ -19,6 +19,18 @@ val up_cell : State.cell -> State.coordinate option
 *)
 val left_cell : State.cell -> State.coordinate option
 
+(* [down_cell c] returns [Some c'] if [c'] is the cell coordinate
+ * directly below [c], and [None] if the cell coordinate directly below [c]
+ * is out of bounds.
+ *)
+val down_cell : State.cell -> State.coordinate option
+
+(* [right_cell c] returns [Some c'] if [c'] is the cell coordinate
+ * directly to the right of [c], and [None] if the cell coordinate
+ * directly to the right of [c] is out of bounds.
+*)
+val right_cell : State.cell -> State.coordinate option
+
 (* [get_all_adj_words c st] returns a list of length 4 in which
  * the first element is the word to the left of [c],
  * the second element is the word to the right of [c],
