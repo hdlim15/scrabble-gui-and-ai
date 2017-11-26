@@ -441,10 +441,25 @@ let rec get_rack_coords rack_len =
   | 0 -> []
   | _ -> (580 + rack_len * 40, 350) :: get_rack_coords (rack_len - 1)
 
+let rec board_coords row_index len =
+  match len with
+  | 15 -> []
+  | _ ->
+    (row_index * 40 * len, row_index * 40 ) :: board_coords row_index (len + 1)
+
+let rec all_cells index =
+  match index with
+  | 15 -> []
+  | _ ->
+    (board_coords index 0) @ all_cells (index + 1)
+
 (* [get_idx_from_coord x] is the rack index corresponding to a given x coord in
  * the gui. *)
 let get_idx_from_coord x =
   (x - 620) / 40 - 1
+
+let get_cell_from_pixel (x, y) =
+  (x / 40), (y / 40)
 
 (* [swap_helper rack] is a character list corresponding to rack boxes in the gui
  * that are clicked on prior to clicking the 'swap' button to finalize the swap
@@ -462,6 +477,19 @@ let rec swap_helper rack =
              (get_idx_from_coord r_x) else acc) (-1) rack_coords in
     if rack_index = -1 then swap_helper rack
     else fst (List.nth rack rack_index) :: swap_helper rack
+
+let rec place_helper board =
+  let s = wait_next_event [Button_down] in
+  if mem (s.mouse_x, s.mouse_y) place_btn then []
+  else
+    let board_coordinates = all_cells 0 in
+    let cell_index = List.fold_left
+        (fun acc (r_x, r_y) ->
+           if mem (s.mouse_x, s.mouse_y) (r_x, r_y, 40, 40) then
+             (get_cell_from_pixel (r_x, r_y)) else acc)
+        (-1,-1) board_coordinates in
+    if cell_index = (-1, -1) then place_helper board
+    else (cell_index) :: place_helper board
 
 (* [str_of_help ()] is a reversed list of strings of gui_help.txt *)
 let rec str_lst_of_help () =
