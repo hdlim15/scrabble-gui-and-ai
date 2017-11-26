@@ -489,7 +489,7 @@ let get_input lst st =
         List.fold_left
           (fun acc x ->
              let coord = x.cell_coord in
-             if not (cell_is_empty x) then (fst (x.letter) |> Char.escaped) ^ acc
+             if not (cell_is_empty x) then (fst (x.letter) |> Char.escaped) ^acc
              else match List.assoc_opt (coord) update_cells with
                | None -> acc
                | Some letter -> (Char.escaped letter) ^ acc
@@ -504,7 +504,7 @@ let get_input lst st =
           match get_adjacent_word c' st false [] with
           | None -> c', (fst (cell'.letter) |> Char.escaped) ^ added_str, false
           | Some (str,_,_) ->
-            let new_cell = fst c' - String.length str , (snd c')in
+            let new_cell = fst c' + 1 - String.length str , (snd c')in
             new_cell, str ^ added_str, false
       else
       let update_coord =
@@ -521,7 +521,7 @@ let get_input lst st =
         List.fold_left
           (fun acc x ->
              let coord = x.cell_coord in
-             if not (cell_is_empty x) then (fst (x.letter) |> Char.escaped) ^ acc
+             if not (cell_is_empty x) then (fst (x.letter) |> Char.escaped) ^acc
              else match List.assoc_opt (coord) update_cells with
                | None -> acc
                | Some letter -> (Char.escaped letter) ^ acc
@@ -536,7 +536,7 @@ let get_input lst st =
           match get_adjacent_word c' st true [] with
           | None -> c', (fst (cell'.letter) |> Char.escaped) ^ added_str, true
           | Some (str,_,_) ->
-            let new_cell = fst c', (snd c') - String.length str in
+            let new_cell = fst c', (snd c') + 1 - String.length str in
             new_cell, str ^ added_str, true
     else
       let letter = snd (List.nth lst 0) |> Char.escaped in
@@ -590,10 +590,10 @@ let get_input lst st =
               begin
                 match get_adjacent_word c'' st false [] with
                 | None ->
-                  let letter' = fst cell'.letter |> Char.escaped in
+                  let letter' = fst cell''.letter |> Char.escaped in
                   c'', letter' ^ letter ^ (List.nth all_words 3), false
                 | Some (str,_,_) ->
-                  let new_cell = fst c' + 1 - String.length str, (snd c') in
+                  let new_cell = fst c'' + 1 - String.length str, (snd c'') in
                   new_cell, str ^ letter ^ (List.nth all_words 3), false
               end
         else
@@ -614,9 +614,16 @@ let get_input lst st =
 let convert_to_move lst st =
   try
     let mv = get_input lst st in
+    let convert =
     {word = snd_triple mv |> explode; mv_coord = fst_triple mv;
      is_horizontal = trd_triple mv
-    }
+    } in
+    (* print_endline
+      (string_of_int(fst convert.mv_coord) ^ "," ^ string_of_int(snd convert.mv_coord) ^ " " ^
+        string_of_bool(convert.is_horizontal) ^ " " ^
+       List.fold_right
+         (fun x acc -> (Char.escaped x) ^ acc)  convert.word ""); *)
+    convert
   with _ -> failwith "no letters were added"
 
 (* [swap_helper rack] is a character list corresponding to rack boxes in the gui
@@ -658,8 +665,6 @@ let rec place_helper rack st =
                (get_cell_from_pixel (r_x, r_y), letter)
              else acc)
           ((-1,-1), ' ') board_coordinates in
-      (* print_endline (((fst (fst cell_index)) |> string_of_int) ^ ", " ^
-                     ((snd (fst cell_index)) |> string_of_int)); *)
       if cell_index = ((-1,-1), ' ') then place_helper rack st
       else (cell_index) :: place_helper rack st
     else failwith "did not click on board after clicking on rack"
