@@ -61,16 +61,16 @@ let rec get_prev_player n p =
  * score. *)
 let finalize_scores players =
   let empty_rack_player =
-  if List.length (List.filter (fun p -> List.length p.rack = 0) players) <> 0 then
-    Some (List.hd (List.filter (fun p -> List.length p.rack = 0) players))
-  else None in
+    if List.length (List.filter (fun p -> List.length p.rack = 0) players) <> 0 then
+      Some (List.hd (List.filter (fun p -> List.length p.rack = 0) players))
+    else None in
   let other_players = List.filter (fun p -> List.length p.rack <> 0) players in
   let score_helper s r =
     List.fold_left (fun acc (l,p) -> acc - p) s r in
   let other_players'_w_sumDeductedPts =
     List.fold_left (fun acc p ->
-      let deducted_ps = p.score - score_helper p.score p.rack in
-      ({p with score = p.score - deducted_ps}::(fst acc)), snd acc + deducted_ps) ([],0) other_players in
+        let deducted_ps = p.score - score_helper p.score p.rack in
+        ({p with score = p.score - deducted_ps}::(fst acc)), snd acc + deducted_ps) ([],0) other_players in
   match empty_rack_player with
   | Some p ->
     let empty_rack_player' = {p with score = p.score + snd other_players'_w_sumDeductedPts} in
@@ -85,8 +85,8 @@ let get_winner st =
          if p.score > (List.hd acc).score then [p]
          else
          if p.score = (List.hd acc).score then
-             p::acc
-           else acc) [List.hd players'] players' in
+           p::acc
+         else acc) [List.hd players'] players' in
   if List.length winner_s = 1 then List.hd winner_s
   else List.fold_left (fun acc p ->
       if p.score > acc.score then p else acc) st.current_player st.players
@@ -130,23 +130,26 @@ let end_turn st end_type =
 
 (* [end_turn_gui st end_type] ends a given turn in the gui *)
 let end_turn_gui st end_type =
-  Graphics.set_color Graphics.black;
-  match end_type with
-  | `Place ->
+  match st.current_player.player_type with
+  | AI _ -> ()
+  | Human ->
+    Graphics.set_color Graphics.black;
+    match end_type with
+    | `Place ->
 
-    (* ensure redraw board *)
+      (* ensure redraw board *)
 
-  Graphics.moveto 625 220;
-  Graphics.draw_string "Press any key to end your turn";
-  let _ = Graphics.wait_next_event [Graphics.Key_pressed] in ()
-  | `Swap ->
+      Graphics.moveto 625 220;
+      Graphics.draw_string "Press any key to end your turn";
+      let _ = Graphics.wait_next_event [Graphics.Key_pressed] in ()
+    | `Swap ->
 
-    (* redraw rack so player can see it before ending turn *)
+      (* redraw rack so player can see it before ending turn *)
 
-  Graphics.moveto 625 220;
-  Graphics.draw_string "Press any key to end your turn";
-  let _ = Graphics.wait_next_event [Graphics.Key_pressed] in ()
-  | `Pass -> ()
+      Graphics.moveto 625 220;
+      Graphics.draw_string "Press any key to end your turn";
+      let _ = Graphics.wait_next_event [Graphics.Key_pressed] in ()
+    | `Pass -> ()
 
 (* [end_nonturn_command str] prints some output [str] to the gui and prompts the user
  * to press any key to continue their turn *)
@@ -169,11 +172,23 @@ let rec get_command st =
          get_command st)
        in command *)
     (try gui_cmd st with
-     | GuiExn s -> end_nonturn_command ("Exception: " ^ s); update_gui st; get_command st)
+     | GuiExn s -> end_nonturn_command ("Exception: " ^ s);
+                   update_gui st;
+                   get_command st)
   | AI diff ->
     match diff with
     | Hard -> Ai.best_move st
     | Easy -> Ai.get_hint st
+
+(* [quit_helper st] acts as a second step of verification for a Quit command *)
+let quit_helper st =
+  Graphics.set_color Graphics.black;
+  Graphics.moveto 625 240;
+  Graphics.draw_string "Press 'Q' to confirm quit, any other key to resume play";
+  let s = Graphics.wait_next_event [Graphics.Key_pressed] in
+  match Char.code s.Graphics.key with
+  | 81 | 113 -> exit 0
+  | _ -> st
 
 (* [play_game st] plays the game represented by [st]. *)
 let rec play_game st =
@@ -182,7 +197,7 @@ let rec play_game st =
     try
       match command with
       | PlaceWord mv ->
-        let st' = do' command st in end_turn st' `Place; st'
+        let st' = do' command st in end_turn_gui st' `Place; st'
       | Swap chars ->
         let st' = do' command st in end_turn_gui st' `Swap; st'
       | Score -> print_endline (get_scores st.players); st
@@ -197,7 +212,7 @@ let rec play_game st =
       | AddWord str ->
         let st' = do' command st in end_nonturn_command ("Added word to dictionary"); st'
       | Help -> print_endline ((str_of_help ())^"\n"); st
-      | Quit -> print_endline "Thanks for playing!\n"; exit 0;
+      | Quit -> (*print_endline "Thanks for playing!\n"; exit 0;*) quit_helper st
       | Board -> print_endline (string_of_board st.board); st
       | Pass ->
         let st' = do' command st in end_turn_gui st' `Pass; st'
@@ -220,58 +235,152 @@ let rec play_game st =
 (******************************************************************************)
 (* GAME INITIALIZATION CODE *)
 
-(* [init_player_names num_players] is a list of player names. *)
-let rec init_player_names num_players =
-  if num_players <> 0 then
-    begin
-      print_endline
-        "\nEnter player names separated by spaces, in the order you want the turns to go.";
-      print_string "> ";
-      let player_names_str = read_line () in
-      let player_name_lst = player_names_str |> Str.split (Str.regexp "[ \t]+") in
-      if List.length player_name_lst <> num_players then
-        (print_endline "Invalid number of names."; init_player_names num_players)
-      else
-      if List.length (List.sort_uniq Pervasives.compare player_name_lst) <> List.length player_name_lst then
-        (print_endline "Player names must be unique."; init_player_names num_players)
-      else
-        player_name_lst
-    end
-  else
-    []
+(* [draw_init_game_logo ()] draws 'scrabble' at the top of the game initialization
+ * gui window. *)
+let draw_init_game_logo () =
+  let bar_height = snd (Graphics.text_size "|") in
+  draw_string "                               _       _       _         " 25 375 true;
+  draw_string "  ___    ___    _ __    __ _  | |__   | |__   | |   ___  " 25 (375 - bar_height) true;
+  draw_string " / __|  / __|  | '__| / _` | |  _ \\ |  _ \\ | |  / _ \\ " 25 (375 - 2 * bar_height) true;
+  draw_string " \\__\\| (__   | |    | (_| | | |_) | | |_) | | | |  __/ " 25 (375 - 3 * bar_height) true;
+  draw_string " |___/  \\___| |_|    \\__,_| |_.__/  |_.__/  |_|  \\___|" 25 (375 - 4 * bar_height) true;
+  draw_string " ________________________________________________________" 25 (375 - 5 * bar_height) true
+
+(* [clear ()] resets the game initialization window to its default configuration *)
+let clear () =
+  Graphics.clear_graph ();
+  draw_init_game_logo ();
+  Graphics.draw_rect 20 20 360 240;
+  Graphics.moveto 20 290;
+  Graphics.draw_string "Welcome to Scrabble!";
+  Graphics.moveto 20 275;
+  Graphics.draw_string "Made by A. Vaziri, C. McHugh, D. Lim, K. Newatia"
+
+(* [inp_reset ()] resets the text box to the default prompt for init_num_players *)
+let inp_reset () =
+  clear ();
+  Graphics.moveto 30 240;
+  Graphics.draw_string "How many players? Enter a number between 1 and 4,";
+  Graphics.moveto 30 225;
+  Graphics.draw_string "followed by 'ENTER'";
+  Graphics.moveto 30 210;
+  Graphics.draw_string "> "
+
+(* [inh_reset ()] resets the text box to the default prompt for init_num_humans *)
+let inh_reset () =
+  clear ();
+  Graphics.moveto 30 240;
+  Graphics.draw_string "How many human players? Enter a number, followed";
+  Graphics.moveto 30 225;
+  Graphics.draw_string "by 'ENTER'";
+  Graphics.moveto 30 210;
+  Graphics.draw_string "> "
+
+(* [iad_reset num_ai] resets the text box to the default prompt for init_ai_diff *)
+let iad_reset num_ai =
+  clear ();
+  Graphics.moveto 30 240;
+  Graphics.draw_string ("Assign difficulty to " ^ (string_of_int num_ai) ^ " AI(s), separated");
+  Graphics.moveto 30 225;
+  Graphics.draw_string "by spaces, followed by 'ENTER'";
+  Graphics.moveto 30 210;
+  Graphics.draw_string "Difficulties are: easy, hard ";
+  Graphics.moveto 30 195;
+  Graphics.draw_string "> "
+
+(* [ipn_reset ()] resets the text box to the default prompt for init_player_names *)
+let ipn_reset () =
+  clear ();
+  Graphics.moveto 30 240;
+  Graphics.draw_string "Enter player names separated by spaces, in the order";
+  Graphics.moveto 30 225;
+  Graphics.draw_string "you want the turns to go, followed by 'ENTER'";
+  Graphics.moveto 30 210;
+  Graphics.draw_string "> "
+
+(* [str_of_keyboard_events io_op info] is the string result of keyboard input for
+ * a given io_op, and an optional [info] integer. *)
+let rec str_of_keyboard_events io_op info =
+  let h = match io_op with
+    | `Init_num_players -> 210
+    | `Init_num_humans -> 210
+    | `Init_ai_diff -> 195
+    | `Init_player_names -> 210 in
+  let w = fst (Graphics.text_size "w") in
+  let rec helper w' history =
+    let curr_status = Graphics.wait_next_event [Graphics.Key_pressed] in
+    let c = curr_status.Graphics.key in
+    if Char.code c = 13 then
+      List.fold_right (fun (c,_) acc -> (Char.escaped c)^acc) history ""
+    else if Char.code c = 8 then
+      (let _ = match io_op with
+          | `Init_num_players -> inp_reset ()
+          | `Init_num_humans -> inh_reset ()
+          | `Init_ai_diff -> iad_reset info
+          | `Init_player_names -> ipn_reset () in
+       Graphics.moveto (30+2*w) h;
+       let h' = remove_last_elt history in
+       let w'' = List.fold_right
+          (fun (c,w') acc ->
+            Graphics.moveto w' h; Graphics.draw_string (Char.escaped c); acc + w) h' 2*w in
+       helper w'' h')
+    else if Char.code c < 26 || Char.code c > 126 then
+      helper w' history
+    else
+      (Graphics.moveto (30+w') h;
+       Graphics.draw_string (Char.escaped c);
+       helper (w'+w) (history @ [(c ,30+w')]))
+  in helper (2*w) []
 
 (* [init_num_players ()] is the number of players (between 1 and 4). *)
 let rec init_num_players () =
-  print_endline "\nHow many players? Enter a number between 1 and 4.";
-  print_string "> ";
-  let num_players = read_line () in
-  let num_players' = try int_of_string num_players with _ ->
-    print_endline "Invalid entry."; init_num_players () in
-  if num_players' > 4 || num_players' < 1 then
-    (print_endline "Invalid number."; init_num_players ())
-  else num_players'
+  inp_reset ();
+  let s = str_of_keyboard_events `Init_num_players (-1) in
+  let num_players = try int_of_string s with _ ->
+    clear ();
+    Graphics.moveto 30 240;
+    Graphics.draw_string "Invalid entry, press any key to continue";
+    let _ = Graphics.wait_next_event [Graphics.Key_pressed] in
+    init_num_players () in
+  if num_players > 4 || num_players < 1 then
+    (clear ();
+     Graphics.moveto 30 240;
+     Graphics.draw_string "Invalid number, press any key to continue";
+     let _ = Graphics.wait_next_event [Graphics.Key_pressed] in
+     init_num_players ())
+  else num_players
 
 (* [init_num_humans total_num_players] is the number of human players. *)
 let rec init_num_humans total_num_players =
-  print_endline "\nHow many human players?";
-  print_string "> ";
-  let num_humans = read_line () in
-  let num_humans' = try int_of_string num_humans with _ ->
-    print_endline "Invalid entry."; init_num_humans total_num_players in
-  if num_humans' < 0 || num_humans' > total_num_players then
-    (print_endline "Invalid number."; init_num_humans total_num_players)
-  else num_humans'
+  inh_reset ();
+  let s = str_of_keyboard_events `Init_num_humans (-1) in
+  let num_humans = try int_of_string s with _ ->
+    clear ();
+    Graphics.moveto 30 240;
+    Graphics.draw_string "Invalid entry, press any key to continue";
+    let _ = Graphics.wait_next_event [Graphics.Key_pressed] in
+    init_num_humans total_num_players in
+  if num_humans < 0 || num_humans > total_num_players then
+    (clear ();
+     Graphics.moveto 30 240;
+     Graphics.draw_string "Invalid number, press any key to continue";
+     let _ = Graphics.wait_next_event [Graphics.Key_pressed] in
+     init_num_humans total_num_players)
+  else num_humans
 
 (* [init_ai_diff num_ai] is a list of difficulties for a number [num_ai] of AIs *)
 let rec init_ai_diff num_ai =
-  print_endline ("\nAssign difficulty to " ^
-                 (string_of_int num_ai) ^ " AI(s), separated by spaces.");
-  print_endline "Difficulties are: easy, hard.";
-  print_string "> ";
-  let ai_diff = read_line () in
-  let ai_diff_lst = ai_diff |> Str.split (Str.regexp "[ \t]+") in
+  iad_reset num_ai;
+  let s = str_of_keyboard_events `Init_ai_diff num_ai in
+  let ai_diff_lst = s |> Str.split (Str.regexp "[ \t]+") in
   if List.length ai_diff_lst <> num_ai then
-    (print_endline "Invalid number of difficulties."; init_ai_diff num_ai)
+    (clear ();
+     Graphics.moveto 30 240;
+     Graphics.draw_string "Invalid number of difficulties, press any key";
+     Graphics.moveto 30 225;
+     Graphics.draw_string "to continue";
+     let _ = Graphics.wait_next_event [Graphics.Key_pressed] in
+     init_ai_diff num_ai)
   else
     let rec helper lst =
       match lst with
@@ -280,41 +389,76 @@ let rec init_ai_diff num_ai =
         match h' with
         | "easy" -> Easy :: helper t
         | "hard" -> Hard :: helper t
-        | _ -> (print_endline "Invalid difficulty entry."; failwith "") in
+        | _ -> (clear ();
+                Graphics.moveto 30 240;
+                Graphics.draw_string "Invalid difficulty entry, press any key to continue";
+                let _ = Graphics.wait_next_event [Graphics.Key_pressed] in
+                failwith "") in
     try helper ai_diff_lst with Failure _ -> init_ai_diff num_ai
 
-(* [init_game rdy], assuming rdy = "yes", gathers game state information from
- * user, generates an initial state [st], and then calls [play_game st]. *)
-let init_game rdy =
-  let rdy' = rdy |> String.trim |> String.lowercase_ascii in
-  if rdy' <> "yes" then (print_endline "Quitting."; exit 0;)
-  else
-    let num_players = init_num_players () in
-    let num_humans = init_num_humans num_players in
-    let player_names = init_player_names num_humans in
-    let ai_difficulty_lst =
-      if num_humans <> num_players then
-        init_ai_diff (num_players - num_humans)
-      else [] in
-    let s = init_state ({num_players = num_players;
-                         num_humans = num_humans;
-                         human_names = player_names;
-                         ai_difficulty = ai_difficulty_lst}) in
-    clear ();
-    print_endline (s.current_player.name ^ "'s turn.");
-    init_gui s;
-    play_game s
+(* [init_player_names num_players] is a list of player names. *)
+let rec init_player_names num_players =
+  if num_players <> 0 then
+    begin
+      ipn_reset ();
+      let player_names_str = str_of_keyboard_events `Init_player_names (-1) in
+      let player_name_lst = player_names_str |> Str.split (Str.regexp "[ \t]+") in
+      if List.length player_name_lst <> num_players then
+        (clear ();
+         Graphics.moveto 30 240;
+         Graphics.draw_string "Invalid number of names, press any key to continue";
+         let _ = Graphics.wait_next_event [Graphics.Key_pressed] in
+         init_player_names num_players)
+      else
+      if List.length (List.sort_uniq Pervasives.compare player_name_lst) <> List.length player_name_lst then
+        (clear ();
+         Graphics.moveto 30 240;
+         Graphics.draw_string "Player names must be unique, press any key to continue";
+         let _ = Graphics.wait_next_event [Graphics.Key_pressed] in
+         init_player_names num_players)
+      else
+        player_name_lst
+    end
+  else []
 
-(* [main ()] starts the REPL *)
+(* [init_game ()] gathers game state information from user, generates an initial
+ * state [st], creates initial gui, and then calls [play_game st]. *)
+let init_game () =
+  clear ();
+  let num_players = init_num_players () in
+  let num_humans = init_num_humans num_players in
+  let player_names = init_player_names num_humans in
+  let ai_difficulty_lst =
+    if num_humans <> num_players then
+      init_ai_diff (num_players - num_humans)
+    else [] in
+  let st = State.init_state ({num_players = num_players;
+                              num_humans = num_humans;
+                              human_names = player_names;
+                              ai_difficulty = ai_difficulty_lst}) in
+  clear ();
+  Graphics.moveto 25 245;
+  Graphics.draw_string "Press any key to continue.";
+  let _ = Graphics.wait_next_event [Graphics.Key_pressed] in
+  Graphics.close_graph ();
+  init_gui st;
+  play_game st
+
+(* [main ()] starts the game *)
 let main () =
   try
-    print_endline "\n\nWelcome to Scrabble!\n";
-    print_endline "Ready to play? (yes/no)";
-    print_string "> ";
-    match read_line () with
-    | exception End_of_file -> ()
-    | ready -> init_game ready
+    Graphics.open_graph " 400x400";
+    draw_init_game_logo ();
+    Graphics.draw_rect 20 20 360 240;
+    Graphics.moveto 20 290;
+    Graphics.draw_string "Welcome to Scrabble!";
+    Graphics.moveto 20 275;
+    Graphics.draw_string "Made by A. Vaziri, C. McHugh, D. Lim, K. Newatia";
+    Graphics.moveto 30 240;
+    Graphics.draw_string "Press any key to continue.";
+    let _ = Graphics.wait_next_event [Graphics.Key_pressed] in
+    init_game ()
   with
-    Graphics.Graphic_failure _ -> print_endline "\nThanks for playing."; exit 0
+    Graphics.Graphic_failure _ -> print_endline "\nThanks for playing!"; exit 0
 
 let () = main ()

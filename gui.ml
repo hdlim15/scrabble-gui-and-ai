@@ -835,9 +835,12 @@ let blank_helper st =
   let regex = Str.regexp "[A-Za-z]" in
   let new_char = str_of_keyboard_events st `Blank in
   if ((String.length new_char = 1) && Str.string_match regex new_char 0)
-  then String.get new_char 0
-  else failwith "character entered for blank tile has length more than 1
-                 or is not in the alphabet"
+  then
+    (blank_tile_reset st;
+     moveto 625 245;
+     Graphics.draw_string "Click the cell on the board you wish to place the blank tile";
+     String.get new_char 0)
+  else raise (GuiExn "invalid blank selection")
 
 (* [place_helper rack st] is a list of (cell, coord, st) entries corresponding to
  * new letters placed onto the board, forming a potentially-valid place command *)
