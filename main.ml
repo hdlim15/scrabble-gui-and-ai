@@ -144,6 +144,8 @@ let rec play_game st =
     | InvalidAdd -> end_nonturn_command ("Invalid Add"); st
   in
   update_gui new_state;
+  if st.current_player <> new_state.current_player then
+    erase_rack ();
   if no_empty_rack new_state && new_state.sp_consec <= 12 then
     play_game new_state
   else
