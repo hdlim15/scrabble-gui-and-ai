@@ -359,7 +359,7 @@ let start_forward cell rack st =
   else Some(
       List.fold_left
         (fun acc x ->
-           let chr = (Char.escaped x) in
+           let chr = if x = '*' then "" else (Char.escaped x) in
            let extensions = get_extensions chr f_dict |> cut_extensions in
            let words = (valid_extensions (remove x rack) extensions)
                        |> concat_moves chr in
@@ -371,7 +371,7 @@ let start_backward cell rack st =
   else Some(
       List.fold_left
         (fun acc x ->
-           let chr = (Char.escaped x) in
+           let chr = if x = '*' then "" else (Char.escaped x) in
            let extensions = get_extensions chr r_dict |> cut_extensions in
            let words = (valid_extensions (remove x rack) extensions) in
            (words,chr)::acc
