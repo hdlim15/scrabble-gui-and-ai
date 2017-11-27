@@ -3,6 +3,7 @@ open Command
 open Graphics
 open Ai
 open Trie
+open Str
 
 (* [relief] represents a particular area of a scrabble board tile. Different
  * areas are shaded differently to provide a 3D effect. *)
@@ -797,11 +798,17 @@ let addword_helper st =
   str_of_keyboard_events st `AddWord
 
 let blank_helper st =
+  let regex = Str.regexp "[A-Za-z]" in
+  let new_char =
   moveto 625 290;
   Graphics.draw_string "Type the letter you wish to be played in place of the";
   moveto 625 275;
   Graphics.draw_string "blank tile, followed by 'ENTER':";
-  str_of_keyboard_events st `Blank
+  str_of_keyboard_events st `Blank in
+  if ((String.length new_char = 1) && Str.string_match regex new_char 0)
+  then String.get new_char 0
+  else failwith "character entered for blank tile has length more than 1
+                 or is not in the alphabet"
 
 (* [place_helper rack st] is a list of (cell, coord, st) entries corresponding to
  * new letters placed onto the board, forming a potentially-valid place command *)
@@ -818,8 +825,7 @@ let rec place_helper rack st =
     if rack_index = -1 then place_helper rack st
     else
       let letter =
-        if  fst (List.nth rack rack_index) = '*'
-        then String.get (blank_helper st) 0
+        if  fst (List.nth rack rack_index) = '*' then blank_helper st
         else fst (List.nth rack rack_index) in
       let s' = wait_next_event [Button_down] in
       if mem (s'.mouse_x, s'.mouse_y) (0,0,600,600) then
@@ -843,7 +849,8 @@ let rec place_helper rack st =
                   update_scores st.players;
                   let curr_player = st.current_player in
                   let curr_player' = {curr_player with rack = r'} in
-                  ((get_cell_from_pixel (r_x, r_y), letter), {st with board = b'; current_player = curr_player'}))
+                  ((get_cell_from_pixel (r_x, r_y), letter),
+                   {st with board = b'; current_player = curr_player'}))
                else acc)
             (((-1,-1), ' '), st) board_coordinates in
         if fst cell_index = ((-1,-1), ' ') then place_helper rack st
