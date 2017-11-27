@@ -25,6 +25,8 @@ type box_config =
    b2_col : Graphics.color;
    b_col : Graphics.color}
 
+exception GuiExn of string
+
 (* [get_chars s] splits [s] into a list of its characters. *)
 let get_chars s =
   let rec split_helper s' acc =
@@ -549,7 +551,7 @@ let get_input lst st =
             | Some (str,_,_) ->
               let new_cell = fst c' + 1 - String.length str , (snd c') in
               new_cell, str ^ added_str, false
-      else failwith "tiles were not placed on same row/column"
+      else raise (GuiExn "tiles were not placed on same row/column")
       else (* horizontal*)
       let first_click = fst (fst (List.nth lst 0)) in
       let enforce_same_row =
@@ -616,7 +618,7 @@ let get_input lst st =
           | Some (str,_,_) ->
             let new_cell = fst c', (snd c') + 1 - String.length str in
             new_cell, str ^ added_str, true
-      else failwith "tiles were not placed on same row/column"
+      else raise (GuiExn "tiles were not placed on same row/column")
     else (* only 1 tile added *)
       let letter = snd (List.nth lst 0) |> Char.escaped in
       let coord = fst (List.nth lst 0) in
@@ -702,7 +704,7 @@ let convert_to_move lst st =
        List.fold_right
          (fun x acc -> (Char.escaped x) ^ acc)  convert.word ""); *)
     convert
-  with Failure f -> failwith f
+  with Failure f -> raise (GuiExn f)
 
 (* [swap_helper rack] is a character list corresponding to rack boxes in the gui
  * that are clicked on prior to clicking the 'swap' button to finalize the swap
@@ -747,36 +749,35 @@ let rec place_helper rack st =
         (fun acc (r_x, r_y) ->
            if mem (s.mouse_x, s.mouse_y) (r_x, r_y, 40, 40) then
              (get_idx_from_coord r_x) else acc) (-1) rack_coords in
-    let letter =
-      if rack_index = -1 then failwith "no letter from rack chosen"
-      else fst (List.nth rack rack_index) in
-    let s' = wait_next_event [Button_down] in
-    if mem (s'.mouse_x, s'.mouse_y) (0,0,600,600) then
-      let board_coordinates = all_cells 0 in
-      let cell_index = List.fold_left
-          (fun acc (r_x, r_y) ->
-             if mem (s'.mouse_x, s'.mouse_y) (r_x, r_y, 40, 40) then
-               (let mv = {word = [letter];
-                          mv_coord = (get_cell_from_pixel (r_x, r_y));
-                          is_horizontal = true} in
-                let b' = State.place_horizontal mv st in
-                Graphics.clear_graph ();
-                draw_logo ();
-                update_vb (List.flatten b');
-                update_board (List.flatten b');
-                let r' = remove_from_rack letter st.current_player.rack in
-                update_rack {st.current_player with rack = r'};
-                draw_buttons ();
-                draw_io_box ();
-                update_scores st.players;
-                let curr_player = st.current_player in
-                let curr_player' = {curr_player with rack = r'} in
-                ((get_cell_from_pixel (r_x, r_y), letter), {st with board = b'; current_player = curr_player'}))
-             else acc)
-          (((-1,-1), ' '), st) board_coordinates in
-      if fst cell_index = ((-1,-1), ' ') then place_helper rack st
-      else (cell_index) :: place_helper (snd cell_index).current_player.rack (snd cell_index)
-    else failwith "did not click on board after clicking on rack"
+    if rack_index = -1 then place_helper rack st
+    else let letter = fst (List.nth rack rack_index) in
+      let s' = wait_next_event [Button_down] in
+      if mem (s'.mouse_x, s'.mouse_y) (0,0,600,600) then
+        let board_coordinates = all_cells 0 in
+        let cell_index = List.fold_left
+            (fun acc (r_x, r_y) ->
+               if mem (s'.mouse_x, s'.mouse_y) (r_x, r_y, 40, 40) then
+                 (let mv = {word = [letter];
+                            mv_coord = (get_cell_from_pixel (r_x, r_y));
+                            is_horizontal = true} in
+                  let b' = State.place_horizontal mv st in
+                  Graphics.clear_graph ();
+                  draw_logo ();
+                  update_vb (List.flatten b');
+                  update_board (List.flatten b');
+                  let r' = remove_from_rack letter st.current_player.rack in
+                  update_rack {st.current_player with rack = r'};
+                  draw_buttons ();
+                  draw_io_box ();
+                  update_scores st.players;
+                  let curr_player = st.current_player in
+                  let curr_player' = {curr_player with rack = r'} in
+                  ((get_cell_from_pixel (r_x, r_y), letter), {st with board = b'; current_player = curr_player'}))
+               else acc)
+            (((-1,-1), ' '), st) board_coordinates in
+        if fst cell_index = ((-1,-1), ' ') then place_helper rack st
+        else (cell_index) :: place_helper (snd cell_index).current_player.rack (snd cell_index)
+      else raise (GuiExn "must click board cell following tile selection")
 
 (* [str_of_help ()] is a reversed list of strings of gui_help.txt *)
 let rec str_lst_of_help () =

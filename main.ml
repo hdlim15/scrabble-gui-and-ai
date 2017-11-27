@@ -95,22 +95,6 @@ let get_winner st =
 let no_empty_rack st =
   List.for_all (fun p -> List.length p.rack <> 0) st.players
 
-(* [get_command ()] is a command, generated from user input *)
-let rec get_command st =
-  match st.current_player.player_type with
-  | Human ->
-    (* print_string "> ";
-    let command = try (parse (read_line ())) with
-      | InvalidCommand ->
-        (print_endline "Invalid action, type 'help' for a list of valid actions";
-         get_command st)
-       in command *)
-    gui_cmd st
-  | AI diff ->
-    match diff with
-    | Hard -> Ai.best_move st
-    | Easy -> Ai.get_hint st
-
 (* [clear ()] wipes the terminal window so players can't see other players' racks *)
 let rec clear () =
   let rec helper n =
@@ -173,6 +157,23 @@ let end_nonturn_command str =
   Graphics.moveto 625 220;
   Graphics.draw_string "Press any key to continue your turn";
   let _ = Graphics.wait_next_event [Graphics.Key_pressed] in ()
+
+(* [get_command st] is a command, generated from user input *)
+let rec get_command st =
+  match st.current_player.player_type with
+  | Human ->
+    (* print_string "> ";
+       let command = try (parse (read_line ())) with
+       | InvalidCommand ->
+        (print_endline "Invalid action, type 'help' for a list of valid actions";
+         get_command st)
+       in command *)
+    (try gui_cmd st with
+     | GuiExn s -> end_nonturn_command ("Exception: " ^ s); update_gui st; get_command st)
+  | AI diff ->
+    match diff with
+    | Hard -> Ai.best_move st
+    | Easy -> Ai.get_hint st
 
 (* [play_game st] plays the game represented by [st]. *)
 let rec play_game st =
