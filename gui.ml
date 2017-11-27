@@ -537,7 +537,6 @@ let get_input lst st =
                  | None -> acc
                  | Some letter -> (Char.escaped letter) ^ acc
             ) "" col |> reverse_str in
-        (* print_endline added_str; *)
         let cell = get_cell_from_coordinate (fst leftmost_input) st in
         match up_cell cell with
         | None -> (fst leftmost_input), added_str, false
@@ -547,10 +546,10 @@ let get_input lst st =
           else
             match get_adjacent_word c' st false [] with
             | None ->
-              c', (fst (cell'.letter) |> Char.escaped) ^ added_str, false
+              c', added_str, false
             | Some (str,_,_) ->
               let new_cell = fst c' + 1 - String.length str , (snd c') in
-              new_cell, str ^ added_str, false
+              new_cell, added_str, false
       else raise (GuiExn "tiles were not placed on same row/column")
       else (* horizontal*)
       let first_click = fst (fst (List.nth lst 0)) in
@@ -614,10 +613,10 @@ let get_input lst st =
         if cell_is_empty cell' then (fst leftmost_input), added_str, true
         else
           match get_adjacent_word c' st true [] with
-          | None -> c', (fst (cell'.letter) |> Char.escaped) ^ added_str, true
+          | None -> c', added_str, true
           | Some (str,_,_) ->
             let new_cell = fst c', (snd c') + 1 - String.length str in
-            new_cell, str ^ added_str, true
+            new_cell, added_str, true
       else raise (GuiExn "tiles were not placed on same row/column")
     else (* only 1 tile added *)
       let letter = snd (List.nth lst 0) |> Char.escaped in
