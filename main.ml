@@ -376,9 +376,6 @@ let main () =
     Graphics.draw_string "Welcome to Scrabble!";
     Graphics.moveto 20 275;
     Graphics.draw_string "Made by A. Vaziri, C. McHugh, D. Lim, K. Newatia";
-    Graphics.moveto 30 240;
-    Graphics.draw_string "Press any key to continue.";
-    let _ = Graphics.wait_next_event [Graphics.Key_pressed] in
     init_game ()
   with
     Graphics.Graphic_failure _ -> print_endline "\nThanks for playing!"; exit 0
