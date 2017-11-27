@@ -106,8 +106,10 @@ let rec get_command st =
          get_command st)
        in command *)
     gui_cmd st
-  | AI diff -> Ai.best_move st
-
+  | AI diff ->
+    match diff with
+    | Hard -> Ai.best_move st
+    | Easy -> Ai.get_hint st
 
 (* [clear ()] wipes the terminal window so players can't see other players' racks *)
 let rec clear () =
