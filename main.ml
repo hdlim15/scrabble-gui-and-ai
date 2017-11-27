@@ -9,42 +9,6 @@ let rec get_scores players =
   let score_string_list = (List.map string_of_score (List.rev players)) in
   String.concat "\n" score_string_list
 
-(* [str_of_rack rack] is the string representation of a rack *)
-let rec str_of_rack rack =
-  rack |> List.map
-    (fun (c,_) -> Char.escaped c ^ ":" ^ (string_of_int (State.get_points c)))
-  |> (String.concat ", ")
-
-(* [str_of_help ()] is the string representation of help.txt *)
-let rec str_of_help () =
-  let rec helper channel str =
-    match (Pervasives.input_line channel) with
-    | exception End_of_file -> Pervasives.close_in channel; str
-    | s -> helper channel (str ^ "\n" ^ s)
-  in
-  helper (Pervasives.open_in "help.txt") ""
-
-(* [string_of_board board] is a string representing the board state *)
-let rec string_of_board b =
-  let rec board_helper board =
-    match board with
-    | [] -> ""
-    | row::t ->
-      let rec helper row =
-        match row with
-        | [] -> ""
-        | cell::[] -> " | " ^ Char.escaped (fst cell.letter) ^ " |"
-        | cell::t ->
-          if snd cell.cell_coord = 0 then
-            let letter = Char.chr (fst cell.cell_coord + 65) in
-            Char.escaped letter ^ " | " ^ Char.escaped (fst cell.letter) ^ helper t
-          else
-            " | " ^ Char.escaped (fst cell.letter) ^ helper t
-      in helper row ^ "\n" ^ board_helper t
-  in
-  let board' = board_helper b in
-  "  | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10| 11| 12| 13| 14|\n" ^ board'
-
 (* [get_prev_player n p] returns the player whose turn was before the
  * current player with order number [n] given a list of the players [p]. *)
 let rec get_prev_player n p =
@@ -95,39 +59,6 @@ let get_winner st =
 let no_empty_rack st =
   List.for_all (fun p -> List.length p.rack <> 0) st.players
 
-(* [clear ()] wipes the terminal window so players can't see other players' racks *)
-let rec clear () =
-  let rec helper n =
-    if n = 0 then "\n" else "\n" ^ helper (n-1) in
-  print_endline (helper 100);
-  let _ = Sys.command "clear" in
-  print_endline "S C R A B B L E";
-  print_endline "For gameplay manual, type 'help'.\n";
-  ()
-
-(* [end_turn st end_type] ends a given turn and sets up the UI for the next player. *)
-let end_turn st end_type =
-  match end_type with
-  | `Place ->
-    print_endline (string_of_board st.board);
-    print_endline "Press 'ENTER' to end your turn.";
-    (* let _ = read_line () in *)
-    clear ();
-    print_endline (st.current_player.name ^ "'s turn.");
-    (* print_endline (str_of_rack st.current_player.rack)  *)
-  | `Swap ->
-    print_endline (str_of_rack (get_prev_player st.current_player.order_num st.players).rack);
-    print_endline "Press 'ENTER' to end your turn.";
-    let _ = read_line () in
-    clear ();
-    print_endline (st.current_player.name ^ "'s turn.");
-    (* print_endline (str_of_rack st.current_player.rack) *)
-  | `Pass ->
-    print_endline "Press 'ENTER' to end your turn.";
-    let _ = read_line () in
-    clear ();
-    print_endline (st.current_player.name ^ "'s turn.")
-
 (* [end_turn_gui st end_type] ends a given turn in the gui *)
 let end_turn_gui st end_type =
   match st.current_player.player_type with
@@ -136,19 +67,13 @@ let end_turn_gui st end_type =
     Graphics.set_color Graphics.black;
     match end_type with
     | `Place ->
-
-      (* ensure redraw board *)
-
-      Graphics.moveto 625 220;
-      Graphics.draw_string "Press any key to end your turn";
-      let _ = Graphics.wait_next_event [Graphics.Key_pressed] in ()
+        Graphics.moveto 625 220;
+        Graphics.draw_string "Press any key to end your turn";
+        let _ = Graphics.wait_next_event [Graphics.Key_pressed] in ()
     | `Swap ->
-
-      (* redraw rack so player can see it before ending turn *)
-
-      Graphics.moveto 625 220;
-      Graphics.draw_string "Press any key to end your turn";
-      let _ = Graphics.wait_next_event [Graphics.Key_pressed] in ()
+        Graphics.moveto 625 220;
+        Graphics.draw_string "Press any key to end your turn";
+        let _ = Graphics.wait_next_event [Graphics.Key_pressed] in ()
     | `Pass -> ()
 
 (* [end_nonturn_command str] prints some output [str] to the gui and prompts the user
@@ -165,12 +90,6 @@ let end_nonturn_command str =
 let rec get_command st =
   match st.current_player.player_type with
   | Human ->
-    (* print_string "> ";
-       let command = try (parse (read_line ())) with
-       | InvalidCommand ->
-        (print_endline "Invalid action, type 'help' for a list of valid actions";
-         get_command st)
-       in command *)
     (try gui_cmd st with
      | GuiExn s -> end_nonturn_command ("Exception: " ^ s);
                    update_gui st;
@@ -201,7 +120,8 @@ let rec play_game st =
       | Swap chars ->
         let st' = do' command st in end_turn_gui st' `Swap; st'
       | Score -> print_endline (get_scores st.players); st
-      | Rack -> print_endline (str_of_rack st.current_player.rack); st
+      | Rack -> st
+      | Board -> st
       | Hint ->
         let hint =
           match (Ai.get_hint st) with
@@ -211,9 +131,8 @@ let rec play_game st =
         end_nonturn_command hint; st
       | AddWord str ->
         let st' = do' command st in end_nonturn_command ("Added word to dictionary"); st'
-      | Help -> print_endline ((str_of_help ())^"\n"); st
-      | Quit -> (*print_endline "Thanks for playing!\n"; exit 0;*) quit_helper st
-      | Board -> print_endline (string_of_board st.board); st
+      | Help -> st
+      | Quit -> quit_helper st
       | Pass ->
         let st' = do' command st in end_turn_gui st' `Pass; st'
     with
@@ -229,7 +148,11 @@ let rec play_game st =
     play_game new_state
   else
     (let winner = (get_winner new_state).name in
-     print_endline ("Congratuations, " ^ winner ^ ", you win!\n");
+     Graphics.moveto 625 235;
+     Graphics.draw_string ("Congratuations, " ^ winner ^ ", you win!");
+     Graphics.moveto 625 220;
+     Graphics.draw_string "Press any key to quit";
+     let _ = Graphics.wait_next_event [Graphics.Key_pressed] in
      exit 0;)
 
 (******************************************************************************)
@@ -437,9 +360,6 @@ let init_game () =
                               human_names = player_names;
                               ai_difficulty = ai_difficulty_lst}) in
   clear ();
-  Graphics.moveto 25 245;
-  Graphics.draw_string "Press any key to continue.";
-  let _ = Graphics.wait_next_event [Graphics.Key_pressed] in
   Graphics.close_graph ();
   init_gui st;
   play_game st
