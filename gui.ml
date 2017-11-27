@@ -737,6 +737,67 @@ let rec remove_from_rack l r =
   | [] -> []
   | (l',p)::t -> if l' = l then t else (l',p) :: remove_from_rack l t
 
+
+(* [remove_last_elt lst] removes the last element of [lst] *)
+let rec remove_last_elt lst =
+  match lst with
+  | [] -> []
+  | h::[] -> []
+  | h::t -> h :: remove_last_elt t
+
+(* [add_word_delete st] redraws the window to deal with backspaces during keyboard
+ * entry in str_of_keyboard_events *)
+let add_word_delete st =
+  update_gui st;
+  moveto 625 290;
+  Graphics.draw_string "Type the word you wish to add to the dictionary, followed";
+  moveto 625 275;
+  Graphics.draw_string "by 'ENTER':"
+
+(* [str_of_keyboard_events st io_op] is the string result of keyboard input for
+ * a given io_op. *)
+let rec str_of_keyboard_events st io_op =
+  let w = fst (text_size "w") in
+  let rec helper w' history =
+    let curr_status = wait_next_event [Key_pressed] in
+    let c = curr_status.key in
+    if Char.code c = 13 then
+      List.fold_right (fun (c,_) acc -> (Char.escaped c)^acc) history ""
+    else if Char.code c = 8 then
+      (let _ = match io_op with
+       | `AddWord -> add_word_delete st
+       | `Blank -> add_word_delete st in
+       moveto 625 260;
+       let h' = remove_last_elt history in
+       let w'' = List.fold_right
+           (fun (c,w') acc ->
+              moveto w' 260; Graphics.draw_string (Char.escaped c); acc + w) h' 0 in
+       helper w'' h')
+    else if Char.code c < 26 || Char.code c > 126 then
+      helper w' history
+    else
+      (moveto (625+w') 260;
+       Graphics.draw_string (Char.escaped c);
+       helper (w'+w) (history @ [(c ,625+w')]))
+  in helper 0 []
+
+(* [addword_helper st] is a string corresponding to a word that a user wishes to
+ * add to the dictionary. The string is received by keyboard input *)
+let addword_helper st =
+  moveto 625 290;
+  Graphics.draw_string "Type the word you wish to add to the dictionary, followed";
+  moveto 625 275;
+  Graphics.draw_string "by 'ENTER':";
+  str_of_keyboard_events st `AddWord
+
+let blank_helper st =
+  moveto 625 290;
+  Graphics.draw_string "Type the letter you wish to be played in place of the
+                        blank tile, followed";
+  moveto 625 275;
+  Graphics.draw_string "by 'ENTER':";
+  str_of_keyboard_events st `Blank
+
 (* [place_helper rack st] is a list of (cell, coord, st) entries corresponding to
  * new letters placed onto the board, forming a potentially-valid place command *)
 let rec place_helper rack st =
@@ -750,7 +811,11 @@ let rec place_helper rack st =
            if mem (s.mouse_x, s.mouse_y) (r_x, r_y, 40, 40) then
              (get_idx_from_coord r_x) else acc) (-1) rack_coords in
     if rack_index = -1 then place_helper rack st
-    else let letter = fst (List.nth rack rack_index) in
+    else
+      let letter =
+        if  fst (List.nth rack rack_index) = '*'
+        then String.get (blank_helper st) 0
+        else fst (List.nth rack rack_index) in
       let s' = wait_next_event [Button_down] in
       if mem (s'.mouse_x, s'.mouse_y) (0,0,600,600) then
         let board_coordinates = all_cells 0 in
@@ -808,57 +873,6 @@ let help_helper st =
     else loop ()
   in loop ()
 
-(* [remove_last_elt lst] removes the last element of [lst] *)
-let rec remove_last_elt lst =
-  match lst with
-  | [] -> []
-  | h::[] -> []
-  | h::t -> h :: remove_last_elt t
-
-(* [add_word_delete st] redraws the window to deal with backspaces during keyboard
- * entry in str_of_keyboard_events *)
-let add_word_delete st =
-  update_gui st;
-  moveto 625 290;
-  Graphics.draw_string "Type the word you wish to add to the dictionary, followed";
-  moveto 625 275;
-  Graphics.draw_string "by 'ENTER':"
-
-(* [str_of_keyboard_events st io_op] is the string result of keyboard input for
- * a given io_op. *)
-let rec str_of_keyboard_events st io_op =
-  let w = fst (text_size "w") in
-  let rec helper w' history =
-    let curr_status = wait_next_event [Key_pressed] in
-    let c = curr_status.key in
-    if Char.code c = 13 then
-      List.fold_right (fun (c,_) acc -> (Char.escaped c)^acc) history ""
-    else if Char.code c = 8 then
-      (let _ = match io_op with
-       | `AddWord -> add_word_delete st
-       | _ -> failwith "unneeded rn" in
-       moveto 625 260;
-       let h' = remove_last_elt history in
-       let w'' = List.fold_right
-           (fun (c,w') acc ->
-              moveto w' 260; Graphics.draw_string (Char.escaped c); acc + w) h' 0 in
-       helper w'' h')
-    else if Char.code c < 26 || Char.code c > 126 then
-      helper w' history
-    else
-      (moveto (625+w') 260;
-       Graphics.draw_string (Char.escaped c);
-       helper (w'+w) (history @ [(c ,625+w')]))
-  in helper 0 []
-
-(* [addword_helper st] is a string corresponding to a word that a user wishes to
- * add to the dictionary. The string is received by keyboard input *)
-let addword_helper st =
-  moveto 625 290;
-  Graphics.draw_string "Type the word you wish to add to the dictionary, followed";
-  moveto 625 275;
-  Graphics.draw_string "by 'ENTER':";
-  str_of_keyboard_events st `AddWord
 
 (* [gui_cmd st] is the command received from user input via the gui *)
 let rec gui_cmd st =
