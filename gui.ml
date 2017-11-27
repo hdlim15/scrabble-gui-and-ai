@@ -479,66 +479,85 @@ let sort_vertical ((x1,_),_) ((x2,_),_) =
 let get_input lst st =
     if List.length lst = 0 then failwith "no letters were placed"
     else if List.length lst > 1 then
-      if fst (fst (List.nth lst 0)) <> fst (fst (List.nth lst 1)) then
-      let update_cells = List.sort sort_vertical lst in
-      let leftmost_input = List.nth update_cells 0 in
-      let leftmost_cell = get_cell_from_coordinate (fst leftmost_input) st in
-      let first_cell =
-      match up_cell (leftmost_cell) with
-      | None -> fst leftmost_input
-      | Some c' ->
-        let cell' = get_cell_from_coordinate c' st in
-        match get_adjacent_word c' st false [] with
-        | None ->
-          if not ( cell_is_empty cell') then
-            fst (fst leftmost_input) - 1, snd (fst leftmost_input)
-          else fst leftmost_input
-        | Some (str,_,_) ->
-          fst (fst leftmost_input) - String.length str,
-          snd (fst leftmost_input)  in
-      let rightmost_input =
-        List.nth update_cells ((List.length update_cells) - 1) in
-      let rightmost_cell = get_cell_from_coordinate (fst rightmost_input) st in
-      let last_cell =
-        match down_cell (rightmost_cell) with
-      | None -> fst rightmost_input
-      | Some c' ->
-        let cell' = get_cell_from_coordinate c' st in
-        match get_adjacent_word c' st false [] with
-        | None ->
-          if not ( cell_is_empty cell') then
-            fst (fst rightmost_input) + 1, snd (fst rightmost_input)
-          else fst rightmost_input
-        | Some (str,_,_) ->
-          fst (fst rightmost_input) + String.length str,
-          snd (fst rightmost_input) in
-      let col = get_column (fst leftmost_input) st
-                |> List.filter (fun c' ->
-                    fst (c'.cell_coord) >= fst (first_cell) &&
-                    fst (c'.cell_coord) <= fst (last_cell) ) in
-      let added_str =
+      if fst (fst (List.nth lst 0)) <> fst (fst (List.nth lst 1)) (* vertical*)
+      then
+        let first_click = snd (fst (List.nth lst 0)) in
+        let enforce_same_column =
         List.fold_left
           (fun acc x ->
-             let coord = x.cell_coord in
-             if not (cell_is_empty x) then (fst (x.letter) |> Char.escaped) ^acc
-             else match List.assoc_opt (coord) update_cells with
-               | None -> acc
-               | Some letter -> (Char.escaped letter) ^ acc
-          ) "" col |> reverse_str in
-      (* print_endline added_str; *)
-      let cell = get_cell_from_coordinate (fst leftmost_input) st in
-      match up_cell cell with
-      | None -> (fst leftmost_input), added_str, false
-      | Some c' ->
-        let cell' = get_cell_from_coordinate c' st in
-        if cell_is_empty cell' then (fst leftmost_input), added_str, false
-        else
+             (acc && (first_click = snd (fst x)))
+          ) true (List.tl lst) in
+      if enforce_same_column then
+        let update_cells = List.sort sort_vertical lst in
+        let leftmost_input = List.nth update_cells 0 in
+        let leftmost_cell = get_cell_from_coordinate (fst leftmost_input) st in
+        let first_cell =
+        match up_cell (leftmost_cell) with
+        | None -> fst leftmost_input
+        | Some c' ->
+          let cell' = get_cell_from_coordinate c' st in
           match get_adjacent_word c' st false [] with
-          | None -> c', (fst (cell'.letter) |> Char.escaped) ^ added_str, false
+          | None ->
+            if not ( cell_is_empty cell') then
+              fst (fst leftmost_input) - 1, snd (fst leftmost_input)
+            else fst leftmost_input
           | Some (str,_,_) ->
-            let new_cell = fst c' + 1 - String.length str , (snd c') in
-            new_cell, str ^ added_str, false
-      else
+            fst (fst leftmost_input) - String.length str,
+            snd (fst leftmost_input)  in
+        let rightmost_input =
+          List.nth update_cells ((List.length update_cells) - 1) in
+        let rightmost_cell =
+          get_cell_from_coordinate (fst rightmost_input) st in
+        let last_cell =
+          match down_cell (rightmost_cell) with
+        | None -> fst rightmost_input
+        | Some c' ->
+          let cell' = get_cell_from_coordinate c' st in
+          match get_adjacent_word c' st false [] with
+          | None ->
+            if not ( cell_is_empty cell') then
+              fst (fst rightmost_input) + 1, snd (fst rightmost_input)
+            else fst rightmost_input
+          | Some (str,_,_) ->
+            fst (fst rightmost_input) + String.length str,
+            snd (fst rightmost_input) in
+        let col = get_column (fst leftmost_input) st
+                  |> List.filter (fun c' ->
+                      fst (c'.cell_coord) >= fst (first_cell) &&
+                      fst (c'.cell_coord) <= fst (last_cell) ) in
+        let added_str =
+          List.fold_left
+            (fun acc x ->
+               let coord = x.cell_coord in
+               if not (cell_is_empty x) then
+                 (fst (x.letter) |> Char.escaped) ^ acc
+               else match List.assoc_opt (coord) update_cells with
+                 | None -> acc
+                 | Some letter -> (Char.escaped letter) ^ acc
+            ) "" col |> reverse_str in
+        (* print_endline added_str; *)
+        let cell = get_cell_from_coordinate (fst leftmost_input) st in
+        match up_cell cell with
+        | None -> (fst leftmost_input), added_str, false
+        | Some c' ->
+          let cell' = get_cell_from_coordinate c' st in
+          if cell_is_empty cell' then (fst leftmost_input), added_str, false
+          else
+            match get_adjacent_word c' st false [] with
+            | None ->
+              c', (fst (cell'.letter) |> Char.escaped) ^ added_str, false
+            | Some (str,_,_) ->
+              let new_cell = fst c' + 1 - String.length str , (snd c') in
+              new_cell, str ^ added_str, false
+      else failwith "tiles were not placed on same row/column"
+      else (* horizontal*)
+      let first_click = fst (fst (List.nth lst 0)) in
+      let enforce_same_row =
+        List.fold_left
+          (fun acc x ->
+             (acc && (first_click = fst (fst x)))
+          ) true (List.tl lst) in
+      if enforce_same_row then
       let update_cells = List.sort sort_horizontal lst in
       let leftmost_input = List.nth update_cells 0 in
       let leftmost_cell = get_cell_from_coordinate (fst leftmost_input) st in
@@ -579,7 +598,8 @@ let get_input lst st =
         List.fold_left
           (fun acc x ->
              let coord = x.cell_coord in
-             if not (cell_is_empty x) then (fst (x.letter) |> Char.escaped) ^acc
+             if not (cell_is_empty x) then
+               (fst (x.letter) |> Char.escaped) ^ acc
              else match List.assoc_opt (coord) update_cells with
                | None -> acc
                | Some letter -> (Char.escaped letter) ^ acc
@@ -596,7 +616,8 @@ let get_input lst st =
           | Some (str,_,_) ->
             let new_cell = fst c', (snd c') + 1 - String.length str in
             new_cell, str ^ added_str, true
-    else
+      else failwith "tiles were not placed on same row/column"
+    else (* only 1 tile added *)
       let letter = snd (List.nth lst 0) |> Char.escaped in
       let coord = fst (List.nth lst 0) in
       let cell = get_cell_from_coordinate coord st in
@@ -681,7 +702,7 @@ let convert_to_move lst st =
        List.fold_right
          (fun x acc -> (Char.escaped x) ^ acc)  convert.word ""); *)
     convert
-  with _ -> failwith "no letters were added"
+  with Failure f -> failwith f
 
 (* [swap_helper rack] is a character list corresponding to rack boxes in the gui
  * that are clicked on prior to clicking the 'swap' button to finalize the swap
