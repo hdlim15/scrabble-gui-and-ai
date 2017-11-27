@@ -281,16 +281,6 @@ let draw_rack cp r_array =
   Array.iter draw_box r_array;
   draw_rack_helper (List.rev cp.rack) 0
 
-(* [update_rack cp] takes the current player [cp] and draws their rack on the
- * board so the player can see their tiles. Generates boxes for each letter. *)
-let update_rack cp =
-  let len_rack = List.length cp.rack in
-  let r_array = rack len_rack in
-  let is_rack_hidden = rack_hidden 662 0 len_rack true in
-  if len_rack = 0 || is_rack_hidden then ()
-  else
-    draw_rack cp r_array
-
 (* [toggle_rack cp] draws the current player [cp]'s rack on the GUI if it is
  * currently hidden and hides the rack if it is currently displayed. *)
 let toggle_rack cp =
@@ -911,21 +901,21 @@ let swap_helper cp =
 
 (* [place_helper rack st] is a list of (cell, coord, st) entries corresponding to
  * new letters placed onto the board, forming a potentially-valid place command *)
-let rec place_helper rack st =
+let rec place_helper p_r st =
   let s = wait_next_event [Button_down] in
   if mem (s.mouse_x, s.mouse_y) place_btn then []
   else
-    let rack_len = List.length rack in
+    let rack_len = List.length p_r in
     let rack_coords = get_rack_coords rack_len in
     let rack_index = List.fold_left
         (fun acc (r_x, r_y) ->
            if mem (s.mouse_x, s.mouse_y) (r_x, r_y, 40, 40) then
              (get_idx_from_coord r_x) else acc) (-1) rack_coords in
-    if rack_index = -1 then place_helper rack st
+    if rack_index = -1 then place_helper p_r st
     else
       let letter =
-        if  fst (List.nth rack rack_index) = '*' then blank_helper st
-        else fst (List.nth rack rack_index) in
+        if  fst (List.nth p_r rack_index) = '*' then blank_helper st
+        else fst (List.nth p_r rack_index) in
       let s' = wait_next_event [Button_down] in
       if mem (s'.mouse_x, s'.mouse_y) (0,0,600,600) then
         let board_coordinates = all_cells 0 in
@@ -940,9 +930,11 @@ let rec place_helper rack st =
                   draw_logo ();
                   update_vb (List.flatten b');
                   update_board (List.flatten b');
-                  let r' = remove_from_rack (fst (List.nth rack rack_index))
+                  let r' = remove_from_rack (fst (List.nth p_r rack_index))
                       st.current_player.rack in
-                  update_rack {st.current_player with rack = r'};
+                  let rack_len = List.length r' in
+                  let r_array = rack rack_len in
+                  draw_rack {st.current_player with rack = r'} r_array;
                   draw_buttons ();
                   let () = draw_blue_place () in
                   draw_io_box ();
@@ -953,7 +945,7 @@ let rec place_helper rack st =
                    {st with board = b'; current_player = curr_player'}))
                else acc)
             (((-1,-1), ' '), st) board_coordinates in
-        if fst cell_index = ((-1,-1), ' ') then place_helper rack st
+        if fst cell_index = ((-1,-1), ' ') then place_helper p_r st
         else (cell_index) :: place_helper (snd cell_index).current_player.rack (snd cell_index)
       else raise (GuiExn "must click board cell following tile selection")
 
