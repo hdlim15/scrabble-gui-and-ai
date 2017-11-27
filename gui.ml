@@ -293,35 +293,6 @@ let toggle_rack cp =
   else
     erase_rack ()
 
-(* let change_color_rack cp color index =
-  let len_rack = List.length cp.rack in
-  let r_array = rack len_rack in
-  let rec change_color_rack_helper r n =
-    match r with
-    | [] -> ()
-    | (l, p)::t ->
-      begin
-        if l <> ' ' then
-          let tile_str =
-            String.capitalize_ascii (Char.escaped l) ^ " : " ^ (string_of_int p)
-          in
-          let rack = r_array.(n) in
-          let new_rack = {rack with b1_col = green1;b2_col = green3;b_col = green2} in
-          let () =
-            if true then
-              Array.set r_array index new_rack
-            else ()
-          in
-          draw_string_in_box Center tile_str new_rack Graphics.black;
-          change_color_rack_helper t (n + 1)
-        else
-          change_color_rack_helper t (n + 1)
-      end
-  in
-  draw_string (cp.name ^ "'s rack:") 660 400 true;
-  Array.iter draw_box r_array;
-  change_color_rack_helper (List.rev cp.rack) 0 *)
-
 (* [draw_buttons ()] draws all of the buttons used to perform different actions
  * in the game. *)
 let draw_buttons () =
@@ -859,7 +830,14 @@ let blank_helper st =
      String.get new_char 0)
   else raise (GuiExn "invalid blank selection")
 
-(* [swap_helper rack] is a character list corresponding to rack boxes in the gui
+let update_rack_tile r_array position colors =
+  let (col1, col2, col) = colors in
+  let new_rack_tile = {r_array.(position) with
+    b1_col = col1; b2_col = col2; b_col = col}
+  in
+  Array.set r_array position new_rack_tile
+
+(* [swap_helper cp] is a character list corresponding to rack boxes in the gui
  * that are clicked on prior to clicking the 'swap' button to finalize the swap
  * command.
  * requires: 'swap' button was clicked prior to initial function call *)
@@ -883,17 +861,15 @@ let swap_helper cp =
       else
         let position = rack_len - rack_index - 1 in
         if (List.mem rack_index swap_list) then
-          let new_rack_tile = {colored_rack.(position) with
-            b1_col = beige1; b2_col = beige3; b_col = beige2}
+          let () = update_rack_tile colored_rack position
+            (beige1, beige3, beige2)
           in
-          Array.set colored_rack position new_rack_tile;
           draw_rack cp colored_rack ;
           swap_helper' (State.remove rack_index swap_list) colored_rack
         else
-          let new_rack_tile = {colored_rack.(position) with
-            b1_col = dark_beige1; b2_col = dark_beige3; b_col = dark_beige2}
+          let () = update_rack_tile colored_rack position
+            (dark_beige1, dark_beige3, dark_beige2)
           in
-          Array.set colored_rack position new_rack_tile;
           draw_rack cp colored_rack ;
           swap_helper' (rack_index :: swap_list) colored_rack
   in
@@ -903,6 +879,7 @@ let swap_helper cp =
  * new letters placed onto the board, forming a potentially-valid place command *)
 let rec place_helper p_r st =
   let s = wait_next_event [Button_down] in
+  (* end recursion when the Place button is pressed again *)
   if mem (s.mouse_x, s.mouse_y) place_btn then []
   else
     let rack_len = List.length p_r in
