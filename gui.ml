@@ -242,12 +242,27 @@ let rack n =
            b1_col = beige1; b2_col = beige3; b_col = beige2; r = Top} in
   Array.of_list (create_rack (n - 1) b [])
 
-(* [update_rack cp] takes the current player [cp] and draws their rack on the
- * board so the player can see their tiles. Generates boxes for each letter. *)
-let update_rack cp =
-  let len_rack = List.length cp.rack in
-  let r_array = rack len_rack in
-  let rec update_rack_helper r n =
+(* [erase_rack ()] effectively erases the current player's rack from the GUI by
+ * drawing a white box in the space where the rack is displayed. *)
+let erase_rack () =
+  Graphics.set_color Graphics.white;
+  Graphics.fill_rect 660 350 300 70;
+  Graphics.set_color Graphics.black
+
+(* [rack_hidden x i len acc] returns true if the current player's rack is
+ * hidden and returns false otherwise. [i] represents the current index in the
+ * rack array that has length [len]. [x] represents the x coordinate of the rack
+ * box with index [i]. *)
+let rec rack_hidden x i len acc =
+  if i >= len then acc
+  else
+    let pt_color = Graphics.point_color x 352 in
+    rack_hidden (x + 40) (i + 1) len (acc && (pt_color = Graphics.white))
+
+(* [draw_rack cp r_array] draws current player [cp]'s rack onto the GUI.
+ * [r_array] is the array of the boxes representing the rack. *)
+let draw_rack cp r_array =
+  let rec draw_rack_helper r i =
     match r with
     | [] -> ()
     | (l, p)::t ->
@@ -256,15 +271,37 @@ let update_rack cp =
           let tile_str =
             String.capitalize_ascii (Char.escaped l) ^ " : " ^ (string_of_int p)
           in
-          draw_string_in_box Center tile_str r_array.(n) Graphics.black;
-          update_rack_helper t (n + 1)
+          draw_string_in_box Center tile_str r_array.(i) Graphics.black;
+          draw_rack_helper t (i + 1)
         else
-          update_rack_helper t (n + 1)
+          draw_rack_helper t (i + 1)
       end
   in
   draw_string (cp.name ^ "'s rack:") 660 400 true;
   Array.iter draw_box r_array;
-  update_rack_helper (List.rev cp.rack) 0
+  draw_rack_helper (List.rev cp.rack) 0
+
+(* [update_rack cp] takes the current player [cp] and draws their rack on the
+ * board so the player can see their tiles. Generates boxes for each letter. *)
+let update_rack cp =
+  let len_rack = List.length cp.rack in
+  let r_array = rack len_rack in
+  let is_rack_hidden = rack_hidden 662 0 len_rack true in
+  if len_rack = 0 || is_rack_hidden then ()
+  else
+    draw_rack cp r_array
+
+(* [toggle_rack cp] draws the current player [cp]'s rack on the GUI if it is
+ * currently hidden and hides the rack if it is currently displayed. *)
+let toggle_rack cp =
+  let len_rack = List.length cp.rack in
+  let r_array = rack len_rack in
+  (* let is_rack_hidden = rack_hidden 0 r_array len_rack true in *)
+  let is_rack_hidden = rack_hidden 662 0 len_rack true in
+  if is_rack_hidden && len_rack > 0 then
+    draw_rack cp r_array
+  else
+    erase_rack ()
 
 (* [draw_buttons ()] draws all of the buttons used to perform different actions
  * in the game. *)
@@ -398,20 +435,24 @@ let update_scores ps =
                     else acc) 0 ps in
   let box_width = w * max_name_len + 50 in
   let box_height = h * (List.length ps + 1) + 5 in
-  Graphics.draw_rect 620 (575 - box_height - 6 * h) box_width box_height;
-  Graphics.set_color Graphics.blue
+  Graphics.draw_rect 620 (575 - box_height - 6 * h) box_width box_height
 
 (* [update_gui st] takes the current state [st] and updates the GUI after each
  * move is made. *)
 let update_gui st =
+  let len_rack = List.length st.current_player.rack in
+  let r_array = rack len_rack in
+  let is_rack_hidden = rack_hidden 662 0 len_rack true in
   Graphics.clear_graph ();
   draw_logo ();
   update_vb (List.flatten st.board);
   update_board (List.flatten st.board);
   update_scores st.players;
-  update_rack st.current_player;
   draw_buttons ();
-  draw_io_box ()
+  draw_io_box ();
+  if is_rack_hidden then ()
+  else
+    draw_rack st.current_player r_array
 
 (* [mem (x,y) (x0,y0,w,h)] is true if (x,y) is within the rectangle specified
  * by (x0,y0,w,h) and false otherwise *)
@@ -901,7 +942,7 @@ let rec gui_cmd st =
   else if mem (x, y) quit_btn then
     Quit
   else if mem (x, y) toggle_rack_btn then
-    failwith "toggle rack"
+    (toggle_rack st.current_player; Rack)
   else if mem (x, y) add_btn then
     AddWord (addword_helper st)
   else if mem (x, y) swap_btn then
@@ -919,10 +960,8 @@ let init_gui st =
     Graphics.open_graph " 1000x600";
     Graphics.set_window_title "Scrabble";
     Array.iter draw_box vb;
-    Array.iter draw_box (rack 7);
     update_scores (st.players);
     update_board (List.flatten st.board);
-    update_rack (st.current_player);
     draw_string_in_box Center "START" vb.(112) Graphics.black;
     draw_logo ();
     draw_buttons ();
