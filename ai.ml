@@ -706,7 +706,8 @@ let pick_worst_move rack st moves =
         fun acc x ->
           try
             let new_points = get_points x st in
-            if new_points < snd acc then x, new_points else acc
+            x, new_points
+            (* if new_points < snd acc then x, new_points else acc *)
           with
             _ -> acc
       ) ({word = [];mv_coord = (0,0);is_horizontal = false}, 100000) moves in
