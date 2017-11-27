@@ -8,8 +8,6 @@ let f_dict = Trie.initialize_dict "forward_dict.txt"
 
 let r_dict = Trie.initialize_dict "reverse_dict.txt"
 
-let vowels = ['a';'e';'i';'o';'u']
-
 let extends_forward str =
   List.length (get_extensions str f_dict) <> 0
 
@@ -671,13 +669,6 @@ let generate_all_moves all_moves =
   List.fold_left
     (fun acc x -> (generate_moves_for_anchor x)::acc) [] all_moves
   |> List.flatten
-
-let evaluate_rack rack =
-  List.fold_left
-    (fun acc x ->
-       if List.mem x vowels then (fst acc + 1, snd acc)
-       else (fst acc, snd acc + 1)
-    ) (0,0) rack
 
 let do_swap rack st =
   if List.length (st.bag) <> 0 then Swap [List.hd rack]
