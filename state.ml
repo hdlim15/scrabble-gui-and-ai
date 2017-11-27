@@ -568,7 +568,13 @@ let refresh_rack new_chars rack =
         h :: (helper t r)
   in
   let chars_represented_by_blanks = helper new_chars' rack_chars in
-  let rack_without_blanks = remove '*' (remove '*' rack_chars) in
+  let rack_without_blanks =
+    if List.length chars_represented_by_blanks = 0 then rack_chars
+    else if List.length chars_represented_by_blanks = 1
+    then (remove '*' rack_chars)
+    else
+      remove '*' (remove '*' rack_chars)
+  in
   let fixed_chars = List.map (fun c -> (c, 0)) chars_represented_by_blanks in
   let fixed_rack = List.map (fun c -> (c, get_points c)) rack_without_blanks in
   fixed_rack @ fixed_chars
