@@ -185,6 +185,8 @@ let cross_check_helper cell st is_h =
  * [chr] forms valid forms with the adjacent tiles on the board in state [st].
  *)
 let cross_check c chr st =
+  if chr = '*' then true
+  else
   let left =
     match left_cell c with
     | None -> ""
@@ -359,7 +361,7 @@ let start_forward cell rack st =
   else Some(
       List.fold_left
         (fun acc x ->
-           let chr = if x = '*' then "" else (Char.escaped x) in
+           let chr = (Char.escaped x) in
            let extensions = get_extensions chr f_dict |> cut_extensions in
            let words = (valid_extensions (remove x rack) extensions)
                        |> concat_moves chr in
@@ -371,7 +373,7 @@ let start_backward cell rack st =
   else Some(
       List.fold_left
         (fun acc x ->
-           let chr = if x = '*' then "" else (Char.escaped x) in
+           let chr = (Char.escaped x) in
            let extensions = get_extensions chr r_dict |> cut_extensions in
            let words = (valid_extensions (remove x rack) extensions) in
            (words,chr)::acc
