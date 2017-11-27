@@ -331,6 +331,12 @@ let draw_buttons () =
   draw_box b_place;
   draw_string_in_box Center "Place" b_place Graphics.black
 
+let draw_blue_place () =
+  let b_place = {x = 908; y = 120; w = 60; h = 60; bw = 2;
+                b1_col = blue1; b2_col = blue3; b_col = blue2; r = Top} in
+  draw_box b_place;
+  draw_string_in_box Center "Place" b_place Graphics.black
+
 (* [update_vb b] takes a flattened board [b] and replaces any colored cells with
  * letters in them with standard beige colors in [vb]. This represents a
  * multiplier being used up. *)
@@ -877,6 +883,7 @@ let rec place_helper rack st =
                       st.current_player.rack in
                   update_rack {st.current_player with rack = r'};
                   draw_buttons ();
+                  let () = draw_blue_place () in
                   draw_io_box ();
                   update_scores st.players;
                   let curr_player = st.current_player in
@@ -918,7 +925,6 @@ let help_helper st =
     else loop ()
   in loop ()
 
-
 (* [gui_cmd st] is the command received from user input via the gui *)
 let rec gui_cmd st =
   let curr_status = wait_next_event [Button_down] in
@@ -943,10 +949,7 @@ let rec gui_cmd st =
       draw_string_in_box Center "Swap" b_swap Graphics.black;
     Swap (swap_helper st.current_player)
   else if mem (x, y) place_btn then
-(*       let b_place = {x = 908; y = 120; w = 60; h = 60; bw = 2;
-                    b1_col = blue1; b2_col = blue3; b_col = blue2; r = Top} in
-      draw_box b_place;
-      draw_string_in_box Center "Place" b_place Graphics.black; *)
+    let () = draw_blue_place () in
     let mv = List.map (fun (f,s) -> f) (place_helper st.current_player.rack st) in
     PlaceWord (convert_to_move mv st)
   else gui_cmd st
