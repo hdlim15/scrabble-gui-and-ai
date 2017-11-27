@@ -754,6 +754,14 @@ let add_word_delete st =
   moveto 625 275;
   Graphics.draw_string "by 'ENTER':"
 
+let blank_tile_delete st =
+  update_gui st;
+  moveto 625 290;
+  Graphics.draw_string "Type the letter you wish to be played in place of the
+                        blank tile, followed";
+  moveto 625 275;
+  Graphics.draw_string "by 'ENTER':"
+
 (* [str_of_keyboard_events st io_op] is the string result of keyboard input for
  * a given io_op. *)
 let rec str_of_keyboard_events st io_op =
