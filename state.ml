@@ -595,8 +595,7 @@ let rec place mv st =
   else if not (check_endpoints mv st) then raise (InvalidPlace "not complete word")
   else
     (* check first-move-of-game condition *)
-    (* if List.for_all (fun p -> p.score = 0) st.players then *)
-    if List.length st.bag = 86 then
+    if List.for_all (fun p -> p.score = 0) st.players then
     let new_chars = check_fit_and_new_entries mv st in
     if not (check_rack st.current_player.rack new_chars) then
       raise (InvalidPlace "letters not in rack")

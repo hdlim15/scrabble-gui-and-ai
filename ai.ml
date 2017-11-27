@@ -761,8 +761,7 @@ let get_hint st =
     best_move_helper st |> pick_worst_move letters_rack st
 
 let best_move st =
-  (* if List.for_all (fun p -> p.score = 0) st.players then first_move st *)
-  if List.length st.bag = 86 then first_move st 
+  if List.for_all (fun p -> p.score = 0) st.players then first_move st
   else
     let letters_rack = st.current_player.rack |> get_letters_rack in
     best_move_helper st |> pick_best_move letters_rack st
