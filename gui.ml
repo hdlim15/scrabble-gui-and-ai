@@ -835,7 +835,8 @@ let rec place_helper rack st =
                   draw_logo ();
                   update_vb (List.flatten b');
                   update_board (List.flatten b');
-                  let r' = remove_from_rack letter st.current_player.rack in
+                  let r' = remove_from_rack (fst (List.nth rack rack_index))
+                      st.current_player.rack in
                   update_rack {st.current_player with rack = r'};
                   draw_buttons ();
                   draw_io_box ();
