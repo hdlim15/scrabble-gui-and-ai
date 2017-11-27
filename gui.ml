@@ -774,7 +774,7 @@ let rec str_of_keyboard_events st io_op =
     else if Char.code c = 8 then
       (let _ = match io_op with
        | `AddWord -> add_word_delete st
-       | `Blank -> add_word_delete st in
+       | `Blank -> blank_tile_delete st in
        moveto 625 260;
        let h' = remove_last_elt history in
        let w'' = List.fold_right
