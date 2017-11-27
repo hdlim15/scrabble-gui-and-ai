@@ -757,10 +757,9 @@ let add_word_delete st =
 let blank_tile_delete st =
   update_gui st;
   moveto 625 290;
-  Graphics.draw_string "Type the letter you wish to be played in place of the
-                        blank tile, followed";
+  Graphics.draw_string "Type the letter you wish to be played in place of the";
   moveto 625 275;
-  Graphics.draw_string "by 'ENTER':"
+  Graphics.draw_string "blank tile, followed by 'ENTER':"
 
 (* [str_of_keyboard_events st io_op] is the string result of keyboard input for
  * a given io_op. *)
@@ -800,10 +799,9 @@ let addword_helper st =
 
 let blank_helper st =
   moveto 625 290;
-  Graphics.draw_string "Type the letter you wish to be played in place of the
-                        blank tile, followed";
+  Graphics.draw_string "Type the letter you wish to be played in place of the";
   moveto 625 275;
-  Graphics.draw_string "by 'ENTER':";
+  Graphics.draw_string "blank tile, followed by 'ENTER':";
   str_of_keyboard_events st `Blank
 
 (* [place_helper rack st] is a list of (cell, coord, st) entries corresponding to
