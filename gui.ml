@@ -745,21 +745,25 @@ let rec remove_last_elt lst =
   | h::[] -> []
   | h::t -> h :: remove_last_elt t
 
-(* [add_word_delete st] redraws the window to deal with backspaces during keyboard
+(* [add_word_reset st] redraws the window to deal with backspaces during keyboard
  * entry in str_of_keyboard_events *)
-let add_word_delete st =
+let addword_reset st =
   update_gui st;
   moveto 625 290;
   Graphics.draw_string "Type the word you wish to add to the dictionary, followed";
   moveto 625 275;
-  Graphics.draw_string "by 'ENTER':"
+  Graphics.draw_string "by 'ENTER':";
+  moveto 625 260;
+  Graphics.draw_string "> "
 
-let blank_tile_delete st =
+let blank_tile_reset st =
   update_gui st;
   moveto 625 290;
   Graphics.draw_string "Type the letter you wish to be played in place of the";
   moveto 625 275;
-  Graphics.draw_string "blank tile, followed by 'ENTER':"
+  Graphics.draw_string "blank tile, followed by 'ENTER':";
+  moveto 625 260;
+  Graphics.draw_string "> "
 
 (* [str_of_keyboard_events st io_op] is the string result of keyboard input for
  * a given io_op. *)
@@ -772,13 +776,13 @@ let rec str_of_keyboard_events st io_op =
       List.fold_right (fun (c,_) acc -> (Char.escaped c)^acc) history ""
     else if Char.code c = 8 then
       (let _ = match io_op with
-       | `AddWord -> add_word_delete st
-       | `Blank -> blank_tile_delete st in
-       moveto 625 260;
+       | `AddWord -> addword_reset st
+       | `Blank -> blank_tile_reset st in
+       moveto (625+2*w) 260;
        let h' = remove_last_elt history in
        let w'' = List.fold_right
            (fun (c,w') acc ->
-              moveto w' 260; Graphics.draw_string (Char.escaped c); acc + w) h' 0 in
+              moveto w' 260; Graphics.draw_string (Char.escaped c); acc + w) h' 2*w in
        helper w'' h')
     else if Char.code c < 26 || Char.code c > 126 then
       helper w' history
@@ -786,25 +790,18 @@ let rec str_of_keyboard_events st io_op =
       (moveto (625+w') 260;
        Graphics.draw_string (Char.escaped c);
        helper (w'+w) (history @ [(c ,625+w')]))
-  in helper 0 []
+  in helper (2*w) []
 
 (* [addword_helper st] is a string corresponding to a word that a user wishes to
  * add to the dictionary. The string is received by keyboard input *)
 let addword_helper st =
-  moveto 625 290;
-  Graphics.draw_string "Type the word you wish to add to the dictionary, followed";
-  moveto 625 275;
-  Graphics.draw_string "by 'ENTER':";
+  addword_reset st;
   str_of_keyboard_events st `AddWord
 
 let blank_helper st =
+  blank_tile_reset st;
   let regex = Str.regexp "[A-Za-z]" in
-  let new_char =
-  moveto 625 290;
-  Graphics.draw_string "Type the letter you wish to be played in place of the";
-  moveto 625 275;
-  Graphics.draw_string "blank tile, followed by 'ENTER':";
-  str_of_keyboard_events st `Blank in
+  let new_char = str_of_keyboard_events st `Blank in
   if ((String.length new_char = 1) && Str.string_match regex new_char 0)
   then String.get new_char 0
   else failwith "character entered for blank tile has length more than 1
