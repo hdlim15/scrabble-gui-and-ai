@@ -171,9 +171,11 @@ let rec get_command st =
     (try gui_cmd st with
      | GuiExn s -> end_nonturn_command ("Exception: " ^ s); update_gui st; get_command st)
   | AI diff ->
+    (* try *)
     match diff with
     | Hard -> Ai.best_move st
     | Easy -> Ai.get_hint st
+    (* with _ -> Pass *)
 
 (* [play_game st] plays the game represented by [st]. *)
 let rec play_game st =
