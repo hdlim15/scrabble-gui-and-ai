@@ -180,6 +180,16 @@ let rec get_command st =
     | Hard -> Ai.best_move st
     | Easy -> Ai.get_hint st
 
+(* [quit_helper st] acts as a second step of verification for a Quit command *)
+let quit_helper st =
+  Graphics.set_color Graphics.black;
+  Graphics.moveto 625 240;
+  Graphics.draw_string "Press 'Q' to confirm quit, any other key to resume play";
+  let s = Graphics.wait_next_event [Graphics.Key_pressed] in
+  match Char.code s.Graphics.key with
+  | 81 | 113 -> exit 0
+  | _ -> st
+
 (* [play_game st] plays the game represented by [st]. *)
 let rec play_game st =
   let command = get_command st in
@@ -202,7 +212,7 @@ let rec play_game st =
       | AddWord str ->
         let st' = do' command st in end_nonturn_command ("Added word to dictionary"); st'
       | Help -> print_endline ((str_of_help ())^"\n"); st
-      | Quit -> print_endline "Thanks for playing!\n"; exit 0;
+      | Quit -> (*print_endline "Thanks for playing!\n"; exit 0;*) quit_helper st
       | Board -> print_endline (string_of_board st.board); st
       | Pass ->
         let st' = do' command st in end_turn_gui st' `Pass; st'
