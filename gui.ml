@@ -266,6 +266,35 @@ let update_rack cp =
   Array.iter draw_box r_array;
   update_rack_helper (List.rev cp.rack) 0
 
+(* let change_color_rack cp color index =
+  let len_rack = List.length cp.rack in
+  let r_array = rack len_rack in
+  let rec change_color_rack_helper r n =
+    match r with
+    | [] -> ()
+    | (l, p)::t ->
+      begin
+        if l <> ' ' then
+          let tile_str =
+            String.capitalize_ascii (Char.escaped l) ^ " : " ^ (string_of_int p)
+          in
+          let rack = r_array.(n) in
+          let new_rack = {rack with b1_col = green1;b2_col = green3;b_col = green2} in
+          let () =
+            if true then
+              Array.set r_array index new_rack
+            else ()
+          in
+          draw_string_in_box Center tile_str new_rack Graphics.black;
+          change_color_rack_helper t (n + 1)
+        else
+          change_color_rack_helper t (n + 1)
+      end
+  in
+  draw_string (cp.name ^ "'s rack:") 660 400 true;
+  Array.iter draw_box r_array;
+  change_color_rack_helper (List.rev cp.rack) 0 *)
+
 (* [draw_buttons ()] draws all of the buttons used to perform different actions
  * in the game. *)
 let draw_buttons () =
@@ -710,7 +739,8 @@ let convert_to_move lst st =
  * that are clicked on prior to clicking the 'swap' button to finalize the swap
  * command.
  * requires: 'swap' button was clicked prior to initial function call *)
-let rec swap_helper rack =
+let rec swap_helper cp =
+  let rack = cp.rack in
   let s = wait_next_event [Button_down] in
   if mem (s.mouse_x, s.mouse_y) swap_btn then []
   else
@@ -720,8 +750,10 @@ let rec swap_helper rack =
         (fun acc (r_x, r_y) ->
            if mem (s.mouse_x, s.mouse_y) (r_x, r_y, 40, 40) then
              (get_idx_from_coord r_x) else acc) (-1) rack_coords in
-    if rack_index = -1 then swap_helper rack
-    else fst (List.nth rack rack_index) :: swap_helper rack
+    if rack_index = -1 then swap_helper cp
+    else
+      (* let () = change_color_rack cp 0 (*change*) rack_index in *)
+      fst (List.nth rack rack_index) :: swap_helper cp
 
 (* [refresh_cell c b] is an updated board with a specified cell coordinate's data
  * updated. *)
@@ -902,8 +934,16 @@ let rec gui_cmd st =
   else if mem (x, y) add_btn then
     AddWord (addword_helper st)
   else if mem (x, y) swap_btn then
-    Swap (swap_helper st.current_player.rack)
+      let b_swap = {x = 816; y = 120; w = 60; h = 60; bw = 2;
+                    b1_col = blue1; b2_col = blue3; b_col = blue2; r = Top} in
+      draw_box b_swap;
+      draw_string_in_box Center "Swap" b_swap Graphics.black;
+    Swap (swap_helper st.current_player)
   else if mem (x, y) place_btn then
+(*       let b_place = {x = 908; y = 120; w = 60; h = 60; bw = 2;
+                    b1_col = blue1; b2_col = blue3; b_col = blue2; r = Top} in
+      draw_box b_place;
+      draw_string_in_box Center "Place" b_place Graphics.black; *)
     let mv = List.map (fun (f,s) -> f) (place_helper st.current_player.rack st) in
     PlaceWord (convert_to_move mv st)
   else gui_cmd st
