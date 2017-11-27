@@ -361,7 +361,7 @@ let rec init_num_humans total_num_players =
 (* [init_ai_diff num_ai] is a list of difficulties for a number [num_ai] of AIs *)
 let rec init_ai_diff num_ai =
   iad_reset num_ai;
-  let s = str_of_keyboard_events `Init_num_humans num_ai in
+  let s = str_of_keyboard_events `Init_ai_diff num_ai in
   let ai_diff_lst = s |> Str.split (Str.regexp "[ \t]+") in
   if List.length ai_diff_lst <> num_ai then
     (clear ();
