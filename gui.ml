@@ -772,26 +772,6 @@ let convert_to_move lst st =
     convert
   with Failure f -> raise (GuiExn f)
 
-(* [swap_helper rack] is a character list corresponding to rack boxes in the gui
- * that are clicked on prior to clicking the 'swap' button to finalize the swap
- * command.
- * requires: 'swap' button was clicked prior to initial function call *)
-let rec swap_helper cp =
-  let rack = cp.rack in
-  let s = wait_next_event [Button_down] in
-  if mem (s.mouse_x, s.mouse_y) swap_btn then []
-  else
-    let rack_len = List.length rack in
-    let rack_coords = get_rack_coords rack_len in
-    let rack_index = List.fold_left
-        (fun acc (r_x, r_y) ->
-           if mem (s.mouse_x, s.mouse_y) (r_x, r_y, 40, 40) then
-             (get_idx_from_coord r_x) else acc) (-1) rack_coords in
-    if rack_index = -1 then swap_helper cp
-    else
-      (* let () = change_color_rack cp 0 (*change*) rack_index in *)
-      fst (List.nth rack rack_index) :: swap_helper cp
-
 (* [refresh_cell c b] is an updated board with a specified cell coordinate's data
  * updated. *)
 let rec refresh_cell c b =
@@ -878,6 +858,46 @@ let blank_helper st =
      Graphics.draw_string "Click the cell on the board you wish to place the blank tile";
      String.get new_char 0)
   else raise (GuiExn "invalid blank selection")
+
+(* [swap_helper rack] is a character list corresponding to rack boxes in the gui
+ * that are clicked on prior to clicking the 'swap' button to finalize the swap
+ * command.
+ * requires: 'swap' button was clicked prior to initial function call *)
+let swap_helper cp =
+  let my_rack = cp.rack in
+  let rack_len = List.length my_rack in
+  let r_array = rack rack_len in
+  (* function that makes swap_helper tail recursive *)
+  let rec swap_helper' swap_list colored_rack =
+    let s = wait_next_event [Button_down] in
+    (* end recursion when user presses the Swap button again *)
+    if mem (s.mouse_x, s.mouse_y) swap_btn then
+      List.map (fun x -> fst (List.nth my_rack x)) swap_list
+    else
+      let rack_coords = get_rack_coords rack_len in
+      let rack_index = List.fold_left
+          (fun acc (r_x, r_y) ->
+             if mem (s.mouse_x, s.mouse_y) (r_x, r_y, 40, 40) then
+               (get_idx_from_coord r_x) else acc) (-1) rack_coords in
+      if rack_index = -1 then swap_helper' swap_list colored_rack
+      else
+        let position = rack_len - rack_index - 1 in
+        if (List.mem rack_index swap_list) then
+          let new_rack_tile = {colored_rack.(position) with
+            b1_col = beige1; b2_col = beige3; b_col = beige2}
+          in
+          Array.set colored_rack position new_rack_tile;
+          draw_rack cp colored_rack ;
+          swap_helper' (State.remove rack_index swap_list) colored_rack
+        else
+          let new_rack_tile = {colored_rack.(position) with
+            b1_col = dark_beige1; b2_col = dark_beige3; b_col = dark_beige2}
+          in
+          Array.set colored_rack position new_rack_tile;
+          draw_rack cp colored_rack ;
+          swap_helper' (rack_index :: swap_list) colored_rack
+  in
+  swap_helper' [] r_array
 
 (* [place_helper rack st] is a list of (cell, coord, st) entries corresponding to
  * new letters placed onto the board, forming a potentially-valid place command *)
