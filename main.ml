@@ -98,8 +98,9 @@ let rec play_game st =
   let new_state =
     try
       match command with
-      | PlaceWord _ | Swap _ | Pass -> do' command st
-      | Rack | Help -> st
+      | PlaceWord _ | Swap _ | Pass -> let st' = do' command st in update_gui st'; st'
+      | Rack -> st
+      | Help -> update_gui st; st
       | Hint ->
         let hint =
           match (Ai.get_hint st) with
@@ -118,7 +119,7 @@ let rec play_game st =
       else (end_nonturn_command "Invalid swap"; st)
     | InvalidAdd -> end_nonturn_command ("Invalid Add"); st
   in
-  update_gui new_state;
+  erase_io_box ();
   if st.current_player.name <> new_state.current_player.name then
     (erase_rack ();
     erase_toggle_button ();
