@@ -445,6 +445,9 @@ let compare_players p1 p2 =
 (* [update_scores ps] takes a list of players [ps] and draws the scores of each
  * player on the GUI after each turn. *)
 let update_scores ps =
+  set_color white;
+  fill_rect 620 400 200 100;
+  set_color black;
   let sorted_ps = List.sort compare_players ps in
   let h = snd (Graphics.text_size "|") in
   let w = fst (Graphics.text_size "w") in
@@ -470,6 +473,7 @@ let erase_turn () =
   Graphics.fill_rect 770 470 200 25;
   Graphics.set_color Graphics.black
 
+
 (* [update_gui st] takes the current state [st] and updates the GUI after each
  * move is made. *)
 let update_gui cmd st =
@@ -482,6 +486,7 @@ let update_gui cmd st =
     update_board (List.flatten st.board);
     update_scores st.players;
     draw_buttons true;
+    erase_turn ();
     draw_string (st.current_player.name ^ "'s turn.") 770 470 true;
     if is_rack_hidden then ()
     else
