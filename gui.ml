@@ -281,21 +281,36 @@ let draw_rack cp r_array =
   Array.iter draw_box r_array;
   draw_rack_helper (List.rev cp.rack) 0
 
+let erase_toggle_button () =
+  Graphics.set_color Graphics.white;
+  Graphics.fill_rect 632 120 60 60;
+  Graphics.set_color Graphics.black
+
 (* [toggle_rack cp] draws the current player [cp]'s rack on the GUI if it is
  * currently hidden and hides the rack if it is currently displayed. *)
 let toggle_rack cp =
   let len_rack = List.length cp.rack in
   let r_array = rack len_rack in
-  (* let is_rack_hidden = rack_hidden 0 r_array len_rack true in *)
   let is_rack_hidden = rack_hidden 662 0 len_rack true in
+  let b_toggle_rack = {x = 632; y = 120; w = 60; h = 60; bw = 2;
+                       b1_col = gray1; b2_col = gray3; b_col = gray2; r = Top} in
+  erase_toggle_button ();
+  draw_box b_toggle_rack;
   if is_rack_hidden && len_rack > 0 then
-    draw_rack cp r_array
+    begin
+      draw_string_in_box Center "Hide rack" b_toggle_rack Graphics.black;
+      draw_rack cp r_array;
+    end
   else
-    erase_rack ()
+    begin
+      draw_string_in_box Center "Show rack" b_toggle_rack Graphics.black;
+      erase_rack ()
+    end
 
-(* [draw_buttons ()] draws all of the buttons used to perform different actions
- * in the game. *)
-let draw_buttons () =
+(* [draw_buttons is_rack_hidden] draws all of the buttons used to perform
+* different actions in the game. [is_rack_hidden] is a boolean that states
+* whether or not the rack is displayed on the GUI. *)
+let draw_buttons is_rack_hidden =
   let b_pass = {x = 632; y = 30; w = 60; h = 60; bw = 2;
                 b1_col = gray1; b2_col = gray3; b_col = gray2; r = Top} in
   draw_box b_pass;
@@ -312,14 +327,18 @@ let draw_buttons () =
                 b1_col = gray1; b2_col = gray3; b_col = gray2; r = Top} in
   draw_box b_quit;
   draw_string_in_box Center "Quit" b_quit Graphics.black;
-  let b_show_rack = {x = 632; y = 120; w = 60; h = 60; bw = 2;
+  let b_toggle_rack = {x = 632; y = 120; w = 60; h = 60; bw = 2;
                 b1_col = gray1; b2_col = gray3; b_col = gray2; r = Top} in
-  draw_box b_show_rack;
-  draw_string_in_box Center "Toggle rack" b_show_rack Graphics.black;
-  let b_hide_rack = {x = 724; y = 120; w = 60; h = 60; bw = 2;
+  draw_box b_toggle_rack;
+  (* draw_string_in_box Center "Show rack" b_toggle_rack Graphics.black; *)
+  if is_rack_hidden then
+    draw_string_in_box Center "Show rack" b_toggle_rack Graphics.black
+  else
+    draw_string_in_box Center "Hide rack" b_toggle_rack Graphics.black;
+  let b_add_word = {x = 724; y = 120; w = 60; h = 60; bw = 2;
                 b1_col = gray1; b2_col = gray3; b_col = gray2; r = Top} in
-  draw_box b_hide_rack;
-  draw_string_in_box Center "Add word" b_hide_rack Graphics.black;
+  draw_box b_add_word;
+  draw_string_in_box Center "Add word" b_add_word Graphics.black;
   let b_swap = {x = 816; y = 120; w = 60; h = 60; bw = 2;
                 b1_col = gray1; b2_col = gray3; b_col = gray2; r = Top} in
   draw_box b_swap;
@@ -444,7 +463,7 @@ let update_gui st =
   update_vb (List.flatten st.board);
   update_board (List.flatten st.board);
   update_scores st.players;
-  draw_buttons ();
+  draw_buttons is_rack_hidden;
   draw_io_box ();
   if is_rack_hidden then ()
   else
@@ -452,8 +471,8 @@ let update_gui st =
 
 (* [mem (x,y) (x0,y0,w,h)] is true if (x,y) is within the rectangle specified
  * by (x0,y0,w,h) and false otherwise *)
-let mem (x,y) (x0,y0,w,h) =
-  (x >= x0) && (x< x0+w) && (y>=y0) && ( y<y0+h)
+let mem (x, y) (x0, y0, w, h) =
+  (x >= x0) && (x < x0 + w) && (y >= y0) && (y < y0 + h)
 
 (* coordinates of rectangle representing the pass button *)
 let pass_btn = (632, 30, 60, 60)
@@ -912,7 +931,8 @@ let rec place_helper p_r st =
                   let rack_len = List.length r' in
                   let r_array = rack rack_len in
                   draw_rack {st.current_player with rack = r'} r_array;
-                  draw_buttons ();
+                  let is_rack_hidden = rack_hidden 662 0 (List.length r') true in
+                  draw_buttons is_rack_hidden;
                   let () = draw_blue_place () in
                   draw_io_box ();
                   update_scores st.players;
@@ -996,7 +1016,7 @@ let init_gui st =
     update_board (List.flatten st.board);
     draw_string_in_box Center "START" vb.(112) Graphics.black;
     draw_logo ();
-    draw_buttons ();
+    draw_buttons true;
     draw_io_box ()
   with
   | Graphics.Graphic_failure("fatal I/O error") ->

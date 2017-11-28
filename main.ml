@@ -145,7 +145,12 @@ let rec play_game st =
   in
   update_gui new_state;
   if st.current_player.name <> new_state.current_player.name then
-    erase_rack ();
+    (erase_rack ();
+    erase_toggle_button ();
+    let b_toggle_rack = {x = 632; y = 120; w = 60; h = 60; bw = 2;
+                         b1_col = gray1; b2_col = gray3; b_col = gray2; r = Top} in
+    draw_box b_toggle_rack;
+    draw_string_in_box Center "Show rack" b_toggle_rack Graphics.black);
   if no_empty_rack new_state && new_state.sp_consec <= 12 then
     play_game new_state
   else
