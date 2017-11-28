@@ -18,8 +18,8 @@ Buttons:
 - Show/hide rack: displays/hides the letters one has in their
   rack.
 
-- Add word: adds a new word to the dictionary of allowed words.
-  Click the button, type the word, and then press 'ENTER'.
+- Add to dict: adds a new word to the dictionary of allowed
+   words. Click the button, type the word, then press 'ENTER'.
 
 - Swap: swaps tiles on one's rack with tiles in the bag. You
   must first click swap, followed by the letters in your rack
