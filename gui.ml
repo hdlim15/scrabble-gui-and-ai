@@ -643,7 +643,7 @@ let get_input lst st =
                match List.assoc_opt (coord) update_cells with
                  | None -> (fst (x.letter) |> Char.escaped) ^ acc
                  | Some _ ->
-                   raise (GuiExn "cannot place new tiles on top of tiles already on the board")
+                   raise (GuiExn "cannot place new tiles on top of existing tiles")
                else match List.assoc_opt (coord) update_cells with
                  | None -> " "
                  | Some letter -> (Char.escaped letter) ^ acc
@@ -714,7 +714,7 @@ let get_input lst st =
                match List.assoc_opt (coord) update_cells with
                | None -> (fst (x.letter) |> Char.escaped) ^ acc
                | Some _ ->
-                 raise (GuiExn "cannot place new tiles on top of tiles already on the board")
+                 raise (GuiExn "cannot place new tiles on top of existing tiles")
              else match List.assoc_opt (coord) update_cells with
                | None -> " "
                | Some letter -> (Char.escaped letter) ^ acc
