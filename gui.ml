@@ -142,9 +142,9 @@ let darker_beige1 = set_rgb 135 135 115
 let darker_beige2 = set_rgb 155 155 135
 let darker_beige3 = set_rgb 175 175 155
 
-let red1 = set_rgb 255 20 20
+let red1 = set_rgb 225 10 10
 let red2 = set_rgb 250 65 65
-let red3 = set_rgb 250 100 100
+let red3 = set_rgb 255 125 125
 
 let green1 = set_rgb 20 140 20
 let green2 = set_rgb 80 190 80
@@ -161,6 +161,10 @@ let orange3 = set_rgb 255 195 110
 let gray1 = set_rgb 120 120 120
 let gray2 = set_rgb 160 160 160
 let gray3 = set_rgb 210 210 210
+
+let dark_gray1 = set_rgb 70 70 70
+let dark_gray2 = set_rgb 110 110 110
+let dark_gray3 = set_rgb 160 160 160
 
 (* [tws_indeces] are the array indices that correspond to cells with triple
  * word multipliers. *)
@@ -334,7 +338,6 @@ let draw_buttons is_rack_hidden =
   let b_toggle_rack = {x = 632; y = 120; w = 60; h = 60; bw = 2;
                 b1_col = gray1; b2_col = gray3; b_col = gray2; r = Top} in
   draw_box b_toggle_rack;
-  (* draw_string_in_box Center "Show rack" b_toggle_rack Graphics.black; *)
   if is_rack_hidden then
     draw_string_in_box Center "Show rack" b_toggle_rack Graphics.black
   else
@@ -342,7 +345,8 @@ let draw_buttons is_rack_hidden =
   let b_add_word = {x = 724; y = 120; w = 60; h = 60; bw = 2;
                 b1_col = gray1; b2_col = gray3; b_col = gray2; r = Top} in
   draw_box b_add_word;
-  draw_string_in_box Center "Add word" b_add_word Graphics.black;
+  draw_string "Add to" 737 153 true;
+  draw_string "dict" 743 135 true;
   let b_swap = {x = 816; y = 120; w = 60; h = 60; bw = 2;
                 b1_col = gray1; b2_col = gray3; b_col = gray2; r = Top} in
   draw_box b_swap;
@@ -354,7 +358,7 @@ let draw_buttons is_rack_hidden =
 
 let draw_blue_place () =
   let b_place = {x = 908; y = 120; w = 60; h = 60; bw = 2;
-                b1_col = blue1; b2_col = blue3; b_col = blue2; r = Top} in
+                b1_col = dark_gray1; b2_col = dark_gray3; b_col = dark_gray2; r = Top} in
   draw_box b_place;
   draw_string_in_box Center "Place" b_place Graphics.black
 
@@ -1105,7 +1109,7 @@ let rec gui_cmd st =
   else if mem (x, y) swap_btn then
     if not (rack_hidden 662 0 (List.length st.current_player.rack) true) then
       let b_swap = {x = 816; y = 120; w = 60; h = 60; bw = 2;
-                    b1_col = blue1; b2_col = blue3; b_col = blue2; r = Top} in
+                    b1_col = dark_gray1; b2_col = dark_gray3; b_col = dark_gray2; r = Top} in
       draw_box b_swap;
       draw_string_in_box Center "Swap" b_swap Graphics.black;
       Swap (swap_helper st.current_player)
