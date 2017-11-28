@@ -642,7 +642,7 @@ let get_input lst st =
                if not (cell_is_empty x) then
                  (fst (x.letter) |> Char.escaped) ^ acc
                else match List.assoc_opt (coord) update_cells with
-                 | None -> acc
+                 | None -> "" (* acc *)
                  | Some letter -> (Char.escaped letter) ^ acc
             ) "" col |> reverse_str in
         let cell = get_cell_from_coordinate (fst leftmost_input) st in
@@ -710,7 +710,7 @@ let get_input lst st =
              if not (cell_is_empty x) then
                (fst (x.letter) |> Char.escaped) ^ acc
              else match List.assoc_opt (coord) update_cells with
-               | None -> acc
+               | None -> "" (* acc *)
                | Some letter -> (Char.escaped letter) ^ acc
           ) "" row  |> reverse_str in
       let cell = get_cell_from_coordinate (fst leftmost_input) st in
