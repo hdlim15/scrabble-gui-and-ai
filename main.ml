@@ -76,7 +76,7 @@ let rec get_command st =
     (try Gui.gui_cmd st with
      | GuiExn s -> end_nonturn_command ("Exception: " ^ s);
        erase_io_box ();
-       Gui.draw_buttons true;
+       Gui.update_gui `Place st;
        get_command st)
   | AI diff ->
     match diff with
