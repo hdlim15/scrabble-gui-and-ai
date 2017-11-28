@@ -14,8 +14,6 @@ Buttons:
 - Help: displays useful information on how to play the game.
 
 - Hint: provides a potential move that could be made.
-  The word displayed could contain some letters that are
-  not in your rack but are already on the board.
 
 - Show/hide rack: displays/hides the letters one has in their
   rack.
