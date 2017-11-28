@@ -44,6 +44,7 @@ type state = {
   added_words : string list;
   current_player : player;
   sp_consec : int;  (* number of consecutive swap or pass turns. *)
+  is_first_move : bool;
 }
 
 type init_game_data = {
