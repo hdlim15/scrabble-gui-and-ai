@@ -833,7 +833,7 @@ let rec str_of_keyboard_events st io_op =
        let h' = remove_last_elt history in
        let w'' = List.fold_right
            (fun (c,w') acc ->
-              moveto w' 260; Graphics.draw_string (Char.escaped c); acc + w) h' 2*w in
+              moveto w' 260; Graphics.draw_string (Char.escaped c); acc + w) h' (2*w) in
        helper w'' h')
     else if Char.code c < 26 || Char.code c > 126 then
       helper w' history
