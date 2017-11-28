@@ -130,13 +130,25 @@ let draw_string_in_box pos str bcf col =
  * component [g], and blue component [b]. *)
 let set_rgb r g b = (Graphics.rgb r g b)
 
-let beige1 = set_rgb 185 185 165
-let beige2 = set_rgb 205 205 185
-let beige3 = set_rgb 245 245 220
+let beige1 = set_rgb 215 215 195
+let beige2 = set_rgb 235 235 215
+let beige3 = set_rgb 255 255 240
 
-let dark_beige1 = set_rgb 155 155 140
+let dark_beige1 = set_rgb 185 185 165
+let dark_beige2 = set_rgb 205 205 185
+let dark_beige3 = set_rgb 245 245 220
+
+(* let dark_beige1 = set_rgb 155 155 140
 let dark_beige2 = set_rgb 170 170 135
-let dark_beige3 = set_rgb 205 205 175
+let dark_beige3 = set_rgb 205 205 175 *)
+
+let light_blue1 = set_rgb 146 166 192
+let light_blue2 = set_rgb 176 196 222
+let light_blue3 = set_rgb 306 226 252
+
+(* let light_blue1 = set_rgb 0 0 0
+let light_blue2 = set_rgb 0 0 0
+let light_blue3 = set_rgb 0 0 0 *)
 
 let red1 = set_rgb 255 20 20
 let red2 = set_rgb 250 65 65
@@ -830,7 +842,7 @@ let blank_helper st =
      String.get new_char 0)
   else raise (GuiExn "invalid blank selection")
 
-let update_rack_tile r_array position colors =
+let update_tile_color r_array position colors =
   let (col1, col2, col) = colors in
   let new_rack_tile = {r_array.(position) with
     b1_col = col1; b2_col = col2; b_col = col}
@@ -861,13 +873,13 @@ let swap_helper cp =
       else
         let position = rack_len - rack_index - 1 in
         if (List.mem rack_index swap_list) then
-          let () = update_rack_tile colored_rack position
+          let () = update_tile_color colored_rack position
             (beige1, beige3, beige2)
           in
           draw_rack cp colored_rack ;
           swap_helper' (State.remove rack_index swap_list) colored_rack
         else
-          let () = update_rack_tile colored_rack position
+          let () = update_tile_color colored_rack position
             (dark_beige1, dark_beige3, dark_beige2)
           in
           draw_rack cp colored_rack ;
@@ -875,9 +887,11 @@ let swap_helper cp =
   in
   swap_helper' [] r_array
 
-(* [place_helper rack st] is a list of (cell, coord, st) entries corresponding to
- * new letters placed onto the board, forming a potentially-valid place command *)
-let rec place_helper p_r st =
+(* [place_helper st] is a list of ((cell, coord), st) entries corresponding to
+ * new letters placed onto the board, forming a potentially-valid place command
+ *)
+let rec place_helper st =
+  let p_r = st.current_player.rack in
   let s = wait_next_event [Button_down] in
   (* end recursion when the Place button is pressed again *)
   if mem (s.mouse_x, s.mouse_y) place_btn then []
@@ -888,42 +902,47 @@ let rec place_helper p_r st =
         (fun acc (r_x, r_y) ->
            if mem (s.mouse_x, s.mouse_y) (r_x, r_y, 40, 40) then
              (get_idx_from_coord r_x) else acc) (-1) rack_coords in
-    if rack_index = -1 then place_helper p_r st
+    if rack_index = -1 then place_helper st
     else
       let letter =
         if  fst (List.nth p_r rack_index) = '*' then blank_helper st
         else fst (List.nth p_r rack_index) in
       let s' = wait_next_event [Button_down] in
+      (* if click is on the board *)
       if mem (s'.mouse_x, s'.mouse_y) (0,0,600,600) then
         let board_coordinates = all_cells 0 in
-        let cell_index = List.fold_left
+        let cell_index =
+          List.fold_left
             (fun acc (r_x, r_y) ->
                if mem (s'.mouse_x, s'.mouse_y) (r_x, r_y, 40, 40) then
                  (let mv = {word = [letter];
                             mv_coord = (get_cell_from_pixel (r_x, r_y));
                             is_horizontal = true} in
                   let b' = State.place_horizontal mv st in
-                  Graphics.clear_graph ();
-                  draw_logo ();
                   update_vb (List.flatten b');
                   update_board (List.flatten b');
                   let r' = remove_from_rack (fst (List.nth p_r rack_index))
                       st.current_player.rack in
                   let rack_len = List.length r' in
                   let r_array = rack rack_len in
+                  erase_rack ();
                   draw_rack {st.current_player with rack = r'} r_array;
-                  draw_buttons ();
-                  let () = draw_blue_place () in
-                  draw_io_box ();
-                  update_scores st.players;
-                  let curr_player = st.current_player in
-                  let curr_player' = {curr_player with rack = r'} in
+                  let curr_player' = {st.current_player with rack = r'} in
                   ((get_cell_from_pixel (r_x, r_y), letter),
                    {st with board = b'; current_player = curr_player'}))
-               else acc)
-            (((-1,-1), ' '), st) board_coordinates in
-        if fst cell_index = ((-1,-1), ' ') then place_helper p_r st
-        else (cell_index) :: place_helper (snd cell_index).current_player.rack (snd cell_index)
+               else acc
+            ) (((-1,-1), ' '), st) board_coordinates
+        in
+        if fst cell_index = ((-1,-1), ' ') then place_helper st
+        else
+          let vb_index = cell_index |> fst |> fst |> coord_to_array_index in
+          print_endline (string_of_int vb_index) ;
+          (* let () = update_tile_color vb vb_index (light_blue1,light_blue3,light_blue2) in *)
+          let new_bcf = {vb.(vb_index) with b1_col=light_blue1;b2_col=light_blue3;b_col=light_blue2} in
+          draw_box new_bcf;
+          draw_string_in_box Center (String.capitalize_ascii (Char.escaped letter))
+          vb.(vb_index) Graphics.black;
+          (cell_index) :: place_helper (snd cell_index)
       else raise (GuiExn "must click board cell following tile selection")
 
 (* [str_of_help ()] is a reversed list of strings of gui_help.txt *)
@@ -980,7 +999,7 @@ let rec gui_cmd st =
     Swap (swap_helper st.current_player)
   else if mem (x, y) place_btn then
     let () = draw_blue_place () in
-    let mv = List.map (fun (f,s) -> f) (place_helper st.current_player.rack st) in
+    let mv = List.map (fun (f,_) -> f) (place_helper st) in
     PlaceWord (convert_to_move mv st)
   else gui_cmd st
 
