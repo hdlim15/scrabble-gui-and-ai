@@ -80,9 +80,11 @@ let rec get_command st =
        Gui.update_gui `Place st;
        get_command st)
   | AI diff ->
+    try
     match diff with
     | Hard -> Ai.best_move st
     | Easy -> Ai.get_hint st
+    with _ -> Pass
 
 (* [quit_helper st] acts as a second step of verification for a Quit command *)
 let quit_helper st =
