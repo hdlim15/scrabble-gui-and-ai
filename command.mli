@@ -16,14 +16,9 @@ exception InvalidCommand
 type command =
   | PlaceWord of move (* place a word on the board *)
   | Swap of char list (* swap tiles with the bag *)
-  | Score (* show current score of all players *)
   | Rack (* show my rack of tiles *)
   | Hint (* give a hint to the player *)
   | AddWord of string (* adds word to dictionary *)
   | Help (* tells the user what commands they can use to play the game *)
   | Quit (* quit the game *)
-  | Board (* print current state of board *)
   | Pass (* make no move and end turn *)
-
-(* [parse str] is the command that represents player input [str]. *)
-val parse : string -> command
