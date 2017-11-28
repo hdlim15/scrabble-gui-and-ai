@@ -640,7 +640,10 @@ let get_input lst st =
             (fun acc x ->
                let coord = x.cell_coord in
                if not (cell_is_empty x) then
-                 (fst (x.letter) |> Char.escaped) ^ acc
+               match List.assoc_opt (coord) update_cells with
+                 | None -> (fst (x.letter) |> Char.escaped) ^ acc
+                 | Some _ ->
+                   raise (GuiExn "cannot place new tiles on top of tiles already on the board")
                else match List.assoc_opt (coord) update_cells with
                  | None -> " "
                  | Some letter -> (Char.escaped letter) ^ acc
@@ -708,7 +711,10 @@ let get_input lst st =
           (fun acc x ->
              let coord = x.cell_coord in
              if not (cell_is_empty x) then
-               (fst (x.letter) |> Char.escaped) ^ acc
+               match List.assoc_opt (coord) update_cells with
+               | None -> (fst (x.letter) |> Char.escaped) ^ acc
+               | Some _ ->
+                 raise (GuiExn "cannot place new tiles on top of tiles already on the board")
              else match List.assoc_opt (coord) update_cells with
                | None -> " "
                | Some letter -> (Char.escaped letter) ^ acc
