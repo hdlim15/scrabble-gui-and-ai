@@ -964,7 +964,7 @@ let rec place_helper st =
         if fst cell_index = ((-1,-1), ' ') then place_helper st
         else
           let vb_index = cell_index |> fst |> fst |> coord_to_array_index in
-          print_endline (string_of_int vb_index) ;
+          (* print_endline (string_of_int vb_index) ; *)
           (* let () = update_tile_color vb vb_index (light_blue1,light_blue3,light_blue2) in *)
           let new_bcf = {vb.(vb_index) with b1_col=light_blue1;b2_col=light_blue3;b_col=light_blue2} in
           draw_box new_bcf;
