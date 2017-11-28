@@ -33,8 +33,8 @@ let finalize_scores players =
     List.fold_left (fun acc (l,p) -> acc - p) s r in
   let other_players'_w_sumDeductedPts =
     List.fold_left (fun acc p ->
-        let deducted_ps = p.score - score_helper p.score p.rack in
-        ({p with score = p.score - deducted_ps}::(fst acc)), snd acc + deducted_ps) ([],0) other_players in
+      let deducted_ps = p.score - score_helper p.score p.rack in
+      ({p with score = p.score - deducted_ps}::(fst acc)), snd acc + deducted_ps) ([],0) other_players in
   match empty_rack_player with
   | Some p ->
     let empty_rack_player' = {p with score = p.score + snd other_players'_w_sumDeductedPts} in
@@ -73,9 +73,9 @@ let end_nonturn_command str =
 let rec get_command st =
   match st.current_player.player_type with
   | Human ->
-    (try gui_cmd st with
+    (try Gui.gui_cmd st with
      | GuiExn s -> end_nonturn_command ("Exception: " ^ s);
-                   update_gui st;
+                   erase_io_box ();
                    get_command st)
   | AI diff ->
     match diff with
@@ -92,22 +92,27 @@ let quit_helper st =
   | 81 | 113 -> print_endline "\nThanks for playing!"; exit 0
   | _ -> st
 
+(* [hint_helper st] displays a hint to the user and returns [st] *)
+let hint_helper st =
+  let hint =
+    match (Ai.get_hint st) with
+    | PlaceWord mv ->
+      "Hint: " ^ List.fold_right (fun x acc -> (Char.escaped x) ^ acc) mv.word ""
+    | _ -> "Hint: you should swap or pass" in
+  end_nonturn_command hint; st
+
 (* [play_game st] plays the game represented by [st]. *)
 let rec play_game st =
   let command = get_command st in
   let new_state =
     try
       match command with
-      | PlaceWord _ | Swap _ | Pass -> let st' = do' command st in update_gui st'; st'
+      | PlaceWord _ -> let st' = do' command st in Gui.update_gui `Place st'; st'
+      | Pass -> let st' = do' command st in Gui.update_gui `Pass st'; st'
+      | Swap _ -> let st' = do' command st in Gui.update_gui `Swap st'; st'
       | Rack -> st
-      | Help -> update_gui st; st
-      | Hint ->
-        let hint =
-          match (Ai.get_hint st) with
-          | PlaceWord mv ->
-            "Hint: " ^ List.fold_right (fun x acc -> (Char.escaped x) ^ acc) mv.word ""
-          | _ -> "Hint: you should swap or pass" in
-        end_nonturn_command hint; st
+      | Help -> Gui.update_gui `Help st; st
+      | Hint -> hint_helper st
       | AddWord str ->
         let st' = do' command st in end_nonturn_command ("Added word to dictionary"); st'
       | Quit -> quit_helper st
