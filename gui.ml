@@ -926,7 +926,8 @@ let swap_helper cp =
     let s = wait_next_event [Button_down] in
     (* end recursion when user presses the Swap button again *)
     if mem (s.mouse_x, s.mouse_y) swap_btn then
-      List.map (fun x -> fst (List.nth my_rack x)) swap_list
+      if swap_list = [] then raise (GuiExn "no tiles are being swapped")
+      else List.map (fun x -> fst (List.nth my_rack x)) swap_list
     else
       let rack_coords = get_rack_coords rack_len in
       let rack_index = List.fold_left
@@ -1009,7 +1010,7 @@ let rec place_helper st =
           draw_string_in_box Center (String.capitalize_ascii (Char.escaped letter))
           vb.(vb_index) Graphics.black;
           (cell_index) :: place_helper (snd cell_index)
-      else raise (GuiExn "must click board cell following tile selection")
+      else place_helper st
 
 (* [str_of_help ()] is a reversed list of strings of gui_help.txt *)
 let rec str_lst_of_help () =
