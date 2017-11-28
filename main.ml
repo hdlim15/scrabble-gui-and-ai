@@ -62,6 +62,7 @@ let no_empty_rack st =
 (* [end_nonturn_command str] prints some output [str] to the gui and prompts the user
  * to press any key to continue their turn *)
 let end_nonturn_command str =
+  erase_io_box ();
   Graphics.set_color Graphics.black;
   Graphics.moveto 625 240;
   Graphics.draw_string str;
