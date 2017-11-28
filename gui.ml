@@ -919,6 +919,15 @@ let update_tile_color r_array position colors =
   in
   Array.set r_array position new_rack_tile
 
+(* [get_rack_index s rack_coords] is the index of the rack given that [s] is
+ * a Button_down event. Returns -1 if the click was not in the rack. *)
+let get_rack_index s rack_coords =
+  List.fold_left (fun acc (r_x, r_y) ->
+    if mem (s.mouse_x, s.mouse_y) (r_x, r_y, 40, 40) then
+      (get_idx_from_coord r_x)
+    else acc
+  ) (-1) rack_coords
+
 (* [swap_helper cp] is a character list corresponding to rack boxes in the gui
  * that are clicked on prior to clicking the 'swap' button to finalize the swap
  * command.
@@ -936,10 +945,7 @@ let swap_helper cp =
       else List.map (fun x -> fst (List.nth my_rack x)) swap_list
     else
       let rack_coords = get_rack_coords rack_len in
-      let rack_index = List.fold_left
-          (fun acc (r_x, r_y) ->
-             if mem (s.mouse_x, s.mouse_y) (r_x, r_y, 40, 40) then
-               (get_idx_from_coord r_x) else acc) (-1) rack_coords in
+      let rack_index = get_rack_index s rack_coords in
       if rack_index = -1 then swap_helper' swap_list colored_rack
       else
         let position = rack_len - rack_index - 1 in
@@ -969,54 +975,86 @@ let rec place_helper st =
   else
     let rack_len = List.length p_r in
     let rack_coords = get_rack_coords rack_len in
-    let rack_index = List.fold_left
-        (fun acc (r_x, r_y) ->
-           if mem (s.mouse_x, s.mouse_y) (r_x, r_y, 40, 40) then
-             (get_idx_from_coord r_x) else acc) (-1) rack_coords in
+    let rack_index = get_rack_index s rack_coords in
+    (* if click not in rack, start over *)
     if rack_index = -1 then place_helper st
     else
-      let letter =
-        if  fst (List.nth p_r rack_index) = '*' then blank_helper st
-        else fst (List.nth p_r rack_index) in
-      let s' = wait_next_event [Button_down] in
-      (* if click is on the board *)
-      if mem (s'.mouse_x, s'.mouse_y) (0,0,600,600) then
-        let board_coordinates = all_cells 0 in
-        let cell_index =
-          List.fold_left
-            (fun acc (r_x, r_y) ->
-               if mem (s'.mouse_x, s'.mouse_y) (r_x, r_y, 40, 40) then
-                 (let mv = {word = [letter];
-                            mv_coord = (get_cell_from_pixel (r_x, r_y));
-                            is_horizontal = true} in
-                  let b' = State.place_horizontal mv st in
-                  update_vb (List.flatten b');
-                  update_board (List.flatten b');
-                  let r' = remove_from_rack (fst (List.nth p_r rack_index))
-                      st.current_player.rack in
-                  let rack_len = List.length r' in
-                  let r_array = rack rack_len in
-                  erase_rack ();
-                  draw_rack {st.current_player with rack = r'} r_array;
-                  let curr_player' = {st.current_player with rack = r'} in
-                  (* let is_rack_hidden = rack_hidden 662 0 (List.length r') true in
-                  draw_buttons is_rack_hidden; *)
-                  ((get_cell_from_pixel (r_x, r_y), letter),
-                   {st with board = b'; current_player = curr_player'}))
-               else acc
-            ) (((-1,-1), ' '), st) board_coordinates
-        in
-        if fst cell_index = ((-1,-1), ' ') then place_helper st
-        else
-          let vb_index = cell_index |> fst |> fst |> coord_to_array_index in
-          (* print_endline (string_of_int vb_index) ; *)
-          (* let () = update_tile_color vb vb_index (light_blue1,light_blue3,light_blue2) in *)
-          let new_bcf = {vb.(vb_index) with b1_col=light_blue1;b2_col=light_blue3;b_col=light_blue2} in
-          draw_box new_bcf;
-          draw_string_in_box Center (String.capitalize_ascii (Char.escaped letter))
-          vb.(vb_index) Graphics.black;
-          (cell_index) :: place_helper (snd cell_index)
-      else place_helper st
+      let colors = (dark_beige1, dark_beige3, dark_beige2) in
+      let letter = (color_tile_get_letter st rack_index colors) in
+      click2_helper st letter rack_index
+
+and color_tile_get_letter st rack_index colors =
+  let p_r = st.current_player.rack in
+  let rack_len = List.length p_r in
+  let rack_array = rack rack_len in
+    let () = update_tile_color rack_array (rack_len - rack_index - 1) colors in
+    draw_rack st.current_player rack_array ;
+  let letter =
+    if  fst (List.nth p_r rack_index) = '*' then blank_helper st
+    else fst (List.nth p_r rack_index)
+  in
+  letter
+
+(* helper function that calls functions based on the second click *)
+and click2_helper st letter rack_index =
+  let p_r = st.current_player.rack in
+  let rack_len = List.length p_r in
+  let rack_coords = get_rack_coords rack_len in
+  let s' = wait_next_event [Button_down] in
+  (* if click is on the board *)
+  if mem (s'.mouse_x, s'.mouse_y) (0,0,600,600) then
+    click2_on_board st s' letter rack_index
+  else
+    let new_rack_index = (get_rack_index s' rack_coords) in
+  if new_rack_index <> -1 then
+    (click2_on_rack st s' rack_index new_rack_index)
+  else click2_helper st letter rack_index
+
+and click2_on_board st s' letter rack_index =
+  let p_r = st.current_player.rack in
+  let board_coordinates = all_cells 0 in
+  let cell_index =
+    List.fold_left
+      (fun acc (r_x, r_y) ->
+         if mem (s'.mouse_x, s'.mouse_y) (r_x, r_y, 40, 40) then
+           (let mv = {word = [letter];
+                      mv_coord = (get_cell_from_pixel (r_x, r_y));
+                      is_horizontal = true} in
+            let b' = State.place_horizontal mv st in
+            update_vb (List.flatten b');
+            update_board (List.flatten b');
+            let r' = remove_from_rack (fst (List.nth p_r rack_index))
+                st.current_player.rack in
+            let rack_len = List.length r' in
+            let r_array = rack rack_len in
+            erase_rack ();
+            draw_rack {st.current_player with rack = r'} r_array;
+            let curr_player' = {st.current_player with rack = r'} in
+            ((get_cell_from_pixel (r_x, r_y), letter),
+             {st with board = b'; current_player = curr_player'}))
+         else acc
+      ) (((-1,-1), ' '), st) board_coordinates
+  in
+  if fst cell_index = ((-1,-1), ' ') then click2_on_board st s' letter rack_index
+  else
+    let vb_index = cell_index |> fst |> fst |> coord_to_array_index in
+    (* print_endline (string_of_int vb_index) ; *)
+    (* let () = update_tile_color vb vb_index (light_blue1,light_blue3,light_blue2) in *)
+    let new_bcf = {vb.(vb_index) with b1_col=light_blue1;b2_col=light_blue3;b_col=light_blue2} in
+    draw_box new_bcf;
+    draw_string_in_box Center (String.capitalize_ascii (Char.escaped letter))
+    vb.(vb_index) Graphics.black;
+    (cell_index) :: place_helper (snd cell_index)
+
+and click2_on_rack st s' curr_idx new_idx =
+  if curr_idx <> new_idx then
+    let dark_colors = (dark_beige1, dark_beige3, dark_beige2) in
+    let letter = (color_tile_get_letter st new_idx dark_colors) in
+    click2_helper st letter new_idx
+  else
+    let colors = (beige1, beige3, beige2) in
+    let _ = (color_tile_get_letter st new_idx colors) in
+    place_helper st
 
 (* [str_of_help ()] is a reversed list of strings of gui_help.txt *)
 let rec str_lst_of_help () =
