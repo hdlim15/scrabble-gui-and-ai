@@ -145,7 +145,12 @@ let rec play_game st =
   in
   update_gui new_state;
   if st.current_player.name <> new_state.current_player.name then
-    erase_rack ();
+    (erase_rack ();
+    erase_toggle_button ();
+    let b_toggle_rack = {x = 632; y = 120; w = 60; h = 60; bw = 2;
+                         b1_col = gray1; b2_col = gray3; b_col = gray2; r = Top} in
+    draw_box b_toggle_rack;
+    draw_string_in_box Center "Show rack" b_toggle_rack Graphics.black);
   if no_empty_rack new_state && new_state.sp_consec <= 12 then
     play_game new_state
   else
@@ -243,18 +248,18 @@ let rec str_of_keyboard_events io_op info =
           | `Init_num_humans -> inh_reset ()
           | `Init_ai_diff -> iad_reset info
           | `Init_player_names -> ipn_reset () in
-       Graphics.moveto (30+2*w) h;
+       Graphics.moveto (30 + 2*w) h;
        let h' = remove_last_elt history in
        let w'' = List.fold_right
           (fun (c,w') acc ->
-            Graphics.moveto w' h; Graphics.draw_string (Char.escaped c); acc + w) h' 2*w in
+            Graphics.moveto w' h; Graphics.draw_string (Char.escaped c); acc + w) h' (2*w) in
        helper w'' h')
     else if Char.code c < 26 || Char.code c > 126 then
       helper w' history
     else
       (Graphics.moveto (30+w') h;
        Graphics.draw_string (Char.escaped c);
-       helper (w'+w) (history @ [(c ,30+w')]))
+       helper (w'+w) (history @ [(c, 30+w')]))
   in helper (2*w) []
 
 (* [init_num_players ()] is the number of players (between 1 and 4). *)
