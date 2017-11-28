@@ -132,7 +132,8 @@ let rec play_game st =
                           b1_col = gray1; b2_col = gray3; b_col = gray2; r = Top} in
      draw_box b_toggle_rack;
      draw_string_in_box Center "Show rack" b_toggle_rack Graphics.black);
-  if no_empty_rack new_state && new_state.sp_consec <= 12 then
+  let num_players = List.length st.players in
+  if no_empty_rack new_state && new_state.sp_consec <= (2*num_players) then
     play_game new_state
   else
     (let winner = (get_winner new_state).name in
