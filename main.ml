@@ -248,18 +248,18 @@ let rec str_of_keyboard_events io_op info =
           | `Init_num_humans -> inh_reset ()
           | `Init_ai_diff -> iad_reset info
           | `Init_player_names -> ipn_reset () in
-       Graphics.moveto (30+2*w) h;
+       Graphics.moveto (30 + 2*w) h;
        let h' = remove_last_elt history in
        let w'' = List.fold_right
           (fun (c,w') acc ->
-            Graphics.moveto w' h; Graphics.draw_string (Char.escaped c); acc + w) h' 2*w in
+            Graphics.moveto w' h; Graphics.draw_string (Char.escaped c); acc + w) h' (2*w) in
        helper w'' h')
     else if Char.code c < 26 || Char.code c > 126 then
       helper w' history
     else
       (Graphics.moveto (30+w') h;
        Graphics.draw_string (Char.escaped c);
-       helper (w'+w) (history @ [(c ,30+w')]))
+       helper (w'+w) (history @ [(c, 30+w')]))
   in helper (2*w) []
 
 (* [init_num_players ()] is the number of players (between 1 and 4). *)
