@@ -69,6 +69,7 @@ let basic_state_1bag = {board = init_board 15;
                         players = [player1; player2];
                         added_words = [];
                         current_player = player1;
+                        is_first_move = true;
                         sp_consec = 0}
 
 let basic_state_2bag = {board = init_board 15;
@@ -76,6 +77,7 @@ let basic_state_2bag = {board = init_board 15;
                         players = [player1; player2];
                         added_words = [];
                         current_player = player1;
+                        is_first_move = true;
                         sp_consec = 0}
 
 let wildcard_player_state = {board = init_board 15;
@@ -83,6 +85,7 @@ let wildcard_player_state = {board = init_board 15;
                              players = [player_wildcard; player2];
                              added_words = [];
                              current_player = player_wildcard;
+                             is_first_move = true;
                              sp_consec = 0}
 
 let move1_h = {word = ['s';'o'];
@@ -237,10 +240,11 @@ let blank1_state = {board = init_board 15;
                     players = [blank_player];
                     added_words = [];
                     current_player = blank_player;
+                    is_first_move = true;
                     sp_consec = 0}
-let blank2_state = {blank1_state with players = [blank_player2];current_player = blank_player2}
-let basic_state = {blank1_state with players = [camel_player];current_player = camel_player}
-let it_no_state = {blank1_state with players = [it_no_player];current_player = it_no_player}
+let blank2_state = {blank1_state with players = [blank_player2];current_player = blank_player2;}
+let basic_state = {blank1_state with players = [camel_player];current_player = camel_player;}
+let it_no_state = {blank1_state with players = [it_no_player];current_player = it_no_player;}
 let scrabble_state = {blank1_state with players = [scrabble_player];current_player = scrabble_player}
 
 let blank_mv1 = {word=['f';'u';'n'];mv_coord=(7,7);is_horizontal=true}
@@ -319,6 +323,7 @@ let prefix_state = {board = init_board 15;
                     players = [prefix_player];
                     added_words = [];
                     current_player = prefix_player;
+                    is_first_move= true;
                     sp_consec = 0}
 
 let move1_h_hat = {word = ['h'; 'a'; 't'];

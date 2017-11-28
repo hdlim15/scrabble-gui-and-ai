@@ -42,6 +42,7 @@ type state = {
   added_words : string list;
   current_player : player;
   sp_consec : int;
+  is_first_move : bool;
 }
 
 (* [get_points c] returns the number of points associated with letter [c]. *)
@@ -203,7 +204,9 @@ let init_state init_data =
             players = players;
             added_words = [];
             current_player = current_player;
-            sp_consec = 0} in
+            sp_consec = 0;
+            is_first_move = true;
+           } in
   let st' = init_racks players st in
   {st' with current_player = List.hd st'.players}
 
@@ -601,7 +604,8 @@ let rec place mv st =
   else if not (check_endpoints mv st) then raise (InvalidPlace "not complete word")
   else
     (* check first-move-of-game condition *)
-    if List.for_all (fun p -> p.score = 0) st.players then
+  if st.is_first_move then
+    (* if List.for_all (fun p -> p.score = 0) st.players then *)
     let new_chars = check_fit_and_new_entries mv st in
     if not (check_rack st.current_player.rack new_chars) then
       raise (InvalidPlace "letters not in rack")
@@ -630,7 +634,9 @@ let rec place mv st =
                  board = board';
                  current_player = next_player;
                  bag = (snd rack_bag);
-                 sp_consec = 0}
+                 sp_consec = 0;
+                 is_first_move = false;
+        }
   else (* not first move of game *)
     (* new_chars is an assoc list of character*coord *)
     let new_chars = check_fit_and_new_entries mv st in
