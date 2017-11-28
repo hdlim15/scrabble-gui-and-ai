@@ -464,23 +464,62 @@ let update_scores ps =
   let box_height = h * (List.length ps + 1) + 5 in
   Graphics.draw_rect 620 (575 - box_height - 6 * h) box_width box_height
 
+(* [erase_turn ()] clears the turn indicator in gui window *)
+let erase_turn () =
+  Graphics.set_color Graphics.white;
+  Graphics.fill_rect 770 470 200 25;
+  Graphics.set_color Graphics.black
+
 (* [update_gui st] takes the current state [st] and updates the GUI after each
  * move is made. *)
-let update_gui st =
-  let len_rack = List.length st.current_player.rack in
-  let r_array = rack len_rack in
-  let is_rack_hidden = rack_hidden 662 0 len_rack true in
-  Graphics.clear_graph ();
-  draw_logo ();
-  update_vb (List.flatten st.board);
-  update_board (List.flatten st.board);
-  update_scores st.players;
-  draw_buttons is_rack_hidden;
-  draw_io_box ();
-  draw_string (st.current_player.name ^ "'s turn.") 770 470 true;
-  if is_rack_hidden then ()
-  else
-    draw_rack st.current_player r_array
+let update_gui cmd st =
+  match cmd with
+  | `Place ->
+    let len_rack = List.length st.current_player.rack in
+    let r_array = rack len_rack in
+    let is_rack_hidden = rack_hidden 662 0 len_rack true in
+    (* Graphics.clear_graph (); *)
+    (* draw_logo (); *)
+    update_vb (List.flatten st.board);
+    update_board (List.flatten st.board);
+    update_scores st.players;
+    draw_buttons is_rack_hidden;
+    (* draw_io_box (); *)
+    draw_string (st.current_player.name ^ "'s turn.") 770 470 true;
+    if is_rack_hidden then ()
+    else
+      draw_rack st.current_player r_array
+  | `Help ->
+    set_color white;
+    fill_rect 601 0 399 600;
+    set_color black;
+    let len_rack = List.length st.current_player.rack in
+    let r_array = rack len_rack in
+    let is_rack_hidden = rack_hidden 662 0 len_rack true in
+    (* Graphics.clear_graph (); *)
+    draw_logo ();
+    (* update_vb (List.flatten st.board); *)
+    (* update_board (List.flatten st.board); *)
+    update_scores st.players;
+    draw_buttons is_rack_hidden;
+    draw_io_box ();
+    draw_string (st.current_player.name ^ "'s turn.") 770 470 true;
+    if is_rack_hidden then ()
+    else
+      draw_rack st.current_player r_array
+  | `Swap ->
+    erase_turn ();
+    let len_rack = List.length st.current_player.rack in
+    let r_array = rack len_rack in
+    let is_rack_hidden = rack_hidden 662 0 len_rack true in
+    draw_string (st.current_player.name ^ "'s turn.") 770 470 true;
+    draw_buttons true;
+    if is_rack_hidden then ()
+    else
+      draw_rack st.current_player r_array
+  | `Pass ->
+    erase_turn ();
+    draw_string (st.current_player.name ^ "'s turn.") 770 470 true
 
 (* [mem (x,y) (x0,y0,w,h)] is true if (x,y) is within the rectangle specified
  * by (x0,y0,w,h) and false otherwise *)
@@ -984,10 +1023,10 @@ let rec str_lst_of_help () =
 
 (* [help_helper st] deals with the displaying of the help message in the gui *)
 let help_helper st =
-  Graphics.clear_graph ();
+  set_color white;
+  fill_rect 601 0 399 600;
+  set_color black;
   draw_logo ();
-  update_vb (List.flatten st.board);
-  update_board (List.flatten st.board);
   let done_btn = {x = 770; y = 20; w = 40; h = 40; bw = 2;
                 b1_col = gray1; b2_col = gray3; b_col = gray2; r = Top} in
   draw_box done_btn;
