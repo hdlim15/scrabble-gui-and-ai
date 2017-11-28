@@ -477,6 +477,7 @@ let update_gui st =
   update_scores st.players;
   draw_buttons is_rack_hidden;
   draw_io_box ();
+  draw_string (st.current_player.name ^ "'s turn.") 770 470 true;
   if is_rack_hidden then ()
   else
     draw_rack st.current_player r_array
@@ -1037,6 +1038,7 @@ let init_gui st =
     draw_string_in_box Center "START" vb.(112) Graphics.black;
     draw_logo ();
     draw_buttons true;
+    draw_string (st.current_player.name ^ "'s turn.") 770 470 true;
     draw_io_box ()
   with
   | Graphics.Graphic_failure("fatal I/O error") ->
