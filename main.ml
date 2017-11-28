@@ -120,9 +120,7 @@ let rec play_game st =
     with
     | InvalidPlace s -> end_nonturn_command ("Invalid Place: " ^ s); Gui.update_gui `Place st; st
     | InvalidSwap ->
-      if List.length st.bag = 0 then
-        (end_nonturn_command "Cannot swap, bag is empty"; Gui.update_gui `Swap st; st)
-      else (end_nonturn_command "Invalid swap"; Gui.update_gui `Swap st; st)
+      (end_nonturn_command "Cannot swap, bag is empty or doesn't have enough tiles"; Gui.update_gui `Swap st; st)
     | InvalidAdd -> end_nonturn_command ("Invalid Add"); st
   in
   erase_io_box ();

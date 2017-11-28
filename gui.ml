@@ -587,7 +587,7 @@ let sort_vertical ((x1,_),_) ((x2,_),_) =
   else 0
 
 let get_input lst st =
-    if List.length lst = 0 then failwith "no letters were placed"
+  if List.length lst = 0 then raise (GuiExn "no letters were placed")
     else if List.length lst > 1 then
       if fst (fst (List.nth lst 0)) <> fst (fst (List.nth lst 1)) (* vertical*)
       then
@@ -642,7 +642,7 @@ let get_input lst st =
                if not (cell_is_empty x) then
                  (fst (x.letter) |> Char.escaped) ^ acc
                else match List.assoc_opt (coord) update_cells with
-                 | None -> "" (* acc *)
+                 | None -> ""
                  | Some letter -> (Char.escaped letter) ^ acc
             ) "" col |> reverse_str in
         let cell = get_cell_from_coordinate (fst leftmost_input) st in
@@ -710,7 +710,7 @@ let get_input lst st =
              if not (cell_is_empty x) then
                (fst (x.letter) |> Char.escaped) ^ acc
              else match List.assoc_opt (coord) update_cells with
-               | None -> "" (* acc *)
+               | None -> ""
                | Some letter -> (Char.escaped letter) ^ acc
           ) "" row  |> reverse_str in
       let cell = get_cell_from_coordinate (fst leftmost_input) st in
