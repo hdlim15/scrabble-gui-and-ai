@@ -902,7 +902,7 @@ let blank_helper st =
   then
     (blank_tile_reset st;
      moveto 625 245;
-     Graphics.draw_string "Click the cell on the board you wish to place the blank tile";
+     Graphics.draw_string "Click a board cell to place the blank tile";
      String.get new_char 0)
   else raise (GuiExn "invalid blank selection")
 
