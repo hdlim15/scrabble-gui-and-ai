@@ -797,10 +797,16 @@ let rec remove_last_elt lst =
   | h::[] -> []
   | h::t -> h :: remove_last_elt t
 
+(* [erase_io_box ()] erases the io box *)
+let erase_io_box () =
+  Graphics.set_color Graphics.white;
+  Graphics.fill_rect 621 211 358 98;
+  Graphics.set_color Graphics.black
+
 (* [add_word_reset st] redraws the window to deal with backspaces during keyboard
  * entry in str_of_keyboard_events *)
 let addword_reset st =
-  update_gui st;
+  erase_io_box ();
   moveto 625 290;
   Graphics.draw_string "Type the word you wish to add to the dictionary, followed";
   moveto 625 275;
@@ -809,7 +815,7 @@ let addword_reset st =
   Graphics.draw_string "> "
 
 let blank_tile_reset st =
-  update_gui st;
+  erase_io_box ();
   moveto 625 290;
   Graphics.draw_string "Type the letter you wish to be played in place of the";
   moveto 625 275;
