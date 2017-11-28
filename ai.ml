@@ -120,57 +120,6 @@ let get_all_adj_words c st =
       | Some (word,_,_) -> word in
   [left;right;up;down]
 
-(* let rec get_next_word c st dir =
-  match dir with
-  | Right ->
-    begin
-      match right_cell c with
-      | None -> c.cell_coord,""
-      | Some c' ->
-        let new_cell = get_cell_from_coordinate c' st in
-        if (new_cell |> cell_is_empty) then get_next_word new_cell st Right
-        else
-          match get_adjacent_word c' st true [] with
-          | None -> c', fst (new_cell.letter) |> Char.escaped
-          | Some (word,_,_) -> c', word
-    end
-  | Left ->
-    begin
-      match left_cell c with
-      | None -> c.cell_coord,""
-      | Some c' ->
-        let new_cell = get_cell_from_coordinate c' st in
-        if (new_cell |> cell_is_empty) then get_next_word new_cell st Left
-        else
-          match get_adjacent_word c' st true [] with
-          | None -> c',fst (new_cell.letter) |> Char.escaped
-          | Some (word,_,_) -> c', word
-    end
-  | Up ->
-    begin
-      match up_cell c with
-      | None -> c.cell_coord,""
-      | Some c' ->
-        let new_cell = get_cell_from_coordinate c' st in
-        if (new_cell |> cell_is_empty) then get_next_word new_cell st Up
-        else
-          match get_adjacent_word c' st false [] with
-          | None -> c',fst (new_cell.letter) |> Char.escaped
-          | Some (word,_,_) -> c',word
-    end
-  | Down ->
-    begin
-      match down_cell c with
-      | None -> c.cell_coord,""
-      | Some c' ->
-        let new_cell = get_cell_from_coordinate c' st in
-        if (new_cell |> cell_is_empty) then get_next_word new_cell st Down
-        else
-          match get_adjacent_word c' st false [] with
-          | None -> c',fst (new_cell.letter) |> Char.escaped
-          | Some (word,_,_) -> c',word
-    end *)
-
 let cross_check_helper cell st is_h =
   match get_adjacent_word cell st is_h [] with
   | None ->
