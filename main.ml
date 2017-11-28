@@ -33,8 +33,8 @@ let finalize_scores players =
     List.fold_left (fun acc (l,p) -> acc - p) s r in
   let other_players'_w_sumDeductedPts =
     List.fold_left (fun acc p ->
-      let deducted_ps = p.score - score_helper p.score p.rack in
-      ({p with score = p.score - deducted_ps}::(fst acc)), snd acc + deducted_ps) ([],0) other_players in
+        let deducted_ps = p.score - score_helper p.score p.rack in
+        ({p with score = p.score - deducted_ps}::(fst acc)), snd acc + deducted_ps) ([],0) other_players in
   match empty_rack_player with
   | Some p ->
     let empty_rack_player' = {p with score = p.score + snd other_players'_w_sumDeductedPts} in
@@ -75,8 +75,9 @@ let rec get_command st =
   | Human ->
     (try Gui.gui_cmd st with
      | GuiExn s -> end_nonturn_command ("Exception: " ^ s);
-                   erase_io_box ();
-                   get_command st)
+       erase_io_box ();
+       Gui.draw_buttons true;
+       get_command st)
   | AI diff ->
     match diff with
     | Hard -> Ai.best_move st
@@ -127,11 +128,11 @@ let rec play_game st =
   erase_io_box ();
   if st.current_player.name <> new_state.current_player.name then
     (erase_rack ();
-    erase_toggle_button ();
-    let b_toggle_rack = {x = 632; y = 120; w = 60; h = 60; bw = 2;
-                         b1_col = gray1; b2_col = gray3; b_col = gray2; r = Top} in
-    draw_box b_toggle_rack;
-    draw_string_in_box Center "Show rack" b_toggle_rack Graphics.black);
+     erase_toggle_button ();
+     let b_toggle_rack = {x = 632; y = 120; w = 60; h = 60; bw = 2;
+                          b1_col = gray1; b2_col = gray3; b_col = gray2; r = Top} in
+     draw_box b_toggle_rack;
+     draw_string_in_box Center "Show rack" b_toggle_rack Graphics.black);
   if no_empty_rack new_state && new_state.sp_consec <= 12 then
     play_game new_state
   else
@@ -232,8 +233,8 @@ let rec str_of_keyboard_events io_op info =
        Graphics.moveto (30 + 2*w) h;
        let h' = remove_last_elt history in
        let w'' = List.fold_right
-          (fun (c,w') acc ->
-            Graphics.moveto w' h; Graphics.draw_string (Char.escaped c); acc + w) h' (2*w) in
+           (fun (c,w') acc ->
+              Graphics.moveto w' h; Graphics.draw_string (Char.escaped c); acc + w) h' (2*w) in
        helper w'' h')
     else if Char.code c < 26 || Char.code c > 126 then
       helper w' history

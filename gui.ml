@@ -478,13 +478,10 @@ let update_gui cmd st =
     let len_rack = List.length st.current_player.rack in
     let r_array = rack len_rack in
     let is_rack_hidden = rack_hidden 662 0 len_rack true in
-    (* Graphics.clear_graph (); *)
-    (* draw_logo (); *)
     update_vb (List.flatten st.board);
     update_board (List.flatten st.board);
     update_scores st.players;
-    draw_buttons is_rack_hidden;
-    (* draw_io_box (); *)
+    draw_buttons true;
     draw_string (st.current_player.name ^ "'s turn.") 770 470 true;
     if is_rack_hidden then ()
     else
@@ -496,10 +493,7 @@ let update_gui cmd st =
     let len_rack = List.length st.current_player.rack in
     let r_array = rack len_rack in
     let is_rack_hidden = rack_hidden 662 0 len_rack true in
-    (* Graphics.clear_graph (); *)
     draw_logo ();
-    (* update_vb (List.flatten st.board); *)
-    (* update_board (List.flatten st.board); *)
     update_scores st.players;
     draw_buttons is_rack_hidden;
     draw_io_box ();
