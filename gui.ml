@@ -907,6 +907,9 @@ let blank_helper st =
      String.get new_char 0)
   else raise (GuiExn "invalid blank selection")
 
+(* [update_tile_color r_array position colors] sets the element of [r_array]
+ * located at [position] to the three colors defined in [colors].
+ * requires: [position] is a valid index of [r_array]. *)
 let update_tile_color r_array position colors =
   let (col1, col2, col) = colors in
   let new_rack_tile = {r_array.(position) with
@@ -914,8 +917,24 @@ let update_tile_color r_array position colors =
   in
   Array.set r_array position new_rack_tile
 
-(* [get_rack_index s rack_coords] is the index of the rack given that [s] is
- * a Button_down event. Returns -1 if the click was not in the rack. *)
+(* [color_tile_get_letter st rack_index colors] sets [st]'s current player's
+ * rack at [rack_index] to the colors defined in [colors], then returns the
+ * letter at that tile.
+ * requires: [rack_index] is a valid index of [st.current_player.rack]. *)
+let color_tile_get_letter st rack_index colors =
+  let p_r = st.current_player.rack in
+  let rack_len = List.length p_r in
+  let rack_array = rack rack_len in
+    update_tile_color rack_array (rack_len - rack_index - 1) colors ;
+    draw_rack st.current_player rack_array ;
+  let letter =
+    if  fst (List.nth p_r rack_index) = '*' then blank_helper st
+    else fst (List.nth p_r rack_index)
+  in
+  letter
+
+(* [get_rack_index s rack_coords] is the index of the rack clicked, given that
+ * [s] is a Button_down event. Returns -1 if the click was not in the rack. *)
 let get_rack_index s rack_coords =
   List.fold_left (fun acc (r_x, r_y) ->
     if mem (s.mouse_x, s.mouse_y) (r_x, r_y, 40, 40) then
@@ -959,17 +978,25 @@ let swap_helper cp =
   in
   swap_helper' [] r_array
 
-let return_to_rack st placed_coords vb_coord =
+(* [return_to_rack st vb_coord placed_coords acc] *)
+let return_to_rack st vb_coord placed_coords acc =
   let (coords, _) = List.split placed_coords in
-  if not (List.mem vb_coord coords) then (-1, st)
+  if not (List.mem vb_coord coords) then st, placed_coords, acc
   else
     (* guaranteed to be found, because [vb_coord] is mem of [coords] *)
     let (_, letter) = List.find (fun (x, _) -> x = vb_coord) placed_coords in
-    let r' = ((letter, (State.get_points letter)) :: st.current_player.rack) in
+    let letter_to_put_in_rack = (letter, (State.get_points letter)) in
+
+    (* update current_player *)
+    let r' = (letter_to_put_in_rack :: st.current_player.rack) in
+    let new_current_player = {st.current_player with rack = r'} in
     let rack_len = List.length r' in
     let r_array = rack rack_len in
+    (* visually update the rack *)
     erase_rack ();
-    let cp' = {st.current_player with rack = r'} in
+    (draw_rack new_current_player r_array);
+
+    (* update the state board *)
     let b' = List.map (
       fun cl ->
         List.map (
@@ -979,123 +1006,130 @@ let return_to_rack st placed_coords vb_coord =
             else c
         ) cl
     ) st.board in
+    (* visually update the board *)
     update_vb (List.flatten b');
     update_board (List.flatten b');
-    let st' = {st with current_player = cp'; board = b'} in
-    draw_rack cp' r_array;
-    vb_coord, st'
 
+    (* remove the tile from placed_coords and acc *)
+    let placed_coords_rm = (remove_from_rack vb_coord placed_coords) in
+    let acc_rm = List.filter
+      (fun ((x,_),_) -> (coord_to_array_index x) <> vb_coord) acc
+    in
+    ({st with current_player = new_current_player; board = b'}, placed_coords_rm, acc_rm)
+
+let get_board_coord s =
+  List.fold_left
+    (fun fold_acc (r_x, r_y) ->
+      if mem (s.mouse_x, s.mouse_y) (r_x, r_y, 40, 40) then
+        get_cell_from_pixel (r_x, r_y)
+      else fold_acc
+    ) (-1, -1) (all_cells 0)
 
 (* [place_helper st] is a list of ((cell, coord), st) entries corresponding to
  * new letters placed onto the board, forming a potentially-valid place command
  *)
-let rec place_helper st placed_coords =
+let rec place_helper st placed_coords acc =
   let p_r = st.current_player.rack in
   let s = wait_next_event [Button_down] in
   (* end recursion when the Place button is pressed again *)
-  if mem (s.mouse_x, s.mouse_y) place_btn then []
+  if mem (s.mouse_x, s.mouse_y) place_btn then acc
   else
-    let cell_index =
-      List.fold_left
-        (fun acc (r_x, r_y) ->
-          if mem (s.mouse_x, s.mouse_y) (r_x, r_y, 40, 40) then
-            get_cell_from_pixel (r_x, r_y)
-          else acc
-        ) (-1, -1) (all_cells 0)
-    in
+    let cell_index = get_board_coord s in
+    (* if first click is located on the board, try to remove a tile *)
     if (cell_index <> (-1, -1)) then
       let vb_coord = (coord_to_array_index cell_index) in
-      let removed_coord, st' = (return_to_rack st placed_coords vb_coord) in
-      place_helper st' (remove_from_rack removed_coord placed_coords)
+      let st', placed_coords_rm, acc_rm =
+        (return_to_rack st vb_coord placed_coords acc)
+      in
+      shade_placed_coords placed_coords_rm;
+      (place_helper st' placed_coords_rm acc_rm)
     else
       let rack_len = List.length p_r in
       let rack_coords = get_rack_coords rack_len in
       let rack_index = get_rack_index s rack_coords in
-      (* if click not in rack, start over *)
-      if rack_index = -1 then (place_helper st placed_coords)
+      (* if click not in rack (nor board), get a new first click *)
+      if rack_index = -1 then (place_helper st placed_coords acc)
       else
+        (* clicked on rack. darken tile, and call click2_helper *)
         let colors = (dark_beige1, dark_beige3, dark_beige2) in
         let letter = (color_tile_get_letter st rack_index colors) in
-        (click2_helper st letter rack_index placed_coords)
-
-and color_tile_get_letter st rack_index colors =
-  let p_r = st.current_player.rack in
-  let rack_len = List.length p_r in
-  let rack_array = rack rack_len in
-    update_tile_color rack_array (rack_len - rack_index - 1) colors ;
-    draw_rack st.current_player rack_array ;
-  let letter =
-    if  fst (List.nth p_r rack_index) = '*' then blank_helper st
-    else fst (List.nth p_r rack_index)
-  in
-  letter
+        (click2_helper st letter rack_index placed_coords acc)
 
 (* helper function that calls functions based on the second click *)
-and click2_helper st letter rack_index placed_coords =
+and click2_helper st letter rack_index placed_coords acc =
   let p_r = st.current_player.rack in
   let rack_len = List.length p_r in
   let rack_coords = get_rack_coords rack_len in
   let s' = wait_next_event [Button_down] in
   (* if click is on the board *)
   if mem (s'.mouse_x, s'.mouse_y) (0,0,600,600) then
-    click2_on_board st s' letter rack_index placed_coords
+    click2_on_board st s' letter rack_index placed_coords acc
   else
     let new_rack_index = (get_rack_index s' rack_coords) in
     if (new_rack_index <> -1) then
-      (click2_on_rack st s' rack_index new_rack_index placed_coords)
+      (click2_on_rack st s' rack_index new_rack_index placed_coords acc)
     else
-      (click2_helper st letter rack_index placed_coords)
+      (click2_helper st letter rack_index placed_coords acc)
 
-and click2_on_board st s' letter rack_index placed_coords =
-  let p_r = st.current_player.rack in
-  let board_coordinates = all_cells 0 in
-  let cell_index =
-    List.fold_left
-      (fun acc (r_x, r_y) ->
-         if mem (s'.mouse_x, s'.mouse_y) (r_x, r_y, 40, 40) then
-           (let mv = {word = [letter];
-                      mv_coord = (get_cell_from_pixel (r_x, r_y));
-                      is_horizontal = true} in
-            let b' = State.place_horizontal mv st in
-            update_vb (List.flatten b');
-            update_board (List.flatten b');
-            let r' = remove_from_rack (fst (List.nth p_r rack_index))
-                st.current_player.rack in
-            let rack_len = List.length r' in
-            let r_array = rack rack_len in
-            erase_rack ();
-            draw_rack {st.current_player with rack = r'} r_array;
-            let curr_player' = {st.current_player with rack = r'} in
-            ((get_cell_from_pixel (r_x, r_y), letter),
-             {st with board = b'; current_player = curr_player'}))
-         else acc
-      ) (((-1,-1), ' '), st) board_coordinates
-  in
-  if fst cell_index = ((-1,-1), ' ') then
-    (click2_on_board st s' letter rack_index placed_coords)
+and click2_on_board st s' letter rack_index placed_coords acc =
+  let cell_coord = get_board_coord s' in
+  let cell = get_cell_from_coordinate cell_coord st in
+  let is_newly_placed = List.mem (fst cell.letter) (snd (List.split placed_coords)) in
+  if ((not is_newly_placed) && (fst cell.letter) <> ' ') then
+    click2_helper st letter rack_index placed_coords acc
   else
-    let shade_placed_tile (coord, letter) =
-        update_tile_color vb coord (darker_beige1,darker_beige3,darker_beige2);
-      let capital_string = (String.capitalize_ascii (Char.escaped letter)) in
-      draw_box vb.(coord);
-      draw_string_in_box Center capital_string vb.(coord) Graphics.black;
+    let vb_coord = (coord_to_array_index cell_coord) in
+    let st', placed_coords', acc' = return_to_rack st vb_coord placed_coords acc in
+
+    let new_current_player = st'.current_player in
+    let new_rack = new_current_player.rack in
+
+    (* to account for the offset when a tile is added back to the rack *)
+    let rack_index = if st = st' then rack_index else (rack_index + 1) in
+
+    let r' = remove_from_rack (fst (List.nth new_rack rack_index)) new_rack in
+    let rack_len = List.length r' in
+    let r_array = rack rack_len in
+    let new_current_player' = {new_current_player with rack = r'} in
+    erase_rack ();
+    draw_rack new_current_player' r_array;
+
+    let mv = {word = [letter]; mv_coord = (cell_coord); is_horizontal = true} in
+    let b' = State.place_horizontal mv st' in
+    update_vb (List.flatten b');
+    update_board (List.flatten b');
+
+    let cell_index = ((cell_coord, letter),
+      {st' with board = b'; current_player = new_current_player'})
     in
     let vb_index = cell_index |> fst |> fst |> coord_to_array_index in
-    let placed_coords' = (vb_index, letter) :: placed_coords in
-    (List.iter shade_placed_tile placed_coords');
-    (cell_index) :: (place_helper (snd cell_index) (placed_coords'))
+    let placed_coords'' = (vb_index, letter) :: placed_coords' in
+    shade_placed_coords placed_coords'';
+    (* (List.iter (fun (x,y)-> print_endline((string_of_int x) ^ " :~ " ^ (Char.escaped y))) placed_coords''); *)
+    (place_helper (snd cell_index) (placed_coords'') (cell_index :: acc'))
 
-and click2_on_rack st s' curr_idx new_idx placed_coords =
+and click2_on_rack st s' curr_idx new_idx placed_coords acc =
   (* selecting a new tile in rack, highlight that one instead *)
   if curr_idx <> new_idx then
     let dark_colors = (dark_beige1, dark_beige3, dark_beige2) in
     let letter = (color_tile_get_letter st new_idx dark_colors) in
-    (click2_helper st letter new_idx placed_coords)
+    (click2_helper st letter new_idx placed_coords acc)
   (* reclicking highlighted tile in rack, unhighlight it *)
   else
     let colors = (beige1, beige3, beige2) in
     let _ = (color_tile_get_letter st new_idx colors) in
-    (place_helper st placed_coords)
+    (place_helper st placed_coords acc)
+
+(* [shade_placed_coords pc] returns unit. It shades all of the coordinates
+ * in [pc] dark_beige. *)
+and shade_placed_coords pc =
+  let shade_placed_tile (coord, letter) =
+      update_tile_color vb coord (darker_beige1,darker_beige3,darker_beige2);
+    let capital_string = (String.capitalize_ascii (Char.escaped letter)) in
+    draw_box vb.(coord);
+    draw_string_in_box Center capital_string vb.(coord) Graphics.black;
+  in
+  (List.iter shade_placed_tile pc)
 
 (* [str_of_help ()] is a reversed list of strings of gui_help.txt *)
 let rec str_lst_of_help () =
@@ -1154,7 +1188,7 @@ let rec gui_cmd st =
   else if mem (x, y) place_btn then
     if not (rack_hidden 662 0 (List.length st.current_player.rack) true) then
       let () = draw_blue_place () in
-      let mv = List.map (fun (f,_) -> f) (place_helper st []) in
+      let mv = List.map (fun (f,_) -> f) (place_helper st [] []) in
       PlaceWord (convert_to_move mv st)
     else raise (GuiExn "show rack before place")
   else gui_cmd st
