@@ -4,7 +4,6 @@ rules below. The different game buttons explained below
 describe how to perform different actions throughout the game.
 The winner is the player with the highest score at the end of
 the game!
-
 Scrabble Rules: https://scrabble.hasbro.com/en-us/rules
 
 Buttons:
