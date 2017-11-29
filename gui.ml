@@ -899,6 +899,10 @@ let addword_helper st =
   addword_reset st;
   str_of_keyboard_events st `AddWord
 
+(* [blank_helper st] is the letter that the user types in to represent with
+ * their blank tile.
+ * raises: [GuiExn "invalid blank selection"] if the letter is not a single
+ * uppercase or lowercase letter in the English alphabet. *)
 let blank_helper st =
   blank_tile_reset st;
   let regex = Str.regexp "[A-Za-z]" in
@@ -947,7 +951,9 @@ let get_rack_index s rack_coords =
 (* [swap_helper cp] is a character list corresponding to rack boxes in the gui
  * that are clicked on prior to clicking the 'swap' button to finalize the swap
  * command.
- * requires: 'swap' button was clicked prior to initial function call *)
+ * requires: 'swap' button was clicked prior to initial function call
+ * raises: [GuiExn "no tiles are being swapped"] if the user presses the Swap
+ *          button again without selecting any tiles to swap. *)
 let swap_helper cp =
   let my_rack = cp.rack in
   let rack_len = List.length my_rack in
@@ -980,7 +986,25 @@ let swap_helper cp =
   in
   swap_helper' [] r_array
 
-(* [return_to_rack st vb_coord placed_coords acc] *)
+(* [remove_letter_at_coord board vb_coord] takes the cell located at [vb_coord]
+ * on [board], and replaces its letter with (' ', -1).
+ * requires: [vb_coord] is a valid coordinate of [board]. *)
+let remove_letter_at_coord board vb_coord =
+  List.map (
+      fun cl ->
+        List.map (
+          fun c ->
+            if (coord_to_array_index c.cell_coord) = vb_coord then
+              {c with letter = (' ', -1)}
+            else c
+        ) cl
+    ) board
+
+(* [return_to_rack st vb_coord placed_coords acc] is [st', pc', acc'] if
+ * removing the newly-placed tile at [vb_coord] results in a new state [st'],
+ * adjusted placed_coords [pc'] and an adjusted accumulator [acc']. If there
+ * is no newly_placed tile at [vb_coord], then [st, pc, acc] is returned.
+ * This function also visually updates the GUI to reflect these changes. *)
 let return_to_rack st vb_coord placed_coords acc =
   let (coords, _) = List.split placed_coords in
   if not (List.mem vb_coord coords) then st, placed_coords, acc
@@ -993,7 +1017,6 @@ let return_to_rack st vb_coord placed_coords acc =
       else
         (letter, (State.get_points letter))
     in
-
     (* update current_player *)
     let r' = (letter_to_put_in_rack :: st.current_player.rack) in
     let new_current_player = {st.current_player with rack = r'} in
@@ -1002,27 +1025,18 @@ let return_to_rack st vb_coord placed_coords acc =
     (* visually update the rack *)
     erase_rack ();
     (draw_rack new_current_player r_array);
-
     (* update the state board *)
-    let b' = List.map (
-      fun cl ->
-        List.map (
-          fun c ->
-            if (coord_to_array_index c.cell_coord) = vb_coord then
-              {c with letter = (' ', -1)}
-            else c
-        ) cl
-    ) st.board in
+    let b' = remove_letter_at_coord st.board vb_coord in
     (* visually update the board *)
     update_vb (List.flatten b');
     update_board (List.flatten b');
-
     (* remove the tile from placed_coords and acc *)
-    let placed_coords_rm = (remove_from_rack vb_coord placed_coords) in
-    let acc_rm = List.filter
+    let st' = {st with current_player = new_current_player; board = b'} in
+    let pc' = (remove_from_rack vb_coord placed_coords) in
+    let acc' = List.filter
       (fun ((x,_),_) -> (coord_to_array_index x) <> vb_coord) acc
     in
-    ({st with current_player = new_current_player; board = b'}, placed_coords_rm, acc_rm)
+    (st', pc', acc')
 
 let get_board_coord s =
   List.fold_left
