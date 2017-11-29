@@ -174,8 +174,8 @@ let tws_indeces =
 (* [dls_indeces] are the array indices that correspond to cells with double
  * letter multipliers. *)
 let dls_indeces =
-  [3; 11; 36; 38; 45; 52; 59; 92; 96; 98; 102; 108; 116; 122; 126; 128; 132;
-   165; 172; 179; 186; 188; 213; 221]
+  [3; 11; 36; 38; 45; 52; 59; 92; 96; 98; 102; 108; 116;
+   122; 126; 128; 132; 165; 172; 179; 186; 188; 213; 221]
 
 (* [dws_indeces] are the array indices that correspond to cells with double
  * word multipliers. *)
@@ -1000,44 +1000,58 @@ let remove_letter_at_coord board vb_coord =
         ) cl
     ) board
 
-(* [return_to_rack st vb_coord placed_coords acc] is [st', pc', acc'] if
+(* [shade_np_tiles pc] returns unit. It shades all of the coordinates
+ * in [pc] dark_beige. *)
+let shade_np_tiles pc =
+  let shade_placed_tile (coord, (letter, is_blank)) =
+      update_tile_color vb coord (darker_beige1,darker_beige3,darker_beige2);
+    let capital_string = (String.capitalize_ascii (Char.escaped letter)) in
+    draw_box vb.(coord);
+    draw_string_in_box Center capital_string vb.(coord) Graphics.black;
+  in
+  (List.iter shade_placed_tile pc)
+
+(* [return_to_rack st vb_coord np_tiles acc] is [st', pc', acc'] if
  * removing the newly-placed tile at [vb_coord] results in a new state [st'],
- * adjusted placed_coords [pc'] and an adjusted accumulator [acc']. If there
+ * adjusted np_tiles [pc'] and an adjusted accumulator [acc']. If there
  * is no newly_placed tile at [vb_coord], then [st, pc, acc] is returned.
  * This function also visually updates the GUI to reflect these changes. *)
-let return_to_rack st vb_coord placed_coords acc =
-  let (coords, _) = List.split placed_coords in
-  if not (List.mem vb_coord coords) then st, placed_coords, acc
+let return_to_rack st vb_coord np_tiles acc =
+  (* is_placed represents whether there is a newly-placed tile at vb_coord *)
+  let is_placed = (np_tiles |> List.split |> fst |> List.mem vb_coord) in
+  if (not is_placed) then
+    st, np_tiles, acc
   else
     (* guaranteed to be found, because [vb_coord] is mem of [coords] *)
-    let (_, (letter, is_blank)) = List.find (fun (x, _) -> x = vb_coord) placed_coords in
+    let coord_data = List.find (fun (x, _) -> x = vb_coord) np_tiles in
+    let (_, (letter, is_blank)) = coord_data in
     let letter_to_put_in_rack =
-      if is_blank then
-        ('*', 0)
-      else
-        (letter, (State.get_points letter))
+      if is_blank then ('*', 0)
+      else (letter, (State.get_points letter))
     in
     (* update current_player *)
-    let r' = (letter_to_put_in_rack :: st.current_player.rack) in
-    let new_current_player = {st.current_player with rack = r'} in
-    let rack_len = List.length r' in
-    let r_array = rack rack_len in
+    let new_rack = (letter_to_put_in_rack :: st.current_player.rack) in
+    let new_current_player = {st.current_player with rack = new_rack} in
     (* visually update the rack *)
     erase_rack ();
-    (draw_rack new_current_player r_array);
+    new_rack |> List.length |> rack |> draw_rack new_current_player;
     (* update the state board *)
     let b' = remove_letter_at_coord st.board vb_coord in
     (* visually update the board *)
     update_vb (List.flatten b');
     update_board (List.flatten b');
-    (* remove the tile from placed_coords and acc *)
+    (* remove the tile from np_tiles and acc *)
     let st' = {st with current_player = new_current_player; board = b'} in
-    let pc' = (remove_from_rack vb_coord placed_coords) in
+    let pc' = (remove_from_rack vb_coord np_tiles) in
     let acc' = List.filter
       (fun ((x,_),_) -> (coord_to_array_index x) <> vb_coord) acc
     in
+    (* final return value of return_to_rack *)
     (st', pc', acc')
 
+(* [get_board_coord s] is the coordinates of the board that were clicked given
+ * a Button_down event [s]. If the click was not inside the board,
+ * then return (-1, -1) *)
 let get_board_coord s =
   List.fold_left
     (fun fold_acc (r_x, r_y) ->
@@ -1049,108 +1063,103 @@ let get_board_coord s =
 (* [place_helper st] is a list of ((cell, coord), st) entries corresponding to
  * new letters placed onto the board, forming a potentially-valid place command
  *)
-let rec place_helper st placed_coords acc =
-  let p_r = st.current_player.rack in
+let rec place_helper st np_tiles acc =
   let s = wait_next_event [Button_down] in
   (* end recursion when the Place button is pressed again *)
   if mem (s.mouse_x, s.mouse_y) place_btn then acc
   else
-    let cell_index = get_board_coord s in
+    let cell_coord = get_board_coord s in
     (* if first click is located on the board, try to remove a tile *)
-    if (cell_index <> (-1, -1)) then
-      let vb_coord = (coord_to_array_index cell_index) in
-      let st', placed_coords_rm, acc_rm =
-        (return_to_rack st vb_coord placed_coords acc)
+    if (cell_coord <> (-1, -1)) then
+      let vb_coord = (coord_to_array_index cell_coord) in
+      let (st', np_tiles', acc') =
+        (return_to_rack st vb_coord np_tiles acc)
       in
-      shade_placed_coords placed_coords_rm;
-      (place_helper st' placed_coords_rm acc_rm)
+      (* shade newly-placed tiles and recursively call place_helper *)
+      shade_np_tiles np_tiles';
+      (place_helper st' np_tiles' acc')
     else
-      let rack_len = List.length p_r in
+      let rack_len = List.length st.current_player.rack in
       let rack_coords = get_rack_coords rack_len in
       let rack_index = get_rack_index s rack_coords in
-      (* if click not in rack (nor board), get a new first click *)
-      if rack_index = -1 then (place_helper st placed_coords acc)
+      (* if first click is neither in rack nor board, get a new first click *)
+      if rack_index = -1 then (place_helper st np_tiles acc)
       else
-        (* clicked on rack. darken tile, and call click2_helper *)
+        (* clicked on rack. darken tile, and call second_click_helper *)
         let colors = (dark_beige1, dark_beige3, dark_beige2) in
         let letter, is_blank = (color_tile_get_letter st rack_index colors) in
-        (click2_helper st (letter, is_blank) rack_index placed_coords acc)
+        (second_click_helper st (letter, is_blank) rack_index np_tiles acc)
 
 (* helper function that calls functions based on the second click *)
-and click2_helper st (letter, is_blank) rack_index placed_coords acc =
-  let p_r = st.current_player.rack in
-  let rack_len = List.length p_r in
-  let rack_coords = get_rack_coords rack_len in
+and second_click_helper st (letter, is_blank) rack_index np_tiles acc =
   let s' = wait_next_event [Button_down] in
   (* if click is on the board *)
   if mem (s'.mouse_x, s'.mouse_y) (0,0,600,600) then
-    click2_on_board st s' (letter, is_blank) rack_index placed_coords acc
+    second_click_on_board st s' (letter, is_blank) rack_index np_tiles acc
   else
+    let rack_len = List.length st.current_player.rack in
+    let rack_coords = get_rack_coords rack_len in
+    (* check to see if second click is inside the rack *)
     let new_rack_index = (get_rack_index s' rack_coords) in
     if (new_rack_index <> -1) then
-      (click2_on_rack st s' rack_index new_rack_index placed_coords acc)
+      (second_click_on_rack st s' rack_index new_rack_index np_tiles acc)
     else
-      (click2_helper st (letter, is_blank) rack_index placed_coords acc)
+      (second_click_helper st (letter, is_blank) rack_index np_tiles acc)
 
-and click2_on_board st s' (letter, is_blank) rack_index placed_coords acc =
+(* [second_click_on_board st s' (letter, is_blank) rack_index np_tiles acc]
+ * accounts for the case when the second click occurs on the board.  *)
+and second_click_on_board st s' (letter, is_blank) rack_index np_tiles acc =
+  (* cannot place a tile on top of a tile that was played on a previous turn *)
   let cell_coord = get_board_coord s' in
-  let cell = get_cell_from_coordinate cell_coord st in
-  let is_newly_placed = List.mem (fst cell.letter) (List.map fst (snd (List.split placed_coords))) in
-  if ((not is_newly_placed) && (fst cell.letter) <> ' ') then
-    click2_helper st (letter, is_blank) rack_index placed_coords acc
-  else
-    let vb_coord = (coord_to_array_index cell_coord) in
-    let st', placed_coords', acc' = return_to_rack st vb_coord placed_coords acc in
-
+  let cell_letter = fst (get_cell_from_coordinate cell_coord st).letter in
+  let np_letters = np_tiles |> List.split |> snd |> List.map fst in
+  let is_newly_placed = List.mem cell_letter np_letters in
+  if ((not is_newly_placed) && (cell_letter <> ' ')) then
+    second_click_helper st (letter, is_blank) rack_index np_tiles acc
+  else (* board has been clicked on an empty tile, or newly placed tile *)
+    (* try returning tile to rack. if nothing there, nothing will happen *)
+    let vb_index = (coord_to_array_index cell_coord) in
+    let (st', np_tiles', acc') = return_to_rack st vb_index np_tiles acc in
+    (* update player and rack based on removing *)
     let new_current_player = st'.current_player in
     let new_rack = new_current_player.rack in
-
     (* to account for the offset when a tile is added back to the rack *)
-    let rack_index = if st = st' then rack_index else (rack_index + 1) in
-
+    let rack_index =
+      if np_tiles = np_tiles' then rack_index else (rack_index + 1)
+    in
+    (* place tile on the board *)
     let r' = remove_from_rack (fst (List.nth new_rack rack_index)) new_rack in
     let rack_len = List.length r' in
     let r_array = rack rack_len in
     let new_current_player' = {new_current_player with rack = r'} in
+    (* visually update rack *)
     erase_rack ();
     draw_rack new_current_player' r_array;
-
+    (* update board state *)
     let mv = {word = [letter]; mv_coord = (cell_coord); is_horizontal = true} in
     let b' = State.place_horizontal mv st' in
+    (* visually update board *)
     update_vb (List.flatten b');
     update_board (List.flatten b');
+    (* shade newly placed tiles *)
+    let np_tiles'' = (vb_index, (letter, is_blank)) :: np_tiles' in
+    shade_np_tiles np_tiles'';
+    let st'' = {st' with board = b'; current_player = new_current_player'} in
+    let cell_index = ((cell_coord, letter), st'') in
+    (* recursively call place_helper to get the next first click *)
+    (place_helper (st'' (np_tiles'') (cell_index :: acc'))
 
-    let cell_index = ((cell_coord, letter),
-      {st' with board = b'; current_player = new_current_player'})
-    in
-    let vb_index = cell_index |> fst |> fst |> coord_to_array_index in
-    let placed_coords'' = (vb_index, (letter, is_blank)) :: placed_coords' in
-    shade_placed_coords placed_coords'';
-    (* (List.iter (fun (x,y)-> print_endline((string_of_int x) ^ " :~ " ^ (Char.escaped y))) placed_coords''); *)
-    (place_helper (snd cell_index) (placed_coords'') (cell_index :: acc'))
-
-and click2_on_rack st s' curr_idx new_idx placed_coords acc =
+and second_click_on_rack st s' curr_idx new_idx np_tiles acc =
   (* selecting a new tile in rack, highlight that one instead *)
   if curr_idx <> new_idx then
     let dark_colors = (dark_beige1, dark_beige3, dark_beige2) in
     let letter, is_blank = (color_tile_get_letter st new_idx dark_colors) in
-    (click2_helper st (letter, is_blank) new_idx placed_coords acc)
+    (second_click_helper st (letter, is_blank) new_idx np_tiles acc)
   (* reclicking highlighted tile in rack, unhighlight it *)
   else
     let colors = (beige1, beige3, beige2) in
     let _ = (color_tile_get_letter st new_idx colors) in
-    (place_helper st placed_coords acc)
-
-(* [shade_placed_coords pc] returns unit. It shades all of the coordinates
- * in [pc] dark_beige. *)
-and shade_placed_coords pc =
-  let shade_placed_tile (coord, (letter, is_blank)) =
-      update_tile_color vb coord (darker_beige1,darker_beige3,darker_beige2);
-    let capital_string = (String.capitalize_ascii (Char.escaped letter)) in
-    draw_box vb.(coord);
-    draw_string_in_box Center capital_string vb.(coord) Graphics.black;
-  in
-  (List.iter shade_placed_tile pc)
+    (place_helper st np_tiles acc)
 
 (* [str_of_help ()] is a reversed list of strings of gui_help.txt *)
 let rec str_lst_of_help () =
