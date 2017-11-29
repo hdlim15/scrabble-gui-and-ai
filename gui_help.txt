@@ -17,6 +17,12 @@ Buttons:
 - Show/Hide Rack: displays/hides the letters one has in their
   rack.
 
+- Place Word: places letters on the board to form valid words.
+  You must first click place, then click a letter in the rack
+  followed by a click on a particular cell of the board, and
+  repeat until placement is done. Finally, click place again
+  to finalize your move.
+
 - Add To Dict: adds a new word to the dictionary of allowed
    words. Click the button, type the word, then press 'ENTER'.
 
@@ -26,9 +32,3 @@ Buttons:
   You must first click swap, followed by the letters in your
   rack you wish to swap, and finally click swap once more to
   finalize the action.
-
-- Place Word: places letters on the board to form valid words.
-  You must first click place, then click a letter in the rack
-  followed by a click on a particular cell of the board, and
-  repeat until placement is done. Then click place again to
-  finalize your move.

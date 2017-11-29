@@ -9,11 +9,17 @@ let f_dict = Trie.initialize_dict "forward_dict.txt"
 
 let r_dict = Trie.initialize_dict "reverse_dict.txt"
 
-let extends_forward str =
-  List.length (get_extensions str f_dict) <> 0
+let simple_f_dict = Trie.initialize_dict "simple_dict.txt"
 
-let extends_reverse str =
-  List.length (get_extensions str r_dict) <> 0
+let simple_r_dict = Trie.initialize_dict "simple_dict_rev.txt"
+
+let extends_forward str is_hard =
+  if is_hard then List.length (get_extensions str f_dict) <> 0
+  else List.length (get_extensions str simple_f_dict) <> 0
+
+let extends_reverse str is_hard =
+  if is_hard then List.length (get_extensions str r_dict) <> 0
+  else List.length (get_extensions str simple_r_dict) <> 0
 
 (* [get_all_cells st] returns a list of all cells currently on the board in
  * state [st]
@@ -132,7 +138,8 @@ let cross_check_helper cell st is_h =
 (* [cross_check c chr st] returns true if, when placed on tile [c],
  * [chr] forms valid forms with the adjacent tiles on the board in state [st].
  *)
-let cross_check c chr st =
+let cross_check c chr st is_hard =
+  let forw_dict = if is_hard then f_dict else simple_f_dict in
   if chr = '*' then true
   else
   let left =
@@ -155,24 +162,24 @@ let cross_check c chr st =
     let hor = left ^ (Char.escaped chr) ^ right in
     if hor = (Char.escaped chr) then true
     else
-      (is_word f_dict hor) || extends_forward hor ||
-      extends_reverse (reverse_str hor) in
+      (is_word forw_dict hor) || extends_forward hor is_hard ||
+      extends_reverse (reverse_str hor) is_hard in
   let bool2 =
     let vert = up ^ (Char.escaped chr) ^ down in
     if vert = (Char.escaped chr) then true
     else
-      (is_word f_dict vert) || extends_forward vert ||
-      extends_reverse (reverse_str vert) in
+      (is_word forw_dict vert) || extends_forward vert is_hard ||
+      extends_reverse (reverse_str vert) is_hard in
   bool1 && bool2
 
 (* [anchor_chars anchor rack st] returns the new rack obtained after
  * throwing out all characters from [rack] that don't form valid words
  * with the surrounding tiles when placed on the anchor cell [anchor].
  *)
-let anchor_chars anchor rack st =
+let anchor_chars anchor rack st is_hard =
   List.fold_left
     (fun acc x ->
-       if cross_check anchor x st then x::acc else acc
+       if cross_check anchor x st is_hard then x::acc else acc
     ) [] rack
 
 (* [generate_anchor_chars anchors rack st ] returns a list of pairs
@@ -182,10 +189,10 @@ let anchor_chars anchor rack st =
  * [rack] that don't form valid words with the surrounding tiles when placed on
  * that anchor cell.
  *)
-let generate_anchor_chars anchors rack st =
+let generate_anchor_chars anchors rack st is_hard =
   List.fold_left
     (fun acc x ->
-       (x, anchor_chars x rack st )::acc
+       (x, anchor_chars x rack st is_hard)::acc
     ) [] anchors
 
 (* [check_extension anchor_rack ext] returns [true] if [ext] can be formed
@@ -230,142 +237,146 @@ let concat_moves_rev str exts =
 let cut_extensions lst =
   List.filter (fun x -> String.length x < 7) lst
 
-let move_forward cell rack st is_h across_bool =
+let move_forward cell rack st is_h across_bool is_hard =
+  let forw_dict = if is_hard then f_dict else simple_f_dict in
   if not across_bool then
   match get_adjacent_word cell st is_h [] with
   | None -> None
   | Some (str,_,_) ->
-  let extensions = get_extensions str f_dict in
+  let extensions = get_extensions str forw_dict in
   let words = (valid_extensions rack extensions) |> concat_moves str in
   Some (words,str)
   else
     if (get_cell_from_coordinate cell st |> cell_is_empty) then None
     else
       let letter = fst ((get_cell_from_coordinate cell st).letter) in
-      let across_ext = get_extensions (Char.escaped letter) f_dict in
+      let across_ext = get_extensions (Char.escaped letter) forw_dict in
       let words = (valid_extensions rack across_ext)
                   |> concat_moves(Char.escaped letter) in
       Some (words,(Char.escaped letter))
 
-let move_backward cell rack st is_h across_bool =
+let move_backward cell rack st is_h across_bool is_hard =
+  let rev_dict = if is_hard then r_dict else simple_r_dict in
   if not across_bool then
     match get_adjacent_word cell st is_h [] with
   | None -> None
   | Some (str,_,__) ->
-    let extensions = get_extensions (reverse_str str) r_dict in
+    let extensions = get_extensions (reverse_str str) rev_dict in
     let words = (valid_extensions rack extensions) in
     Some (words,str)
   else
     if (get_cell_from_coordinate cell st |> cell_is_empty) then None
     else
       let letter = fst ((get_cell_from_coordinate cell st).letter) in
-      let across_ext = get_extensions (Char.escaped letter) r_dict in
+      let across_ext = get_extensions (Char.escaped letter) rev_dict in
     let words = (valid_extensions rack across_ext) in
       Some (words, Char.escaped letter)
 
-let make_move c rack st =
+let make_move c rack st is_hard =
   let left =
   match left_cell c with
   | None -> None
-  | Some c' -> move_forward c' rack st true false in
+  | Some c' -> move_forward c' rack st true false is_hard in
   let left_across =
     match left_cell c with
     | None -> None
-    | Some c' -> move_forward c' rack st true true in
+    | Some c' -> move_forward c' rack st true true is_hard in
   let right =
   match right_cell c with
   | None -> None
-  | Some c' ->  move_backward c' rack st true false in
+  | Some c' ->  move_backward c' rack st true false is_hard in
   let right_across =
     match right_cell c with
     | None -> None
-    | Some c' -> move_backward c' rack st true false in
+    | Some c' -> move_backward c' rack st true false is_hard in
   let up =
   match up_cell c with
   | None -> None
-  | Some c' -> move_forward c' rack st false false in
+  | Some c' -> move_forward c' rack st false false is_hard in
   let up_across =
     match up_cell c with
     | None -> None
-    | Some c' -> move_forward c' rack st false true in
+    | Some c' -> move_forward c' rack st false true is_hard in
   let down =
     match down_cell c with
     | None -> None
-    | Some c' -> move_backward c' rack st false false in
+    | Some c' -> move_backward c' rack st false false is_hard in
   let down_across =
       match down_cell c with
       | None -> None
-      | Some c' -> move_backward c' rack st false true in
+      | Some c' -> move_backward c' rack st false true is_hard in
   [left;right;up;down;left_across;right_across;up_across;down_across]
 
-let all_moves anchors st =
+let all_moves anchors st is_hard =
   List.fold_left
     (fun acc x ->
-       (fst x,(make_move (fst x) (snd x) st))::acc
+       (fst x,(make_move (fst x) (snd x) st is_hard ))::acc
     ) [] anchors
 
-let start_forward cell rack st =
+let start_forward cell rack st is_hard =
+  let forw_dict = if is_hard then f_dict else simple_f_dict in
   if (get_cell_from_coordinate cell st |> cell_is_empty) then None
   else Some(
       List.fold_left
         (fun acc x ->
            let chr = (Char.escaped x) in
-           let extensions = get_extensions chr f_dict |> cut_extensions in
+           let extensions = get_extensions chr forw_dict |> cut_extensions in
            let words = (valid_extensions (remove x rack) extensions)
                        |> concat_moves chr in
            (words,chr)::acc
         ) [] (List.sort_uniq compare rack))
 
-let start_backward cell rack st =
+let start_backward cell rack st is_hard =
+  let rev_dict = if is_hard then r_dict else simple_r_dict in
   if (get_cell_from_coordinate cell st |> cell_is_empty) then None
   else Some(
       List.fold_left
         (fun acc x ->
            let chr = (Char.escaped x) in
-           let extensions = get_extensions chr r_dict |> cut_extensions in
+           let extensions = get_extensions chr rev_dict |> cut_extensions in
            let words = (valid_extensions (remove x rack) extensions) in
            (words,chr)::acc
         ) [] (List.sort_uniq compare rack))
 
-let make_more_moves c rack st =
+let make_more_moves c rack st is_hard =
   let left_down =
     match left_cell c with
     | None -> None
-    | Some c' -> start_forward c' rack st in
+    | Some c' -> start_forward c' rack st is_hard in
   let left_up =
     match left_cell c with
     | None -> None
-    | Some c' -> start_backward c' rack st in
+    | Some c' -> start_backward c' rack st is_hard in
   let right_down =
     match right_cell c with
     | None -> None
-    | Some c' -> start_forward c' rack st in
+    | Some c' -> start_forward c' rack st is_hard in
   let right_up =
     match right_cell c with
     | None -> None
-    | Some c' -> start_backward c' rack st in
+    | Some c' -> start_backward c' rack st is_hard in
   let up_right =
     match up_cell c with
     | None -> None
-    | Some c' -> start_forward c' rack st in
+    | Some c' -> start_forward c' rack st is_hard in
   let up_left =
     match up_cell c with
     | None -> None
-    | Some c' -> start_backward c' rack st in
+    | Some c' -> start_backward c' rack st is_hard in
   let down_right =
     match down_cell c with
     | None -> None
-    | Some c' -> start_forward c' rack st in
+    | Some c' -> start_forward c' rack st is_hard in
   let down_left =
     match down_cell c with
     | None -> None
-    | Some c' -> start_backward c' rack st in
+    | Some c' -> start_backward c' rack st is_hard in
   [left_down;left_up;right_down;right_up;up_right;up_left;down_right;down_left]
 
-let all_more_moves anchors st =
+let all_more_moves anchors st is_hard =
   List.fold_left
     (fun acc x ->
-       (fst x,(make_more_moves (fst x) (snd x) st))::acc
+       (fst x,(make_more_moves (fst x) (snd x) st is_hard))::acc
     ) [] anchors
 
 let make_first_move chr rack st =
@@ -653,8 +664,8 @@ let pick_worst_move rack st moves =
             (* if new_points < snd acc then x, new_points else acc *)
           with
             _ -> acc
-      ) ({word = [];mv_coord = (0,0);is_horizontal = false}, 100000) moves in
-    if ( (snd best_move)= 100000) then do_swap rack st
+      ) ({word = [];mv_coord = (0,0);is_horizontal = false}, 10000) moves in
+    if ( (snd best_move)= 10000) then do_swap rack st
     else PlaceWord (fst best_move)
 
 let best_first_move moves rack st =
@@ -684,14 +695,14 @@ let first_move st =
   let moves = generate_all_moves updated_anchors in
   best_first_move moves letters_rack st
 
-let best_move_helper st =
+let best_move_helper st is_hard =
   let letters_rack = st.current_player.rack |> get_letters_rack in
   let all_cells = get_all_cells st in
   let empty_cells = get_empty_cells all_cells in
   let anchors = get_anchors empty_cells st in
-  let anchor_pairs = generate_anchor_chars anchors letters_rack st in
-  let anchor_moves = all_moves anchor_pairs st in
-  let more_moves = all_more_moves anchor_pairs st in
+  let anchor_pairs = generate_anchor_chars anchors letters_rack st is_hard in
+  let anchor_moves = all_moves anchor_pairs st is_hard in
+  let more_moves = all_more_moves anchor_pairs st is_hard  in
   let updated_anchors = update_all_anchor_pairs anchor_moves st in
   let more_updates = update_all_more_anchor_pairs more_moves st in
   let moves = generate_all_moves updated_anchors in
@@ -703,10 +714,10 @@ let get_hint st =
   if st.is_first_move then first_move st
   else
     let letters_rack = st.current_player.rack |> get_letters_rack in
-    best_move_helper st |> pick_worst_move letters_rack st
+    best_move_helper st false |> pick_worst_move letters_rack st
 
 let best_move st =
-  if List.for_all (fun p -> p.score = 0) st.players then first_move st
+  if st.is_first_move then first_move st
   else
     let letters_rack = st.current_player.rack |> get_letters_rack in
-    best_move_helper st |> pick_best_move letters_rack st
+    best_move_helper st true |> pick_best_move letters_rack st
