@@ -1147,7 +1147,7 @@ and second_click_on_board st s' (letter, is_blank) rack_index np_tiles acc =
     let st'' = {st' with board = b'; current_player = new_current_player'} in
     let cell_index = ((cell_coord, letter), st'') in
     (* recursively call place_helper to get the next first click *)
-    (place_helper (st'' (np_tiles'') (cell_index :: acc'))
+    (place_helper st'' (np_tiles'') (cell_index :: acc'))
 
 and second_click_on_rack st s' curr_idx new_idx np_tiles acc =
   (* selecting a new tile in rack, highlight that one instead *)
