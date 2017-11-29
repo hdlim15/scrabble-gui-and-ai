@@ -238,7 +238,7 @@ let rec str_of_keyboard_events io_op info =
            (fun (c,w') acc ->
               Graphics.moveto w' h; Graphics.draw_string (Char.escaped c); acc + w) h' (2*w) in
        helper w'' h')
-    else if Char.code c < 26 || Char.code c > 126 then
+    else if Char.code c < 26 || Char.code c > 126 || ((List.length history) * w > 320)then
       helper w' history
     else
       (Graphics.moveto (30+w') h;
