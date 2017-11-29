@@ -8,25 +8,27 @@ the game!
 Scrabble Rules: https://scrabble.hasbro.com/en-us/rules
 
 Buttons:
-- Quit: quits the current game.
+- Quit Game: quits the current game.
 
 - Help: displays useful information on how to play the game.
 
 - Hint: provides a potential move that could be made. The word
   shown could contain letters which are already on the board.
 
-- Show/hide rack: displays/hides the letters one has in their
+- Show/Hide Rack: displays/hides the letters one has in their
   rack.
 
-- Add to dict: adds a new word to the dictionary of allowed
+- Add To Dict: adds a new word to the dictionary of allowed
    words. Click the button, type the word, then press 'ENTER'.
 
-- Swap: swaps tiles on one's rack with tiles in the bag. You
+- Pass Turn: skips the current player's turn.
+
+- Swap Tiles: swaps tiles on one's rack with tiles in the bag. You
   must first click swap, followed by the letters in your rack
   you wish to swap, and finally click swap once more to
   finalize the action.
 
-- Place: places letters on the board to form valid words. You
+- Place Word: places letters on the board to form valid words. You
   must first click place, then click a letter in the rack
   followed by a click on a particular cell of the board, and
   repeat until placement is done. Then click place again to

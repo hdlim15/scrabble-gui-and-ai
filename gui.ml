@@ -322,7 +322,7 @@ let draw_buttons is_rack_hidden =
   let b_pass = {x = 632; y = 30; w = 60; h = 60; bw = 2;
                 b1_col = gray1; b2_col = gray3; b_col = gray2; r = Top} in
   draw_box b_pass;
-  draw_string_in_box Center "Pass" b_pass Graphics.black;
+  draw_string_in_box Center "Pass Turn" b_pass Graphics.black;
   let b_help = {x = 724; y = 30; w = 60; h = 60; bw = 2;
                 b1_col = gray1; b2_col = gray3; b_col = gray2; r = Top} in
   draw_box b_help;
@@ -334,33 +334,37 @@ let draw_buttons is_rack_hidden =
   let b_quit = {x = 908; y = 30; w = 60; h = 60; bw = 2;
                 b1_col = gray1; b2_col = gray3; b_col = gray2; r = Top} in
   draw_box b_quit;
-  draw_string_in_box Center "Quit" b_quit Graphics.black;
+  draw_string "Quit" 927 63 true;
+  draw_string "Game" 927 45 true;
   let b_toggle_rack = {x = 632; y = 120; w = 60; h = 60; bw = 2;
                 b1_col = gray1; b2_col = gray3; b_col = gray2; r = Top} in
   draw_box b_toggle_rack;
   if is_rack_hidden then
-    draw_string_in_box Center "Show rack" b_toggle_rack Graphics.black
+    draw_string_in_box Center "Show Rack" b_toggle_rack Graphics.black
   else
-    draw_string_in_box Center "Hide rack" b_toggle_rack Graphics.black;
+    draw_string_in_box Center "Hide Rack" b_toggle_rack Graphics.black;
   let b_add_word = {x = 724; y = 120; w = 60; h = 60; bw = 2;
                 b1_col = gray1; b2_col = gray3; b_col = gray2; r = Top} in
   draw_box b_add_word;
-  draw_string "Add to" 737 153 true;
-  draw_string "dict" 743 135 true;
+  draw_string "Add To" 737 153 true;
+  draw_string "Dict" 743 135 true;
   let b_swap = {x = 816; y = 120; w = 60; h = 60; bw = 2;
                 b1_col = gray1; b2_col = gray3; b_col = gray2; r = Top} in
   draw_box b_swap;
-  draw_string_in_box Center "Swap" b_swap Graphics.black;
+  draw_string "Swap" 835 153 true;
+  draw_string "Tiles" 832 135 true;
   let b_place = {x = 908; y = 120; w = 60; h = 60; bw = 2;
                 b1_col = gray1; b2_col = gray3; b_col = gray2; r = Top} in
   draw_box b_place;
-  draw_string_in_box Center "Place" b_place Graphics.black
+  draw_string "Place" 924 153 true;
+  draw_string "Word" 927 135 true
 
 let draw_blue_place () =
   let b_place = {x = 908; y = 120; w = 60; h = 60; bw = 2;
                 b1_col = dark_gray1; b2_col = dark_gray3; b_col = dark_gray2; r = Top} in
   draw_box b_place;
-  draw_string_in_box Center "Place" b_place Graphics.black
+  draw_string "Place" 924 153 true;
+  draw_string "Word" 927 135 true
 
 (* [update_vb b] takes a flattened board [b] and replaces any colored cells with
  * letters in them with standard beige colors in [vb]. This represents a
@@ -1182,7 +1186,8 @@ let rec gui_cmd st =
       let b_swap = {x = 816; y = 120; w = 60; h = 60; bw = 2;
                     b1_col = dark_gray1; b2_col = dark_gray3; b_col = dark_gray2; r = Top} in
       draw_box b_swap;
-      draw_string_in_box Center "Swap" b_swap Graphics.black;
+      draw_string "Swap" 835 153 true;
+      draw_string "Tiles" 832 135 true;
       Swap (swap_helper st.current_player)
     else raise (GuiExn "show rack before swap")
   else if mem (x, y) place_btn then
