@@ -49,13 +49,17 @@ type state = {
 let get_points c =
   match c with
   | 'a' | 'e' | 'i' | 'l' | 'n'
-  | 'o' | 'r' | 's' | 't' | 'u' -> 1
-  | 'd' | 'g'                   -> 2
-  | 'b' | 'c' | 'm' | 'p'       -> 3
-  | 'f' | 'h' | 'v' | 'w' | 'y' -> 4
-  | 'k'                         -> 5
-  | 'j' | 'x'                   -> 8
-  | 'q' | 'z'                   -> 10
+  | 'o' | 'r' | 's' | 't' | 'u'
+  | 'A' | 'E' | 'I' | 'L' | 'N'
+  | 'O' | 'R' | 'S' | 'T' | 'U' -> 1
+  | 'd' | 'g' | 'D' | 'G'       -> 2
+  | 'b' | 'c' | 'm' | 'p'
+  | 'B' | 'C' | 'M' | 'P'       -> 3
+  | 'f' | 'h' | 'v' | 'w' | 'y'
+  | 'F' | 'H' | 'V' | 'W' | 'Y' -> 4
+  | 'k' | 'K'                   -> 5
+  | 'j' | 'x' | 'J' | 'X'       -> 8
+  | 'q' | 'z' | 'Q' | 'Z'       -> 10
   | '*'                         -> 0
   | _ -> failwith "impossible"
 
@@ -106,24 +110,25 @@ let rec init_bag () =
   List.flatten (List.map init_letters_of_char alphabet)
 and init_letters_of_char c =
   match c with
-  | 'a' -> num_tiles_of_char 9 'a' 1  | 'b' -> num_tiles_of_char 2 'b' 3
-  | 'c' -> num_tiles_of_char 2 'c' 3  | 'd' -> num_tiles_of_char 4 'd' 2
-  | 'e' -> num_tiles_of_char 12 'e' 1 | 'f' -> num_tiles_of_char 2 'f' 4
-  | 'g' -> num_tiles_of_char 3 'g' 2  | 'h' -> num_tiles_of_char 2 'h' 4
-  | 'i' -> num_tiles_of_char 9 'i' 1  | 'j' -> num_tiles_of_char 1 'j' 8
-  | 'k' -> num_tiles_of_char 1 'k' 5  | 'l' -> num_tiles_of_char 4 'l' 1
-  | 'm' -> num_tiles_of_char 2 'm' 3  | 'n' -> num_tiles_of_char 6 'n' 1
-  | 'o' -> num_tiles_of_char 8 'o' 1  | 'p' -> num_tiles_of_char 2 'p' 3
-  | 'q' -> num_tiles_of_char 1 'q' 10 | 'r' -> num_tiles_of_char 6 'r' 1
-  | 's' -> num_tiles_of_char 4 's' 1  | 't' -> num_tiles_of_char 6 't' 1
-  | 'u' -> num_tiles_of_char 4 'u' 1  | 'v' -> num_tiles_of_char 2 'v' 4
-  | 'w' -> num_tiles_of_char 2 'w' 4  | 'x' -> num_tiles_of_char 1 'x' 8
-  | 'y' -> num_tiles_of_char 2 'y' 4  | 'z' -> num_tiles_of_char 1 'z' 10
-  | '*' -> num_tiles_of_char 2 '*' 0  | _ -> failwith "impossible"
-and num_tiles_of_char n c p =
+| 'a' -> num_tiles_of_char 9 'a'   | 'b' -> num_tiles_of_char 2 'b'
+| 'c' -> num_tiles_of_char 2 'c'   | 'd' -> num_tiles_of_char 4 'd'
+| 'e' -> num_tiles_of_char 12 'e'  | 'f' -> num_tiles_of_char 2 'f'
+| 'g' -> num_tiles_of_char 3 'g'   | 'h' -> num_tiles_of_char 2 'h'
+| 'i' -> num_tiles_of_char 9 'i'   | 'j' -> num_tiles_of_char 1 'j'
+| 'k' -> num_tiles_of_char 1 'k'   | 'l' -> num_tiles_of_char 4 'l'
+| 'm' -> num_tiles_of_char 2 'm'   | 'n' -> num_tiles_of_char 6 'n'
+| 'o' -> num_tiles_of_char 8 'o'   | 'p' -> num_tiles_of_char 2 'p'
+| 'q' -> num_tiles_of_char 1 'q'   | 'r' -> num_tiles_of_char 6 'r'
+| 's' -> num_tiles_of_char 4 's'   | 't' -> num_tiles_of_char 6 't'
+| 'u' -> num_tiles_of_char 4 'u'   | 'v' -> num_tiles_of_char 2 'v'
+| 'w' -> num_tiles_of_char 2 'w'   | 'x' -> num_tiles_of_char 1 'x'
+| 'y' -> num_tiles_of_char 2 'y'   | 'z' -> num_tiles_of_char 1 'z'
+| '*' -> num_tiles_of_char 2 '*'   | _ -> failwith "impossible"
+and num_tiles_of_char n c =
+  let p = get_points c in
   match n with
   | 0 -> []
-  | i -> (c, p) :: num_tiles_of_char (n - 1) c p
+  | i -> (c, p) :: num_tiles_of_char (n - 1) c
 
 (* [gen_human_players num names] is a list of human players *)
 let rec gen_human_players num names =
@@ -164,6 +169,7 @@ let update_rack_and_bag chars_from_rack rack bag =
       begin
 
         (* Random.self_init (); *)
+        (* Random.init 35; *)
 
         let i = Random.int (List.length b) in
         let letter_from_bag = List.nth b i in
