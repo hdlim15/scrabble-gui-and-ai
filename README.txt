@@ -27,4 +27,7 @@ Installation:
   - If the above test still failes, type 'brew reinstall ocaml'
   - At this point, you will have successfully installed the Graphics module!
 
+Play Game:
+Simply type 'make play' to start up the Scrabble Gui.
+
 Enjoy!
