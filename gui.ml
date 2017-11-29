@@ -931,11 +931,9 @@ let color_tile_get_letter st rack_index colors =
   let rack_array = rack rack_len in
     update_tile_color rack_array (rack_len - rack_index - 1) colors ;
     draw_rack st.current_player rack_array ;
-  let letter =
-    if  fst (List.nth p_r rack_index) = '*' then blank_helper st
-    else fst (List.nth p_r rack_index)
-  in
-  letter
+  let letter = fst (List.nth p_r rack_index) in
+    if letter = '*' then ((blank_helper st), true)
+    else (letter, false)
 
 (* [get_rack_index s rack_coords] is the index of the rack clicked, given that
  * [s] is a Button_down event. Returns -1 if the click was not in the rack. *)
@@ -988,8 +986,13 @@ let return_to_rack st vb_coord placed_coords acc =
   if not (List.mem vb_coord coords) then st, placed_coords, acc
   else
     (* guaranteed to be found, because [vb_coord] is mem of [coords] *)
-    let (_, letter) = List.find (fun (x, _) -> x = vb_coord) placed_coords in
-    let letter_to_put_in_rack = (letter, (State.get_points letter)) in
+    let (_, (letter, is_blank)) = List.find (fun (x, _) -> x = vb_coord) placed_coords in
+    let letter_to_put_in_rack =
+      if is_blank then
+        ('*', 0)
+      else
+        (letter, (State.get_points letter))
+    in
 
     (* update current_player *)
     let r' = (letter_to_put_in_rack :: st.current_player.rack) in
@@ -1056,31 +1059,31 @@ let rec place_helper st placed_coords acc =
       else
         (* clicked on rack. darken tile, and call click2_helper *)
         let colors = (dark_beige1, dark_beige3, dark_beige2) in
-        let letter = (color_tile_get_letter st rack_index colors) in
-        (click2_helper st letter rack_index placed_coords acc)
+        let letter, is_blank = (color_tile_get_letter st rack_index colors) in
+        (click2_helper st (letter, is_blank) rack_index placed_coords acc)
 
 (* helper function that calls functions based on the second click *)
-and click2_helper st letter rack_index placed_coords acc =
+and click2_helper st (letter, is_blank) rack_index placed_coords acc =
   let p_r = st.current_player.rack in
   let rack_len = List.length p_r in
   let rack_coords = get_rack_coords rack_len in
   let s' = wait_next_event [Button_down] in
   (* if click is on the board *)
   if mem (s'.mouse_x, s'.mouse_y) (0,0,600,600) then
-    click2_on_board st s' letter rack_index placed_coords acc
+    click2_on_board st s' (letter, is_blank) rack_index placed_coords acc
   else
     let new_rack_index = (get_rack_index s' rack_coords) in
     if (new_rack_index <> -1) then
       (click2_on_rack st s' rack_index new_rack_index placed_coords acc)
     else
-      (click2_helper st letter rack_index placed_coords acc)
+      (click2_helper st (letter, is_blank) rack_index placed_coords acc)
 
-and click2_on_board st s' letter rack_index placed_coords acc =
+and click2_on_board st s' (letter, is_blank) rack_index placed_coords acc =
   let cell_coord = get_board_coord s' in
   let cell = get_cell_from_coordinate cell_coord st in
-  let is_newly_placed = List.mem (fst cell.letter) (snd (List.split placed_coords)) in
+  let is_newly_placed = List.mem (fst cell.letter) (List.map fst (snd (List.split placed_coords))) in
   if ((not is_newly_placed) && (fst cell.letter) <> ' ') then
-    click2_helper st letter rack_index placed_coords acc
+    click2_helper st (letter, is_blank) rack_index placed_coords acc
   else
     let vb_coord = (coord_to_array_index cell_coord) in
     let st', placed_coords', acc' = return_to_rack st vb_coord placed_coords acc in
@@ -1107,7 +1110,7 @@ and click2_on_board st s' letter rack_index placed_coords acc =
       {st' with board = b'; current_player = new_current_player'})
     in
     let vb_index = cell_index |> fst |> fst |> coord_to_array_index in
-    let placed_coords'' = (vb_index, letter) :: placed_coords' in
+    let placed_coords'' = (vb_index, (letter, is_blank)) :: placed_coords' in
     shade_placed_coords placed_coords'';
     (* (List.iter (fun (x,y)-> print_endline((string_of_int x) ^ " :~ " ^ (Char.escaped y))) placed_coords''); *)
     (place_helper (snd cell_index) (placed_coords'') (cell_index :: acc'))
@@ -1116,8 +1119,8 @@ and click2_on_rack st s' curr_idx new_idx placed_coords acc =
   (* selecting a new tile in rack, highlight that one instead *)
   if curr_idx <> new_idx then
     let dark_colors = (dark_beige1, dark_beige3, dark_beige2) in
-    let letter = (color_tile_get_letter st new_idx dark_colors) in
-    (click2_helper st letter new_idx placed_coords acc)
+    let letter, is_blank = (color_tile_get_letter st new_idx dark_colors) in
+    (click2_helper st (letter, is_blank) new_idx placed_coords acc)
   (* reclicking highlighted tile in rack, unhighlight it *)
   else
     let colors = (beige1, beige3, beige2) in
@@ -1127,7 +1130,7 @@ and click2_on_rack st s' curr_idx new_idx placed_coords acc =
 (* [shade_placed_coords pc] returns unit. It shades all of the coordinates
  * in [pc] dark_beige. *)
 and shade_placed_coords pc =
-  let shade_placed_tile (coord, letter) =
+  let shade_placed_tile (coord, (letter, is_blank)) =
       update_tile_color vb coord (darker_beige1,darker_beige3,darker_beige2);
     let capital_string = (String.capitalize_ascii (Char.escaped letter)) in
     draw_box vb.(coord);
