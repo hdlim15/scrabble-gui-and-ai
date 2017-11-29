@@ -359,7 +359,7 @@ let draw_buttons is_rack_hidden =
   draw_string "Place" 924 153 true;
   draw_string "Word" 927 135 true
 
-let draw_blue_place () =
+let dark_gray_place () =
   let b_place = {x = 908; y = 120; w = 60; h = 60; bw = 2;
                 b1_col = dark_gray1; b2_col = dark_gray3; b_col = dark_gray2; r = Top} in
   draw_box b_place;
@@ -1208,20 +1208,27 @@ let rec gui_cmd st =
   else if mem (x, y) add_btn then
     AddWord (addword_helper st)
   else if mem (x, y) swap_btn then
-    if not (rack_hidden 662 0 (List.length st.current_player.rack) true) then
+    let () =
+      if (rack_hidden 662 0 (List.length st.current_player.rack) true) then
+        toggle_rack st.current_player
+      else ()
+    in
       let b_swap = {x = 816; y = 120; w = 60; h = 60; bw = 2;
-                    b1_col = dark_gray1; b2_col = dark_gray3; b_col = dark_gray2; r = Top} in
+        b1_col = dark_gray1; b2_col = dark_gray3; b_col = dark_gray2; r = Top}
+      in
       draw_box b_swap;
       draw_string "Swap" 835 153 true;
       draw_string "Tiles" 832 135 true;
       Swap (swap_helper st.current_player)
-    else raise (GuiExn "show rack before swap")
   else if mem (x, y) place_btn then
-    if not (rack_hidden 662 0 (List.length st.current_player.rack) true) then
-      let () = draw_blue_place () in
-      let mv = List.map (fun (f,_) -> f) (place_helper st [] []) in
-      PlaceWord (convert_to_move mv st)
-    else raise (GuiExn "show rack before place")
+    let () =
+      if (rack_hidden 662 0 (List.length st.current_player.rack) true) then
+        toggle_rack st.current_player
+      else ()
+    in
+    let () = dark_gray_place () in
+    let mv = List.map (fun (f,_) -> f) (place_helper st [] []) in
+    PlaceWord (convert_to_move mv st)
   else gui_cmd st
 
 (* [init_gui st] initializes the GUI when the game starts with initial state
