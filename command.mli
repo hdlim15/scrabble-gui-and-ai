@@ -16,9 +16,9 @@ exception InvalidCommand
 type command =
   | PlaceWord of move (* place a word on the board *)
   | Swap of char list (* swap tiles with the bag *)
-  | Rack (* show my rack of tiles *)
+  | Rack (* show/hide current player's rack of tiles *)
   | Hint (* give a hint to the player *)
-  | AddWord of string (* adds word to dictionary *)
+  | AddWord of string (* adds custom word to dictionary *)
   | Help (* tells the user what commands they can use to play the game *)
   | Quit (* quit the game *)
   | Pass (* make no move and end turn *)

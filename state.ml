@@ -667,7 +667,7 @@ let rec place mv st =
         let word_score_lst = get_values_from_opt_list word_score_lst_opt [] in
         let valid_words =
           List.fold_left (fun acc (s, i, wm) ->
-              (fst_triple acc && check_word s st, snd_triple acc + i, trd_triple acc + wm)) (true, 0, 1) word_score_lst in
+              (fst_triple acc && check_word s st, snd_triple acc + i, trd_triple acc * wm)) (true, 0, 1) word_score_lst in
         let score' = (* score adjusted for bingo rule *)
           if List.length new_chars = 7 then (snd_triple valid_words + 50) else (snd_triple valid_words) in
         if fst_triple valid_words then
