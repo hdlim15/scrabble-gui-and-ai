@@ -9,7 +9,7 @@ Karan Newatia (kn348)
 Hyuckin David Lim (hdl39)
 
 Dependencies:
-- XQuarts
+- XQuartz
 - OCaml
 - OCaml Graphics
 
