@@ -485,7 +485,7 @@ let update_gui cmd st =
     update_vb (List.flatten st.board);
     update_board (List.flatten st.board);
     update_scores st.players;
-    draw_buttons true;
+    draw_buttons is_rack_hidden;
     erase_turn ();
     draw_string (st.current_player.name ^ "'s turn.") 770 470 true;
     if is_rack_hidden then ()
