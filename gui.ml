@@ -991,14 +991,14 @@ let swap_helper cp =
  * requires: [vb_coord] is a valid coordinate of [board]. *)
 let remove_letter_at_coord board vb_coord =
   List.map (
-      fun cl ->
-        List.map (
-          fun c ->
-            if (coord_to_array_index c.cell_coord) = vb_coord then
-              {c with letter = (' ', -1)}
-            else c
-        ) cl
-    ) board
+    fun cl ->
+      List.map (
+        fun c ->
+          let c_coord = coord_to_array_index c.cell_coord in
+          if c_coord = vb_coord then {c with letter = (' ', -1)}
+          else c
+      ) cl
+  ) board
 
 (* [shade_np_tiles pc] returns unit. It shades all of the coordinates
  * in [pc] dark_beige. *)
@@ -1102,7 +1102,7 @@ and second_click_helper st (letter, is_blank) rack_index np_tiles acc =
     (* check to see if second click is inside the rack *)
     let new_rack_index = (get_rack_index s' rack_coords) in
     if (new_rack_index <> -1) then
-      (second_click_on_rack st s' rack_index new_rack_index np_tiles acc)
+      (second_click_on_rack st rack_index new_rack_index np_tiles acc)
     else
       (second_click_helper st (letter, is_blank) rack_index np_tiles acc)
 
@@ -1149,7 +1149,7 @@ and second_click_on_board st s' (letter, is_blank) rack_index np_tiles acc =
     (* recursively call place_helper to get the next first click *)
     (place_helper st'' (np_tiles'') (cell_index :: acc'))
 
-and second_click_on_rack st s' curr_idx new_idx np_tiles acc =
+and second_click_on_rack st curr_idx new_idx np_tiles acc =
   (* selecting a new tile in rack, highlight that one instead *)
   if curr_idx <> new_idx then
     let dark_colors = (dark_beige1, dark_beige3, dark_beige2) in
@@ -1190,6 +1190,13 @@ let help_helper st =
     else loop ()
   in loop ()
 
+(* [show_if_hidden st] shows the current player's rack if it is hidden, and
+ * does nothing if it is already shown. *)
+let show_if_hidden st =
+  if (rack_hidden 662 0 (List.length st.current_player.rack) true) then
+    toggle_rack st.current_player
+  else ()
+
 (* [gui_cmd st] is the command received from user input via the gui *)
 let rec gui_cmd st =
   let curr_status = wait_next_event [Button_down] in
@@ -1208,11 +1215,7 @@ let rec gui_cmd st =
   else if mem (x, y) add_btn then
     AddWord (addword_helper st)
   else if mem (x, y) swap_btn then
-    let () =
-      if (rack_hidden 662 0 (List.length st.current_player.rack) true) then
-        toggle_rack st.current_player
-      else ()
-    in
+    let () = show_if_hidden st in
       let b_swap = {x = 816; y = 120; w = 60; h = 60; bw = 2;
         b1_col = dark_gray1; b2_col = dark_gray3; b_col = dark_gray2; r = Top}
       in
@@ -1221,11 +1224,7 @@ let rec gui_cmd st =
       draw_string "Tiles" 832 135 true;
       Swap (swap_helper st.current_player)
   else if mem (x, y) place_btn then
-    let () =
-      if (rack_hidden 662 0 (List.length st.current_player.rack) true) then
-        toggle_rack st.current_player
-      else ()
-    in
+    let () = show_if_hidden st in
     let () = dark_gray_place () in
     let mv = List.map (fun (f,_) -> f) (place_helper st [] []) in
     PlaceWord (convert_to_move mv st)

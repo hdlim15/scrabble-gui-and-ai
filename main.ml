@@ -103,7 +103,8 @@ let hint_helper st =
     | PlaceWord mv ->
       "Hint: " ^ List.fold_right (fun x acc -> (Char.escaped x) ^ acc) mv.word ""
     | _ -> "Hint: you should swap or pass" in
-  end_nonturn_command hint; st
+  end_nonturn_command hint;
+  st
 
 (* [play_game st] plays the game represented by [st]. *)
 let rec play_game st =
