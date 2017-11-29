@@ -171,9 +171,15 @@ let reset () =
   Graphics.moveto 20 275;
   Graphics.draw_string "Made by A. Vaziri, C. McHugh, D. Lim, K. Newatia"
 
+(* [clear_init_io_box ()] clears the initial game io box *)
+let clear_init_io_box () =
+  Graphics.set_color Graphics.white;
+  Graphics.fill_rect 21 21 358 238;
+  Graphics.set_color Graphics.black
+
 (* [inp_reset ()] resets the text box to the default prompt for init_num_players *)
 let inp_reset () =
-  reset ();
+  clear_init_io_box ();
   Graphics.moveto 30 240;
   Graphics.draw_string "How many players? Enter a number between 1 and 4,";
   Graphics.moveto 30 225;
@@ -183,7 +189,7 @@ let inp_reset () =
 
 (* [inh_reset ()] resets the text box to the default prompt for init_num_humans *)
 let inh_reset () =
-  reset ();
+  clear_init_io_box ();
   Graphics.moveto 30 240;
   Graphics.draw_string "How many human players? Enter a number, followed";
   Graphics.moveto 30 225;
@@ -193,7 +199,7 @@ let inh_reset () =
 
 (* [iad_reset num_ai] resets the text box to the default prompt for init_ai_diff *)
 let iad_reset num_ai =
-  reset ();
+  clear_init_io_box ();
   Graphics.moveto 30 240;
   Graphics.draw_string ("Assign difficulty to " ^ (string_of_int num_ai) ^ " AI(s), separated");
   Graphics.moveto 30 225;
@@ -205,7 +211,7 @@ let iad_reset num_ai =
 
 (* [ipn_reset ()] resets the text box to the default prompt for init_player_names *)
 let ipn_reset () =
-  reset ();
+  clear_init_io_box ();
   Graphics.moveto 30 240;
   Graphics.draw_string "Enter player names separated by spaces, in the order";
   Graphics.moveto 30 225;
