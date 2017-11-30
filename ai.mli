@@ -10,8 +10,7 @@ val reverse_str : string -> string
 
 (* [up_cell c] returns [Some c'] if [c'] is the cell coordinate
  * directly above [c], and [None] if the cell coordinate directly above [c]
- * is out of bounds.
- *)
+ * is out of bounds. *)
 val up_cell : State.cell -> State.coordinate option
 
 (* [left_cell c] returns [Some c'] if [c'] is the cell coordinate
