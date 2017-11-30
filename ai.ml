@@ -481,22 +481,30 @@ let all_parallel_moves anchors st is_hard =
        (fst x,(make_parallel_moves (fst x) (snd x) st is_hard))::acc
     ) [] anchors
 
-let make_first_move chr rack st =
+(* [all_parallel_moves anchors st is_hard] returns a list of pairs for all
+ * anchors in [anchors], where the the fst of each pair is an anchor,
+ * and the snd is the result of applying [make_parallel_moves] to that anchor.
+ * If [is_hard] is true, then the bigger forward dictionary
+ * is checked, and the smaller one is checked otherwise.
+ *)
+let make_first_move chr rack st is_hard =
+  let forw_dict = if is_hard then f_dict else simple_f_dict in
+  let rev_dict = if is_hard then r_dict else simple_r_dict in
   let str = Char.escaped chr in
   let left =
-    let extensions = get_extensions str f_dict in
+    let extensions = get_extensions str forw_dict in
     let words = (valid_extensions rack extensions) |> concat_moves str in
     (words,str)in
   let right =
-    let extensions = get_extensions (reverse_str str) r_dict in
+    let extensions = get_extensions (reverse_str str) rev_dict in
     let words = (valid_extensions rack extensions) in
     (words,str) in
   [left;right]
 
-let all_first_moves anchor rack st =
+let all_first_moves anchor rack st is_hard =
   List.fold_left
     (fun acc x ->
-       (anchor, (make_first_move x (remove x rack) st))::acc
+       (anchor, (make_first_move x (remove x rack) st is_hard))::acc
     ) [] rack
 
 let get_start_cell anchor word dir =
@@ -790,10 +798,10 @@ let best_first_move moves rack st =
 let get_letters_rack rack =
   List.map(fun (letter,_) -> letter) rack
 
-let first_move st =
+let first_move st is_hard =
   let letters_rack = st.current_player.rack |> get_letters_rack in
   let anchor = get_cell_from_coordinate (7,8) st in
-  let anchor_moves = all_first_moves anchor letters_rack st in
+  let anchor_moves = all_first_moves anchor letters_rack st is_hard in
   let updated_anchors = update_all_first_move_anchor_pairs anchor_moves st in
   let moves = generate_all_moves updated_anchors in
   best_first_move moves letters_rack st
@@ -814,13 +822,13 @@ let best_move_helper st is_hard =
   moves @ parallel_moves
 
 let get_hint st =
-  if st.is_first_move then first_move st
+  if st.is_first_move then first_move st false
   else
     let letters_rack = st.current_player.rack |> get_letters_rack in
     best_move_helper st false |> pick_worst_move letters_rack st
 
 let best_move st =
-  if st.is_first_move then first_move st
+  if st.is_first_move then first_move st true
   else
     let letters_rack = st.current_player.rack |> get_letters_rack in
     best_move_helper st true |> pick_best_move letters_rack st
