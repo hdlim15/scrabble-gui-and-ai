@@ -18,14 +18,15 @@ let rec get_prev_player n p =
   in
   List.hd (List.filter (fun p -> p.order_num = n') p)
 
-(* [finalize_scores players] is the list of players, with their respective scores
+(*[finalize_scores players] is the list of players, with their respective scores
  * updated based on the tiles left in their rack. Each player's score is reduced
  * by the sum of their unplayed letters. If a player played all their letters,
  * the sum of the other players' unplayed letters is added to thta player's
  * score. *)
 let finalize_scores players =
   let empty_rack_player =
-    if List.length (List.filter (fun p -> List.length p.rack = 0) players) <> 0 then
+    if List.length (List.filter (fun p -> List.length p.rack = 0) players) <> 0
+    then
       Some (List.hd (List.filter (fun p -> List.length p.rack = 0) players))
     else None in
   let other_players = List.filter (fun p -> List.length p.rack <> 0) players in
@@ -34,10 +35,12 @@ let finalize_scores players =
   let other_players'_w_sumDeductedPts =
     List.fold_left (fun acc p ->
         let deducted_ps = p.score - score_helper p.score p.rack in
-        ({p with score = p.score - deducted_ps}::(fst acc)), snd acc + deducted_ps) ([],0) other_players in
+        ({p with score = p.score - deducted_ps}::(fst acc)),
+        snd acc + deducted_ps) ([],0) other_players in
   match empty_rack_player with
   | Some p ->
-    let empty_rack_player' = {p with score = p.score + snd other_players'_w_sumDeductedPts} in
+    let empty_rack_player' =
+      {p with score = p.score + snd other_players'_w_sumDeductedPts} in
     empty_rack_player' :: fst other_players'_w_sumDeductedPts
   | None -> fst other_players'_w_sumDeductedPts
 
@@ -59,8 +62,8 @@ let get_winner st =
 let no_empty_rack st =
   List.for_all (fun p -> List.length p.rack <> 0) st.players
 
-(* [end_nonturn_command str] prints some output [str] to the gui and prompts the user
- * to press any key to continue their turn *)
+(* [end_nonturn_command str] prints some output [str] to the gui and prompts the
+ * user to press any key to continue their turn *)
 let end_nonturn_command str =
   erase_io_box ();
   Graphics.set_color Graphics.black;
@@ -94,7 +97,8 @@ let rec get_command st =
 let quit_helper st =
   Graphics.set_color Graphics.black;
   Graphics.moveto 625 240;
-  Graphics.draw_string "Press 'Q' to confirm quit, any other key to resume play";
+  Graphics.draw_string
+    "Press 'Q' to confirm quit, any other key to resume play";
   let s = Graphics.wait_next_event [Graphics.Key_pressed] in
   match Char.code s.Graphics.key with
   | 81 | 113 -> print_endline "\nThanks for playing!"; exit 0
@@ -105,7 +109,8 @@ let hint_helper st =
   let hint =
     match (Ai.get_hint st) with
     | PlaceWord mv ->
-      "Hint: " ^ List.fold_right (fun x acc -> (Char.escaped x) ^ acc) mv.word ""
+      "Hint: " ^ List.fold_right
+        (fun x acc -> (Char.escaped x) ^ acc) mv.word ""
     | _ -> "Hint: you should swap or pass" in
   end_nonturn_command hint;
   st
@@ -116,19 +121,24 @@ let rec play_game st =
   let new_state =
     try
       match command with
-      | PlaceWord _ -> let st' = do' command st in Gui.update_gui `Place st'; st'
+      | PlaceWord _ ->
+        let st' = do' command st in Gui.update_gui `Place st'; st'
       | Pass -> let st' = do' command st in Gui.update_gui `Pass st'; st'
       | Swap _ -> let st' = do' command st in Gui.update_gui `Swap st'; st'
       | Rack -> st
       | Help -> Gui.update_gui `Help st; st
       | Hint -> hint_helper st
       | AddWord str ->
-        let st' = do' command st in end_nonturn_command ("Added word to dictionary"); st'
+        let st' = do' command st in end_nonturn_command
+          ("Added word to dictionary"); st'
       | Quit -> quit_helper st
     with
-    | InvalidPlace s -> end_nonturn_command ("Invalid Place: " ^ s); Gui.update_gui `Place st; st
+    | InvalidPlace s ->
+      end_nonturn_command ("Invalid Place: " ^ s); Gui.update_gui `Place st; st
     | InvalidSwap ->
-      (end_nonturn_command "Cannot swap, bag is empty or doesn't have enough tiles"; Gui.update_gui `Swap st; st)
+      (end_nonturn_command
+         "Cannot swap, bag is empty or doesn't have enough tiles";
+         Gui.update_gui `Swap st; st)
     | InvalidAdd -> end_nonturn_command ("Invalid Add"); st
   in
   erase_io_box ();
@@ -136,7 +146,8 @@ let rec play_game st =
     (erase_rack ();
      erase_toggle_button ();
      let b_toggle_rack = {x = 632; y = 120; w = 60; h = 60; bw = 2;
-                          b1_col = gray1; b2_col = gray3; b_col = gray2; r = Top} in
+                          b1_col = gray1; b2_col = gray3;
+                          b_col = gray2; r = Top} in
      draw_box b_toggle_rack;
      draw_string_in_box Center "Show rack" b_toggle_rack Graphics.black);
   let num_players = List.length st.players in
@@ -165,7 +176,8 @@ let draw_init_game_logo () =
   draw_string " |___/  \\___| |_|    \\__,_| |_.__/  |_.__/  |_|  \\___|" 25 (375 - 4 * bar_height) true;
   draw_string " ________________________________________________________" 25 (375 - 5 * bar_height) true
 
-(* [reset ()] resets the game initialization window to its default configuration *)
+(* [reset ()] resets the game initialization window to its
+ * default configuration *)
 let reset () =
   Graphics.clear_graph ();
   draw_init_game_logo ();
@@ -181,7 +193,8 @@ let clear_init_io_box () =
   Graphics.fill_rect 21 21 358 238;
   Graphics.set_color Graphics.black
 
-(* [inp_reset ()] resets the text box to the default prompt for init_num_players *)
+(* [inp_reset ()] resets the text box to the default prompt for
+ * init_num_players *)
 let inp_reset () =
   clear_init_io_box ();
   Graphics.moveto 30 240;
@@ -191,7 +204,8 @@ let inp_reset () =
   Graphics.moveto 30 210;
   Graphics.draw_string "> "
 
-(* [inh_reset ()] resets the text box to the default prompt for init_num_humans *)
+(* [inh_reset ()] resets the text box to the default prompt for
+ * init_num_humans *)
 let inh_reset () =
   clear_init_io_box ();
   Graphics.moveto 30 240;
@@ -201,11 +215,13 @@ let inh_reset () =
   Graphics.moveto 30 210;
   Graphics.draw_string "> "
 
-(* [iad_reset num_ai] resets the text box to the default prompt for init_ai_diff *)
+(* [iad_reset num_ai] resets the text box to the default prompt for
+ * init_ai_diff *)
 let iad_reset num_ai =
   clear_init_io_box ();
   Graphics.moveto 30 240;
-  Graphics.draw_string ("Assign difficulty to " ^ (string_of_int num_ai) ^ " AI(s), separated");
+  Graphics.draw_string ("Assign difficulty to " ^
+                        (string_of_int num_ai) ^ " AI(s), separated");
   Graphics.moveto 30 225;
   Graphics.draw_string "by spaces, followed by 'ENTER'";
   Graphics.moveto 30 210;
@@ -213,7 +229,8 @@ let iad_reset num_ai =
   Graphics.moveto 30 195;
   Graphics.draw_string "> "
 
-(* [ipn_reset ()] resets the text box to the default prompt for init_player_names *)
+(* [ipn_reset ()] resets the text box to the default prompt for
+ * init_player_names *)
 let ipn_reset () =
   clear_init_io_box ();
   Graphics.moveto 30 240;
@@ -223,8 +240,8 @@ let ipn_reset () =
   Graphics.moveto 30 210;
   Graphics.draw_string "> "
 
-(* [str_of_keyboard_events io_op info] is the string result of keyboard input for
- * a given io_op, and an optional [info] integer. *)
+(* [str_of_keyboard_events io_op info] is the string result of keyboard input
+ * for a given io_op, and an optional [info] integer. *)
 let rec str_of_keyboard_events io_op info =
   let h = match io_op with
     | `Init_num_players -> 210
@@ -247,9 +264,11 @@ let rec str_of_keyboard_events io_op info =
        let h' = remove_last_elt history in
        let w'' = List.fold_right
            (fun (c,w') acc ->
-              Graphics.moveto w' h; Graphics.draw_string (Char.escaped c); acc + w) h' (2*w) in
+              Graphics.moveto w' h;
+              Graphics.draw_string (Char.escaped c); acc + w) h' (2*w) in
        helper w'' h')
-    else if Char.code c < 26 || Char.code c > 126 || ((List.length history) * w > 320)then
+    else if Char.code c < 26 || Char.code c > 126 ||
+            ((List.length history) * w > 320)then
       helper w' history
     else
       (Graphics.moveto (30+w') h;
@@ -293,7 +312,8 @@ let rec init_num_humans total_num_players =
      init_num_humans total_num_players)
   else num_humans
 
-(* [init_ai_diff num_ai] is a list of difficulties for a number [num_ai] of AIs *)
+(* [init_ai_diff num_ai] is a list of difficulties for a number
+ * [num_ai] of AIs *)
 let rec init_ai_diff num_ai =
   iad_reset num_ai;
   let s = str_of_keyboard_events `Init_ai_diff num_ai in
@@ -316,7 +336,8 @@ let rec init_ai_diff num_ai =
         | "hard" -> Hard :: helper t
         | _ -> (reset ();
                 Graphics.moveto 30 240;
-                Graphics.draw_string "Invalid difficulty entry, press any key to continue";
+                Graphics.draw_string
+                  "Invalid difficulty entry, press any key to continue";
                 let _ = Graphics.wait_next_event [Graphics.Key_pressed] in
                 failwith "") in
     try helper ai_diff_lst with Failure _ -> init_ai_diff num_ai
@@ -327,18 +348,22 @@ let rec init_player_names num_players =
     begin
       ipn_reset ();
       let player_names_str = str_of_keyboard_events `Init_player_names (-1) in
-      let player_name_lst = player_names_str |> Str.split (Str.regexp "[ \t]+") in
+      let player_name_lst =
+        player_names_str |> Str.split (Str.regexp "[ \t]+") in
       if List.length player_name_lst <> num_players then
         (reset ();
          Graphics.moveto 30 240;
-         Graphics.draw_string "Invalid number of names, press any key to continue";
+         Graphics.draw_string
+           "Invalid number of names, press any key to continue";
          let _ = Graphics.wait_next_event [Graphics.Key_pressed] in
          init_player_names num_players)
       else
-      if List.length (List.sort_uniq Pervasives.compare player_name_lst) <> List.length player_name_lst then
+      if List.length (List.sort_uniq Pervasives.compare player_name_lst) <>
+         List.length player_name_lst then
         (reset ();
          Graphics.moveto 30 240;
-         Graphics.draw_string "Player names must be unique, press any key to continue";
+         Graphics.draw_string
+           "Player names must be unique, press any key to continue";
          let _ = Graphics.wait_next_event [Graphics.Key_pressed] in
          init_player_names num_players)
       else

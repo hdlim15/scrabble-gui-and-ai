@@ -153,7 +153,8 @@ let init_players init_data =
   let num_humans = init_data.num_humans in
   let human_players = gen_human_players 1 init_data.human_names in
   let ai_players =
-    gen_ai_players num_players (num_players - num_humans) init_data.ai_difficulty in
+    gen_ai_players num_players (num_players - num_humans)
+      init_data.ai_difficulty in
   human_players @ ai_players
 
 (* [update_rack_and_bag chars_from_rack rack bag] adds letters from [bag] to
@@ -161,7 +162,8 @@ let init_players init_data =
  * returns: a pair with the updated [rack] and [bag]. *)
 let update_rack_and_bag chars_from_rack rack bag =
   let rack' =
-    List.fold_left (fun acc c -> List.remove_assoc c acc) rack chars_from_rack in
+    List.fold_left
+      (fun acc c -> List.remove_assoc c acc) rack chars_from_rack in
   let rec update_rack r b =
     if List.length r = 7 || List.length b = 0 then
       (r, b)
@@ -179,16 +181,18 @@ let update_rack_and_bag chars_from_rack rack bag =
   in
   update_rack rack' bag
 
-(* [update_players current_player rack players new_points] is the updated players
- * list with [current_player] getting [new_points] added to their score, and [rack]
- * assigned as their rack field. *)
+(* [update_players current_player rack players new_points] is the updated
+ * players list with [current_player] getting [new_points] added to their score,
+ * and [rack] assigned as their rack field. *)
 let update_players current_player rack players new_points =
   let updated_player =
-    {current_player with rack = rack; score = current_player.score + new_points} in
-  (List.filter (fun p -> p.name <> updated_player.name) players) @ [updated_player]
+    {current_player with rack = rack;
+                         score = current_player.score + new_points} in
+  (List.filter
+     (fun p -> p.name <> updated_player.name) players) @ [updated_player]
 
-(* [init_racks players st] is the updated state with players having been assigned
- * initial racks *)
+(* [init_racks players st] is the updated state with players having been
+ * assigned initial racks *)
 let rec init_racks players st =
   match players with
   | [] -> st
@@ -376,7 +380,9 @@ let get_adjacent_word c st is_h new_coords =
         adjacent_helper t (new_string, points, word_multiplier)
     in
     let word_triple = adjacent_helper word_cells ("", 0, 1) in
-    Some (fst_triple word_triple, (snd_triple word_triple) * (trd_triple word_triple), trd_triple word_triple)
+    Some (fst_triple word_triple,
+          (snd_triple word_triple) * (trd_triple word_triple),
+          trd_triple word_triple)
   else
     None
 
@@ -411,7 +417,8 @@ let place_horizontal mv st =
             else (* cell letter needs to be updated *)
               let letter_char = List.nth mv.word (count - (snd mv.mv_coord)) in
               let letter_points = get_points letter_char in
-              {cell with letter = (letter_char, letter_points)} :: helper' t (count+1)
+              {cell with letter =
+                           (letter_char, letter_points)} :: helper' t (count+1)
         in helper' row 0 :: helper t (count+1)
   in helper st.board 0
 
@@ -456,8 +463,9 @@ let check_bounds mv st =
   if mv.is_horizontal then (snd mv.mv_coord) + String.length word <= 15
   else (fst mv.mv_coord) + String.length word <= 15
 
-(* [check_endpoints mv st] is true if the cell to left/top and cell to right/bottom
- * (depending on if mv is horizontal or vertical) is either empty or nonexistant. *)
+(* [check_endpoints mv st] is true if the cell to left/top and cell to
+ * right/botto (depending on if mv is horizontal or vertical) is either empty
+ * or nonexistant. *)
 let check_endpoints mv st =
   let r = fst mv.mv_coord in
   let c = snd mv.mv_coord in
@@ -466,7 +474,8 @@ let check_endpoints mv st =
       try get_cell_from_coordinate (r, c - 1) st |> cell_is_empty
       with InvalidPlace _ -> true in
     let right_empty =
-      try get_cell_from_coordinate (r, c + (List.length mv.word)) st |> cell_is_empty
+      try get_cell_from_coordinate (r, c + (List.length mv.word)) st
+          |> cell_is_empty
       with InvalidPlace _ -> true in
     left_empty && right_empty
   else
@@ -474,12 +483,14 @@ let check_endpoints mv st =
       try get_cell_from_coordinate (r - 1, c) st |> cell_is_empty
       with InvalidPlace _ -> true in
     let bottom_empty =
-      try get_cell_from_coordinate (r + (List.length mv.word), c) st |> cell_is_empty
+      try get_cell_from_coordinate (r + (List.length mv.word), c) st
+          |> cell_is_empty
       with InvalidPlace _ -> true in
     top_empty && bottom_empty
 
-(* [check_fit_and_new_entries mv st] is the list of new chars and their respective
- * coordinates on the board, assuming mv.word doesn't violate the current board state.
+(* [check_fit_and_new_entries mv st] is the list of new chars and their
+ * respective coordinates on the board, assuming mv.word doesn't violate the
+ * current board state.
  * raises: InvalidPlace when mv.word violates current board state. *)
 let check_fit_and_new_entries mv st =
   if mv.is_horizontal then
@@ -496,10 +507,12 @@ let check_fit_and_new_entries mv st =
           (* pre-existing letter, not coming from player rack *)
           helper t (count+1) acc
         else
-        if fst cell.letter <> ' ' then raise (InvalidPlace "overlapping letters")
+        if fst cell.letter <> ' '
+        then raise (InvalidPlace "overlapping letters")
         else (* adding char from rack to this cell *)
           helper t (count+1)
-            ((List.nth mv.word (count - (snd mv.mv_coord)), (fst mv.mv_coord, count)) :: acc)
+            ((List.nth mv.word (count - (snd mv.mv_coord)),
+              (fst mv.mv_coord, count)) :: acc)
     in helper row 0 []
   else
     let col = get_column mv.mv_coord st in
@@ -515,10 +528,12 @@ let check_fit_and_new_entries mv st =
           (* pre-existing letter, not coming from player rack *)
           helper t (count+1) acc
         else
-        if fst cell.letter <> ' ' then raise (InvalidPlace "overlapping letters")
+        if fst cell.letter <> ' ' then
+          raise (InvalidPlace "overlapping letters")
         else (* adding char from rack to this cell *)
           helper t (count+1)
-            ((List.nth mv.word (count - (fst mv.mv_coord)), (count, snd mv.mv_coord)) :: acc)
+            ((List.nth mv.word (count - (fst mv.mv_coord)),
+              (count, snd mv.mv_coord)) :: acc)
     in
     helper col 0 []
 
@@ -530,7 +545,8 @@ let rec remove c lst =
   | h::t -> if h = c then t
     else h :: remove c t
 
-(* [check_rack rack new_board_chars] checks that new_board_chars is a subset of rack *)
+(* [check_rack rack new_board_chars] checks that new_board_chars
+ * is a subset of rack *)
 let check_rack rack new_board_chars =
   let board_chars = List.map (fun (c, coord) -> c) new_board_chars in
   let rack' = List.map (fun (c,p) -> c) rack in
@@ -589,16 +605,19 @@ let refresh_rack new_chars rack =
   fixed_rack @ fixed_chars
 
 (* [fix_score curr_player players rack'] is the list of players, with the current
- * player's ([curr_player]) score adjusted for any possible use of blank tiles *)
+ * player's ([curr_player]) score adjusted for any possible use
+ * of blank tiles *)
 let fix_score curr_player players rack' word_mult =
   let rec helper r =
     match r with
     | [] -> 0
-    | (c,0)::t -> if c <> '*' then (word_mult * get_points c) + (helper t) else helper t
+    | (c,0)::t ->
+      if c <> '*' then (word_mult * get_points c) + (helper t) else helper t
     | _::t -> helper t in
   let points_to_deduct = helper rack' in
   let p = List.hd (List.filter (fun p -> p.name = curr_player) players) in
-  {p with score = p.score - points_to_deduct} :: (List.filter (fun p -> p.name <> curr_player) players)
+  {p with score = p.score - points_to_deduct} ::
+  (List.filter (fun p -> p.name <> curr_player) players)
 
 (* [place w c is_h] places word segment [w] at coordinate [c] horizontally if
  * [is_h] is true and vertically if [is_h] is false.
@@ -606,8 +625,10 @@ let fix_score curr_player players rack' word_mult =
 let rec place mv st =
   let word = List.fold_right (fun c acc -> (Char.escaped c)^acc) mv.word "" in
   if not (check_word word st) then raise (InvalidPlace "invalid word")
-  else if not (check_bounds mv st) then raise (InvalidPlace "cannot place off board")
-  else if not (check_endpoints mv st) then raise (InvalidPlace "not complete word")
+  else if not (check_bounds mv st) then
+    raise (InvalidPlace "cannot place off board")
+  else if not (check_endpoints mv st) then
+    raise (InvalidPlace "not complete word")
   else
     (* check first-move-of-game condition *)
   if st.is_first_move then
@@ -628,14 +649,20 @@ let rec place mv st =
         let rack_bag = update_rack_and_bag mv.word rack' st.bag in
         let new_coords = List.map (fun (_,coord) -> coord) new_chars in
         let word_score_opt =
-          get_adjacent_word mv.mv_coord {st with board = board'} mv.is_horizontal new_coords in
-        let word_score = List.hd (get_values_from_opt_list [word_score_opt] []) in
+          get_adjacent_word mv.mv_coord {st with board = board'}
+            mv.is_horizontal new_coords in
+        let word_score =
+          List.hd (get_values_from_opt_list [word_score_opt] []) in
         let score' = (* score adjusted for bingo rule *)
-          if List.length new_chars = 7 then (snd_triple word_score + 50) else (snd_triple word_score) in
+          if List.length new_chars = 7 then
+            (snd_triple word_score + 50) else (snd_triple word_score) in
         let updated_players =
           update_players current_player (fst rack_bag) st.players score' in
-        let updated_players' = fix_score current_player.name updated_players rack' (trd_triple word_score) in
-        let next_player = get_next_player current_player.order_num updated_players' in
+        let updated_players' =
+          fix_score current_player.name updated_players rack'
+            (trd_triple word_score) in
+        let next_player =
+          get_next_player current_player.order_num updated_players' in
         {st with players = updated_players';
                  board = board';
                  current_player = next_player;
@@ -647,7 +674,8 @@ let rec place mv st =
     (* new_chars is an assoc list of character*coord *)
     let new_chars = check_fit_and_new_entries mv st in
     if not (check_rack st.current_player.rack new_chars) then
-      raise (InvalidPlace "letters not in rack")(* newly-placed chars not in player rack *)
+      (* newly-placed chars not in player rack *)
+      raise (InvalidPlace "letters not in rack")
     else
       (* assuming place is valid... *)
       let rack' = refresh_rack new_chars st.current_player.rack in
@@ -660,7 +688,8 @@ let rec place mv st =
       if List.length new_chars = List.length mv.word &&
          not (List.fold_left
                 (fun acc (_, c) ->
-                   (has_adj_new_chars c (not mv.is_horizontal) st_board) || acc) false new_chars) then
+                   (has_adj_new_chars c (not mv.is_horizontal) st_board) || acc)
+                false new_chars) then
         raise (InvalidPlace "not connected to board")
       else
         let word_score_opp_dir_opt =
@@ -673,14 +702,20 @@ let rec place mv st =
         let word_score_lst = get_values_from_opt_list word_score_lst_opt [] in
         let valid_words =
           List.fold_left (fun acc (s, i, wm) ->
-              (fst_triple acc && check_word s st, snd_triple acc + i, trd_triple acc * wm)) (true, 0, 1) word_score_lst in
+              (fst_triple acc &&
+               check_word s st, snd_triple acc + i, trd_triple acc * wm))
+            (true, 0, 1) word_score_lst in
         let score' = (* score adjusted for bingo rule *)
-          if List.length new_chars = 7 then (snd_triple valid_words + 50) else (snd_triple valid_words) in
+          if List.length new_chars = 7 then (snd_triple valid_words + 50)
+          else (snd_triple valid_words) in
         if fst_triple valid_words then
           let updated_players =
             update_players current_player (fst rack_bag) st.players score' in
-          let updated_players' = fix_score current_player.name updated_players rack' (trd_triple valid_words) in
-          let next_player = get_next_player current_player.order_num updated_players' in
+          let updated_players' =
+            fix_score current_player.name updated_players rack'
+              (trd_triple valid_words) in
+          let next_player =
+            get_next_player current_player.order_num updated_players' in
           {st_board with players = updated_players';
                          current_player = next_player;
                          bag = (snd rack_bag);
@@ -714,8 +749,9 @@ let swap lst st =
 
 (* [pass st] returns [st] with the sp_consec field incremented by 1. *)
 let pass st =
-  {st with current_player = get_next_player st.current_player.order_num st.players;
-           sp_consec = st.sp_consec + 1}
+  {st with current_player =
+             get_next_player st.current_player.order_num st.players;
+             sp_consec = st.sp_consec + 1}
 
 (* [check_word s] ensures that [s] only contains characters in the alphabet *)
 let check_word_chars s =

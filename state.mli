@@ -4,7 +4,8 @@ open Command
 (* [coordinate] represents the coordinate of a board cell *)
 type coordinate = int * int
 
-(* [letter] represents a scrabble letter as a char, with an associated score value. *)
+(* [letter] represents a scrabble letter as a char,
+ *  with an associated score value. *)
 type letter = (char * int)
 
 (* [cell] represents a cell of the board. *)
@@ -62,8 +63,8 @@ exception InvalidPlace of string
  * player's rack or there are not enough letters in the bag to do the swap. *)
 exception InvalidSwap
 
-(* [InvalidAdd] is raised if the word to be added to the custom dictionary contains
- * characters besides those in the alphabet *)
+(* [InvalidAdd] is raised if the word to be added to the custom dictionary
+ * contains characters besides those in the alphabet *)
 exception InvalidAdd
 
 val init_board : int -> board
@@ -120,7 +121,8 @@ val trd_triple : 'a * 'b * 'c -> 'c
  * adjacent word is searched for horizontally or vertically. None is returned if
  * [c] is empty or there are no adjacent characters to [c] in the direction
  * specified by [is_h]. *)
-val get_adjacent_word : coordinate -> state -> bool -> coordinate list -> (string*int*int) option
+val get_adjacent_word : coordinate -> state -> bool ->
+                       coordinate list -> (string*int*int) option
 
 (* [point_moves m] is the number of points earned by the move [m] *)
 (* val point_moves : Command.move -> int *)
@@ -132,12 +134,14 @@ val check_bounds : Command.move -> state -> bool
  * list of added words, otherwise returns false. *)
 val check_word : string -> state -> bool
 
-(* [check_endpoints mv st] is true if the cell to left/top and cell to right/bottom
- * (depending on if mv is horizontal or vertical) is either empty or nonexistant. *)
+(* [check_endpoints mv st] is true if the cell to left/top and cell to
+ * right/bottom (depending on if mv is horizontal or vertical) is either
+ * empty or nonexistant. *)
 val check_endpoints : Command.move -> state -> bool
 
-(* [check_fit_and_new_entries mv st] is the list of new chars and their respective
- * coordinates on the board, assuming mv.word doesn't violate the current board state.
+(* [check_fit_and_new_entries mv st] is the list of new chars and their
+ * respective coordinates on the board, assuming mv.word doesn't violate the
+ * current board state.
  * raises: InvalidPlace when mv.word violates current board state. *)
 val check_fit_and_new_entries :
   Command.move -> state -> (char * (int * int)) list
