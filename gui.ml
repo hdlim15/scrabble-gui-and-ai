@@ -573,107 +573,212 @@ let rec all_cells index =
 let get_idx_from_coord x =
   (x - 660) / 40
 
+(* [get_cell_from_pixel (x, y)] converts the gui board cooridnate for a cell
+ * to the coordinate required for making a move in state. *)
 let get_cell_from_pixel (x, y) =
   (14 - (y / 40), x / 40)
 
+(* [sort_horizontal ((_,y1),_) ((_,y2),_)] is used for sorting pairs of cells
+ * and corresponding letters when the tiles are placed in the horizontal
+ * direction.
+ *)
 let sort_horizontal ((_,y1),_) ((_,y2),_) =
   if y1 < y2 then -1
   else if y1 > y2 then 1
   else 0
 
+(* [sort_horizontal ((_,y1),_) ((_,y2),_)] is used for sorting pairs of cells
+ * and corresponding letters when the tiles are placed in the vertical
+ * direction.
+ *)
 let sort_vertical ((x1,_),_) ((x2,_),_) =
   if x1 < x2 then -1
   else if x1 > x2 then 1
   else 0
 
-let get_input lst st =
-  if List.length lst = 0 then raise (GuiExn "no letters were placed")
-    else if List.length lst > 1 then
-      if fst (fst (List.nth lst 0)) <> fst (fst (List.nth lst 1)) (* vertical*)
-      then
-        let first_click = snd (fst (List.nth lst 0)) in
-        let enforce_same_column =
-        List.fold_left
-          (fun acc x ->
-             (acc && (first_click = snd (fst x)))
-          ) true (List.tl lst) in
-      if enforce_same_column then
-        let update_cells = List.sort sort_vertical lst in
-        let leftmost_input = List.nth update_cells 0 in
-        let leftmost_cell = get_cell_from_coordinate (fst leftmost_input) st in
-        let first_cell =
-        match up_cell (leftmost_cell) with
-        | None -> fst leftmost_input
-        | Some c' ->
-          let cell' = get_cell_from_coordinate c' st in
-          match get_adjacent_word c' st false [] with
-          | None ->
-            if not ( cell_is_empty cell') then
-              fst (fst leftmost_input) - 1, snd (fst leftmost_input)
-            else fst leftmost_input
-          | Some (str,_,_) ->
-            fst (fst leftmost_input) - String.length str,
-            snd (fst leftmost_input)  in
-        let rightmost_input =
-          List.nth update_cells ((List.length update_cells) - 1) in
-        let rightmost_cell =
-          get_cell_from_coordinate (fst rightmost_input) st in
-        let last_cell =
-          match down_cell (rightmost_cell) with
-        | None -> fst rightmost_input
-        | Some c' ->
-          let cell' = get_cell_from_coordinate c' st in
-          match get_adjacent_word c' st false [] with
-          | None ->
-            if not ( cell_is_empty cell') then
-              fst (fst rightmost_input) + 1, snd (fst rightmost_input)
-            else fst rightmost_input
-          | Some (str,_,_) ->
-            fst (fst rightmost_input) + String.length str,
-            snd (fst rightmost_input) in
-        let col = get_column (fst leftmost_input) st
-                  |> List.filter (fun c' ->
-                      fst (c'.cell_coord) >= fst (first_cell) &&
-                      fst (c'.cell_coord) <= fst (last_cell) ) in
-        let added_str =
-          List.fold_left
-            (fun acc x ->
-               let coord = x.cell_coord in
-               if not (cell_is_empty x) then
-               match List.assoc_opt (coord) update_cells with
-                 | None -> (fst (x.letter) |> Char.escaped) ^ acc
-                 | Some _ ->
-                   raise (GuiExn "cannot place new tiles on top of existing tiles")
-               else match List.assoc_opt (coord) update_cells with
-                 | None -> " "
-                 | Some letter -> (Char.escaped letter) ^ acc
-            ) "" col |> reverse_str in
-        let cell = get_cell_from_coordinate (fst leftmost_input) st in
-        match up_cell cell with
-        | None -> (fst leftmost_input), added_str, false
-        | Some c' ->
-          let cell' = get_cell_from_coordinate c' st in
-          if cell_is_empty cell' then (fst leftmost_input), added_str, false
-          else
-            match get_adjacent_word c' st false [] with
+(* [get_input_one_tile lst st] converts the coordinate-letter pair in lst
+ * to a triple which is used for conversion into a move type in state [st].
+ * requires: [lst] is of length 1
+ *)
+let get_input_one_tile lst st =
+  let letter = snd (List.nth lst 0) |> Char.escaped in
+  let coord = fst (List.nth lst 0) in
+  let cell = get_cell_from_coordinate coord st in
+  let all_words = get_all_adj_words (cell) st in
+  match (left_cell cell, up_cell cell) with
+  | Some c', None ->
+    let cell' = get_cell_from_coordinate c' st in
+    if cell_is_empty cell' then
+      if List.nth all_words 1 <> "" then
+        coord, letter ^ (List.nth all_words 1), true
+      else coord, letter ^ (List.nth all_words 3), false
+    else
+      begin
+      match get_adjacent_word c' st true [] with
+      | None ->
+        let letter' = fst cell'.letter |> Char.escaped in
+        c', letter' ^ letter ^ (List.nth all_words 1), true
+      | Some (str,_,_) ->
+        let new_cell = fst c', (snd c') + 1 - String.length str in
+        new_cell, str ^ letter ^ (List.nth all_words 1), true
+    end
+  | None, Some c' ->
+    let cell' = get_cell_from_coordinate c' st in
+    if cell_is_empty cell' then
+      if List.nth all_words 1 <> "" then
+        coord, letter ^ (List.nth all_words 1), true
+      else coord, letter ^ (List.nth all_words 3), false
+    else
+      begin
+        match get_adjacent_word c' st false [] with
+        | None ->
+          let letter' = fst cell'.letter |> Char.escaped in
+          c', letter' ^ letter ^ (List.nth all_words 3), false
+        | Some (str,_,_) ->
+          let new_cell = fst c' + 1 - String.length str, snd c' in
+          new_cell, str ^ letter ^ (List.nth all_words 3), false
+      end
+  | Some c', Some c'' ->
+    let cell' = get_cell_from_coordinate c' st in
+    let cell'' = get_cell_from_coordinate c'' st in
+    if cell_is_empty cell' then
+      if List.nth all_words 1 <> "" then
+        coord, letter ^ (List.nth all_words 1), true
+      else
+        if cell_is_empty cell'' then
+          coord, letter ^ (List.nth all_words 3), false
+        else
+          begin
+            match get_adjacent_word c'' st false [] with
             | None ->
-              c', added_str, false
+              let letter' = fst cell''.letter |> Char.escaped in
+              c'', letter' ^ letter ^ (List.nth all_words 3), false
             | Some (str,_,_) ->
-              let new_cell = fst c' + 1 - String.length str , (snd c') in
-              new_cell, added_str, false
-      else raise (GuiExn "tiles were not placed on same row/column")
-      else (* horizontal*)
-      let first_click = fst (fst (List.nth lst 0)) in
-      let enforce_same_row =
-        List.fold_left
-          (fun acc x ->
-             (acc && (first_click = fst (fst x)))
-          ) true (List.tl lst) in
-      if enforce_same_row then
-      let update_cells = List.sort sort_horizontal lst in
-      let leftmost_input = List.nth update_cells 0 in
-      let leftmost_cell = get_cell_from_coordinate (fst leftmost_input) st in
-      let first_cell =
+              let new_cell = fst c'' + 1 - String.length str, (snd c'') in
+              new_cell, str ^ letter ^ (List.nth all_words 3), false
+          end
+    else
+      begin
+        match get_adjacent_word c' st true [] with
+        | None ->
+          let letter' = fst cell'.letter |> Char.escaped in
+          c', letter' ^ letter ^ (List.nth all_words 1), true
+        | Some (str,_,_) ->
+          let new_cell = fst c', (snd c') + 1 - String.length str in
+          new_cell, str ^ letter ^ (List.nth all_words 1), true
+      end
+  | None, None ->
+    if (List.nth all_words 1) <> "" then
+      coord, letter ^ (List.nth all_words 1), true
+    else coord, letter ^ (List.nth all_words 3), false
+
+(* [get_input_vertical lst st] converts the cell-letter pairs in lst
+ * to a triple which is used for conversion into a move type in state [st,
+ * where the move is in the vertical direction.
+ * requires: [lst] is of length more than 1
+ * raises:
+ * - [GuiExn "cannot place new tiles on top of existing tiles"] if any of the
+ * coordinate-letter pairs in [lst] has a coordinate that is the same
+ * as any of the already existing tile coordinates in [st]
+ * -  [GuiExn "tiles were not placed on same row/column"] if all the coordinates
+ * in [lst] do not have the same y-coordinate.
+ *)
+let get_input_vertical lst st =
+  let first_click = snd (fst (List.nth lst 0)) in
+  let enforce_same_column =
+    List.fold_left
+      (fun acc x ->
+         (acc && (first_click = snd (fst x)))
+      ) true (List.tl lst) in
+  if enforce_same_column then
+    let update_cells = List.sort sort_vertical lst in
+    let leftmost_input = List.nth update_cells 0 in
+    let leftmost_cell = get_cell_from_coordinate (fst leftmost_input) st in
+    let first_cell =
+      match up_cell (leftmost_cell) with
+      | None -> fst leftmost_input
+      | Some c' ->
+        let cell' = get_cell_from_coordinate c' st in
+        match get_adjacent_word c' st false [] with
+        | None ->
+          if not ( cell_is_empty cell') then
+            fst (fst leftmost_input) - 1, snd (fst leftmost_input)
+          else fst leftmost_input
+        | Some (str,_,_) ->
+          fst (fst leftmost_input) - String.length str,
+          snd (fst leftmost_input)  in
+    let rightmost_input =
+      List.nth update_cells ((List.length update_cells) - 1) in
+    let rightmost_cell =
+      get_cell_from_coordinate (fst rightmost_input) st in
+    let last_cell =
+      match down_cell (rightmost_cell) with
+      | None -> fst rightmost_input
+      | Some c' ->
+        let cell' = get_cell_from_coordinate c' st in
+        match get_adjacent_word c' st false [] with
+        | None ->
+          if not ( cell_is_empty cell') then
+            fst (fst rightmost_input) + 1, snd (fst rightmost_input)
+          else fst rightmost_input
+        | Some (str,_,_) ->
+          fst (fst rightmost_input) + String.length str,
+          snd (fst rightmost_input) in
+    let col = get_column (fst leftmost_input) st
+              |> List.filter (fun c' ->
+                  fst (c'.cell_coord) >= fst (first_cell) &&
+                  fst (c'.cell_coord) <= fst (last_cell) ) in
+    let added_str =
+      List.fold_left
+        (fun acc x ->
+           let coord = x.cell_coord in
+           if not (cell_is_empty x) then
+             match List.assoc_opt (coord) update_cells with
+             | None -> (fst (x.letter) |> Char.escaped) ^ acc
+             | Some _ ->
+               raise (GuiExn "cannot place new tiles on top of existing tiles")
+           else match List.assoc_opt (coord) update_cells with
+             | None -> " "
+             | Some letter -> (Char.escaped letter) ^ acc
+        ) "" col |> reverse_str in
+    let cell = get_cell_from_coordinate (fst leftmost_input) st in
+    match up_cell cell with
+    | None -> (fst leftmost_input), added_str, false
+    | Some c' ->
+      let cell' = get_cell_from_coordinate c' st in
+      if cell_is_empty cell' then (fst leftmost_input), added_str, false
+      else
+        match get_adjacent_word c' st false [] with
+        | None ->
+          c', added_str, false
+        | Some (str,_,_) ->
+          let new_cell = fst c' + 1 - String.length str , (snd c') in
+          new_cell, added_str, false
+  else raise (GuiExn "tiles were not placed on same row/column")
+
+(* [get_input_horizontal lst st] converts the cell-letter pairs in lst
+ * to a triple which is used for conversion into a move type in state [st,
+ * where the move is in the horizontal direction.
+ * requires: [lst] is of length more than 1
+ * raises:
+ * - [GuiExn "cannot place new tiles on top of existing tiles"] if any of the
+ * coordinate-letter pairs in [lst] has a coordinate that is the same
+ * as any of the already existing tile coordinates in [st]
+ * -  [GuiExn "tiles were not placed on same row/column"] if all the coordinates
+ * in [lst] do not have the same x-coordinate.
+ *)
+let get_input_horizontal lst st =
+  let first_click = fst (fst (List.nth lst 0)) in
+  let enforce_same_row =
+    List.fold_left
+      (fun acc x ->
+         (acc && (first_click = fst (fst x)))
+      ) true (List.tl lst) in
+  if enforce_same_row then
+    let update_cells = List.sort sort_horizontal lst in
+    let leftmost_input = List.nth update_cells 0 in
+    let leftmost_cell = get_cell_from_coordinate (fst leftmost_input) st in
+    let first_cell =
       match left_cell (leftmost_cell) with
       | None -> fst leftmost_input
       | Some c' ->
@@ -686,10 +791,10 @@ let get_input lst st =
         | Some (str,_,_) ->
           fst (fst leftmost_input),
           snd (fst leftmost_input) - String.length str in
-      let rightmost_input =
-        List.nth update_cells ((List.length update_cells) - 1) in
-      let rightmost_cell = get_cell_from_coordinate (fst rightmost_input) st in
-      let last_cell =
+    let rightmost_input =
+      List.nth update_cells ((List.length update_cells) - 1) in
+    let rightmost_cell = get_cell_from_coordinate (fst rightmost_input) st in
+    let last_cell =
       match right_cell (rightmost_cell) with
       | None -> fst rightmost_input
       | Some c' ->
@@ -702,108 +807,69 @@ let get_input lst st =
         | Some (str,_,_) ->
           fst (fst rightmost_input),
           snd (fst rightmost_input) + String.length str in
-      let row = get_row (fst leftmost_input) st
-                |> List.filter (fun c' ->
-                    snd (c'.cell_coord) >= snd (first_cell) &&
-                    snd (c'.cell_coord) <= snd (last_cell) ) in
-      let added_str =
-        List.fold_left
-          (fun acc x ->
-             let coord = x.cell_coord in
-             if not (cell_is_empty x) then
-               match List.assoc_opt (coord) update_cells with
-               | None -> (fst (x.letter) |> Char.escaped) ^ acc
-               | Some _ ->
-                 raise (GuiExn "cannot place new tiles on top of existing tiles")
-             else match List.assoc_opt (coord) update_cells with
-               | None -> " "
-               | Some letter -> (Char.escaped letter) ^ acc
-          ) "" row  |> reverse_str in
-      let cell = get_cell_from_coordinate (fst leftmost_input) st in
-      match left_cell cell with
-      | None -> (fst leftmost_input), added_str, true
-      | Some c' ->
-        let cell' = get_cell_from_coordinate c' st in
-        if cell_is_empty cell' then (fst leftmost_input), added_str, true
-        else
-          match get_adjacent_word c' st true [] with
-          | None -> c', added_str, true
-          | Some (str,_,_) ->
-            let new_cell = fst c', (snd c') + 1 - String.length str in
-            new_cell, added_str, true
-      else raise (GuiExn "tiles were not placed on same row/column")
-    else (* only 1 tile added *)
-      let letter = snd (List.nth lst 0) |> Char.escaped in
-      let coord = fst (List.nth lst 0) in
-      let cell = get_cell_from_coordinate coord st in
-      let all_words = get_all_adj_words (cell) st in
-      match (left_cell cell, up_cell cell) with
-      | Some c', None ->
-        let cell' = get_cell_from_coordinate c' st in
-        if cell_is_empty cell' then
-          if List.nth all_words 1 <> "" then
-            coord, letter ^ (List.nth all_words 1), true
-          else coord, letter ^ (List.nth all_words 3), false
-        else
-          begin
-          match get_adjacent_word c' st true [] with
-          | None ->
-            let letter' = fst cell'.letter |> Char.escaped in
-            c', letter' ^ letter ^ (List.nth all_words 1), true
-          | Some (str,_,_) ->
-            let new_cell = fst c', (snd c') + 1 - String.length str in
-            new_cell, str ^ letter ^ (List.nth all_words 1), true
-        end
-      | None, Some c' ->
-        let cell' = get_cell_from_coordinate c' st in
-        if cell_is_empty cell' then
-          if List.nth all_words 1 <> "" then
-            coord, letter ^ (List.nth all_words 1), true
-          else coord, letter ^ (List.nth all_words 3), false
-        else
-          begin
-            match get_adjacent_word c' st false [] with
-            | None ->
-              let letter' = fst cell'.letter |> Char.escaped in
-              c', letter' ^ letter ^ (List.nth all_words 3), false
-            | Some (str,_,_) ->
-              let new_cell = fst c' + 1 - String.length str, snd c' in
-              new_cell, str ^ letter ^ (List.nth all_words 3), false
-          end
-      | Some c', Some c'' ->
-        let cell' = get_cell_from_coordinate c' st in
-        let cell'' = get_cell_from_coordinate c'' st in
-        if cell_is_empty cell' then
-          if List.nth all_words 1 <> "" then
-            coord, letter ^ (List.nth all_words 1), true
-          else
-            if cell_is_empty cell'' then
-              coord, letter ^ (List.nth all_words 3), false
-            else
-              begin
-                match get_adjacent_word c'' st false [] with
-                | None ->
-                  let letter' = fst cell''.letter |> Char.escaped in
-                  c'', letter' ^ letter ^ (List.nth all_words 3), false
-                | Some (str,_,_) ->
-                  let new_cell = fst c'' + 1 - String.length str, (snd c'') in
-                  new_cell, str ^ letter ^ (List.nth all_words 3), false
-              end
-        else
-          begin
-            match get_adjacent_word c' st true [] with
-            | None ->
-              let letter' = fst cell'.letter |> Char.escaped in
-              c', letter' ^ letter ^ (List.nth all_words 1), true
-            | Some (str,_,_) ->
-              let new_cell = fst c', (snd c') + 1 - String.length str in
-              new_cell, str ^ letter ^ (List.nth all_words 1), true
-          end
-      | None, None ->
-        if (List.nth all_words 1) <> "" then
-          coord, letter ^ (List.nth all_words 1), true
-        else coord, letter ^ (List.nth all_words 3), false
+    let row = get_row (fst leftmost_input) st
+              |> List.filter (fun c' ->
+                  snd (c'.cell_coord) >= snd (first_cell) &&
+                  snd (c'.cell_coord) <= snd (last_cell) ) in
+    let added_str =
+      List.fold_left
+        (fun acc x ->
+           let coord = x.cell_coord in
+           if not (cell_is_empty x) then
+             match List.assoc_opt (coord) update_cells with
+             | None -> (fst (x.letter) |> Char.escaped) ^ acc
+             | Some _ ->
+               raise (GuiExn "cannot place new tiles on top of existing tiles")
+           else match List.assoc_opt (coord) update_cells with
+             | None -> " "
+             | Some letter -> (Char.escaped letter) ^ acc
+        ) "" row  |> reverse_str in
+    let cell = get_cell_from_coordinate (fst leftmost_input) st in
+    match left_cell cell with
+    | None -> (fst leftmost_input), added_str, true
+    | Some c' ->
+      let cell' = get_cell_from_coordinate c' st in
+      if cell_is_empty cell' then (fst leftmost_input), added_str, true
+      else
+        match get_adjacent_word c' st true [] with
+        | None -> c', added_str, true
+        | Some (str,_,_) ->
+          let new_cell = fst c', (snd c') + 1 - String.length str in
+          new_cell, added_str, true
+  else raise (GuiExn "tiles were not placed on same row/column")
 
+(* [get_input lst st] converts the cell-letter pair(s) in lst
+ * to a triple which is used for conversion into a move type in state [st].
+ * requires: [lst] is of length more than 0
+ * raises:
+ * - [GuiExn "cannot place new tiles on top of existing tiles"] if any of the
+ * coordinate-letter pairs in [lst] has a coordinate that is the same
+ * as any of the already existing tile coordinates in [st]
+ * -  [GuiExn "tiles were not placed on same row/column"] if all the coordinates
+ * in [lst] do not have the same y-coordinate.
+ * - [GuiExn "no letters were placed"] if length of [lst] is 0.
+ *)
+let get_input lst st =
+  if List.length lst = 0 then raise (GuiExn "no letters were placed")
+  else if List.length lst > 1 then
+    if fst (fst (List.nth lst 0)) <> fst (fst (List.nth lst 1)) (* vertical*)
+    then get_input_vertical lst st
+    else (* horizontal*)
+    get_input_horizontal lst st
+  else (* only 1 tile added *)
+    get_input_one_tile lst st
+
+(* [convert_to_move lst st] converts the cell-letter pair(s) in lst
+ * a 'move' type in state [st].
+ * requires: [lst] is of length more than 0
+ * raises:
+ * - [GuiExn "cannot place new tiles on top of existing tiles"] if any of the
+ * coordinate-letter pairs in [lst] has a coordinate that is the same
+ * as any of the already existing tile coordinates in [st]
+ * -  [GuiExn "tiles were not placed on same row/column"] if all the coordinates
+ * in [lst] do not have the same y-coordinate.
+ * - [GuiExn "no letters were placed"] if length of [lst] is 0.
+*)
 let convert_to_move lst st =
   try
     let mv = get_input lst st in
@@ -811,11 +877,6 @@ let convert_to_move lst st =
       word = snd_triple mv |> explode; mv_coord = fst_triple mv;
       is_horizontal = trd_triple mv
     }
-    (* print_endline
-      (string_of_int(fst convert.mv_coord) ^ "," ^ string_of_int(snd convert.mv_coord) ^ " " ^
-        string_of_bool(convert.is_horizontal) ^ " " ^
-       List.fold_right
-         (fun x acc -> (Char.escaped x) ^ acc)  convert.word ""); *)
   with Failure f -> raise (GuiExn f)
 
 (* [refresh_cell c b] is an updated board with a specified cell coordinate's data
@@ -857,6 +918,9 @@ let addword_reset st =
   moveto 625 260;
   Graphics.draw_string "> "
 
+(* [blank_tile_reset st] redraws the window to deal with the case a blank tile
+ * was clicked and the user was prompted to type the preferred letter for the
+ * blank during keyboard entry in str_of_keyboard_events *)
 let blank_tile_reset st =
   erase_io_box ();
   moveto 625 290;
