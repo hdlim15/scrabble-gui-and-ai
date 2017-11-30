@@ -552,6 +552,7 @@ let get_start_cell anchor word dir =
  * for playing the concerned word in [word_lst] in the forward
  * direction, and the second element is similar except it is for
  * words to be played in the revrese direction, in state [st].
+ * The moves are for the first move of the game.
  *)
 let get_all_first_move_start_cells anchor word_lst st =
   let left =
@@ -653,6 +654,10 @@ let get_all_start_cells anchor word_lst st =
 let update_all_anchor_pairs anchor_pair_lst st =
   List.map (fun x -> get_all_start_cells (fst x) (snd x) st) anchor_pair_lst
 
+(* [parallel_start_cells_forward anchor lst] returns the list of all
+ * corrected starting cells for the moves in [lst]
+ * for an anchor cell [anchor] in the forward direction.
+ *)
 let parallel_start_cells_forward anchor lst =
   (List.fold_left
      (fun accu elm ->
@@ -664,6 +669,10 @@ let parallel_start_cells_forward anchor lst =
            ) [] (fst elm))::accu
      ) [] lst) |> List.flatten
 
+(* [parallel_start_cells_backward anchor lst dir] returns the list of all
+ * corrected starting cells for the moves in [lst]
+ * for an anchor cell [anchor] in the direction given by [dir].
+ *)
 let parallel_start_cells_backward anchor lst dir =
   (List.fold_left
      (fun accu elm ->
@@ -675,7 +684,15 @@ let parallel_start_cells_backward anchor lst dir =
            ) [] (fst elm))::accu
      ) [] lst) |> List.flatten
 
-let get_all_more_start_cells anchor word_lst st =
+(* [get_all_parallel_start_cells anchor word_lst st] returns a list of length 2,
+ * where the first element is a list of all updated starting cells for the moves
+ * given by an anchor cell [anchor] and [word_lst], which is the list
+ * of all words, in the forward direction; and the second element is similar
+ * except that it is for moves in the reverse direction.
+ * requires: the moves in [word_lst] are in the parallel direction
+ * to existing tiles.
+ *)
+let get_all_parallel_start_cells anchor word_lst st =
   let left_down =
     match List.nth word_lst 0 with
     | None -> []
@@ -711,10 +728,21 @@ let get_all_more_start_cells anchor word_lst st =
   [up_left @ up_right @ down_right @ down_left;
    left_up @ left_down @ right_up @ right_down]
 
-let update_all_more_anchor_pairs anchor_pair_lst st =
+(* update_all_parallel_anchor_pairs anchor_pair_lst st] returns the list of all
+ * moves after correcting the starting cells for each anchor-word pair
+ * in [anchor_pair_lst] in state [st].
+ * requires: the moves in [anchor_pair_lst] are in the parallel direction
+ * to existing tiles.
+ *)
+let update_all_parallel_anchor_pairs anchor_pair_lst st =
   List.map (fun x ->
-      get_all_more_start_cells (fst x) (snd x) st) anchor_pair_lst
+      get_all_parallel_start_cells (fst x) (snd x) st) anchor_pair_lst
 
+(* [get_points mv st] returns the points earned
+ * if [mv] were to played in [st].
+ * requires: the first move of the game in [st] has already been played.
+ * raises: [InvalidPlace] if the move is invalid in state [st].
+ *)
 let get_points mv st =
   let word = List.fold_right (fun c acc -> (Char.escaped c)^acc) mv.word "" in
   if not (is_word f_dict word) then raise (InvalidPlace "invalid word")
@@ -755,6 +783,11 @@ let get_points mv st =
       else
         raise (InvalidPlace "invalid newly-formed word")
 
+(* [get_points mv st] returns the points earned
+ * if [mv] were to played in [st].
+ * requires: the first move of the game in [st] is yet to be played.
+ * raises: [InvalidPlace] if the move is invalid in state [st].
+ *)
 let get_first_move_points mv st =
     let board' = update_board mv st in
     let row7 = List.nth board' 7 in
@@ -774,11 +807,18 @@ let get_first_move_points mv st =
         else (snd_triple word_score) in
       score'
 
+(* [generate_move cell str dir] generates a 'move' type using [cell],
+ * [str] and [dir].
+ * requires: [cell] is the starting cell of the move
+ *)
 let generate_move cell str dir =
   match dir with
   | Left | Right -> {word = explode str; mv_coord = cell; is_horizontal = true;}
   | Up | Down -> {word = explode str; mv_coord = cell; is_horizontal = false;}
 
+(* [generate_moves_for_anchor move_lst] generates a 'move' type for each
+ * potential move in [move_lst].
+ *)
 let generate_moves_for_anchor move_lst =
   let left_right =
     List.fold_left
@@ -792,15 +832,29 @@ let generate_moves_for_anchor move_lst =
       ) [] (List.nth move_lst 1) in
   left_right @ up_down
 
+(* [generate_all_moves all_moves] generates a 'move' type for each
+ * potential move in [all_moves].
+ *)
 let generate_all_moves all_moves =
   List.fold_left
     (fun acc x -> (generate_moves_for_anchor x)::acc) [] all_moves
   |> List.flatten
 
+(* [do_swap rack st] swaps the first letter in [rack] if the bag in [st]
+ * isn't empty, otherwise passes the turn.
+ *)
 let do_swap rack st =
   if List.length (st.bag) <> 0 then Swap [List.hd rack]
   else Pass
 
+(* [pick_best_move rack st moves] returns the move with the highest points
+ * out of all the moves in [moves], given [rack] and [st].
+ * If more than one move have the same number of points, and that
+ * number is the highest number of points, then the move in [moves] that
+ * comes earlier in [moves] will be picked out of the subset of [moves]
+ * that have the same number of points.
+ * requires: the first move of the game in [st] has already been played.
+ *)
 let pick_best_move rack st moves =
   match moves with
   | [] -> do_swap rack st
@@ -817,6 +871,10 @@ let pick_best_move rack st moves =
   if ( (snd best_move) = -1) then do_swap rack st
   else PlaceWord (fst best_move)
 
+(* [pick_worst_move rack st moves] returns the first valid move
+ * out of all the moves in [moves], given [rack] and [st].
+ * requires: the first move of the game in [st] has already been played.
+ *)
 let pick_worst_move rack st moves =
   match moves with
   | [] -> do_swap rack st
@@ -827,13 +885,20 @@ let pick_worst_move rack st moves =
           try
             let new_points = get_points x st in
             x, new_points
-            (* if new_points < snd acc then x, new_points else acc *)
           with
             _ -> acc
       ) ({word = [];mv_coord = (0,0);is_horizontal = false}, 10000) moves in
     if ( (snd best_move)= 10000) then do_swap rack st
     else PlaceWord (fst best_move)
 
+(* [best_first_move moves rack st] returns the move with the highest points
+ * out of all the moves in [moves], given [rack] and [st].
+ * If more than one move have the same number of points, and that
+ * number is the highest number of points, then the move in [moves] that
+ * comes earlier in [moves] will be picked out of the subset of [moves]
+ * that have the same number of points.
+ * requires: the first move of the game in [st] is yet to be played.
+ *)
 let best_first_move moves rack st =
   match moves with
   | [] -> do_swap rack st
@@ -850,9 +915,16 @@ let best_first_move moves rack st =
     if ( (snd best_move) = -1000) then do_swap rack st
     else PlaceWord (fst best_move)
 
+(* [get_letters_rack rack] returns the list of all characters in [rack]
+ * without the associated points of each letter.
+ *)
 let get_letters_rack rack =
   List.map(fun (letter,_) -> letter) rack
 
+(* [first_move st is_hard] returns a choice for the first move of the game
+ * in [st]. If [is_hard] is true, then the bigger dictionary is used;
+ * otherwise the smaller dictionary is used.
+ *)
 let first_move st is_hard =
   let letters_rack = st.current_player.rack |> get_letters_rack in
   let anchor = get_cell_from_coordinate (7,8) st in
@@ -861,7 +933,14 @@ let first_move st is_hard =
   let moves = generate_all_moves updated_anchors in
   best_first_move moves letters_rack st
 
-let best_move_helper st is_hard =
+(* [pick_move_helper st is_hard] returns a list of all potential moves
+ * calculated by the AI in state [st].
+ * The moves are not necessarily valid, they are checked later in
+ * [get_hint] or [best_move].
+ * If [is_hard] is true, the  bigger dictionary is used; otherwise the f
+ * smaller dictionary is used.
+ *)
+let pick_move_helper st is_hard =
   let letters_rack = st.current_player.rack |> get_letters_rack in
   let all_cells = get_all_cells st in
   let empty_cells = get_empty_cells all_cells in
@@ -871,7 +950,7 @@ let best_move_helper st is_hard =
   let parallel_moves = all_parallel_moves anchor_pairs st is_hard  in
   let updated_anchors = update_all_anchor_pairs anchor_moves st in
   let parallel_updated_anchors =
-    update_all_more_anchor_pairs parallel_moves st in
+    update_all_parallel_anchor_pairs parallel_moves st in
   let moves = generate_all_moves updated_anchors in
   let parallel_moves = generate_all_moves parallel_updated_anchors in
   moves @ parallel_moves
@@ -880,10 +959,10 @@ let get_hint st =
   if st.is_first_move then first_move st false
   else
     let letters_rack = st.current_player.rack |> get_letters_rack in
-    best_move_helper st false |> pick_worst_move letters_rack st
+    pick_move_helper st false |> pick_worst_move letters_rack st
 
 let best_move st =
   if st.is_first_move then first_move st true
   else
     let letters_rack = st.current_player.rack |> get_letters_rack in
-    best_move_helper st true |> pick_best_move letters_rack st
+    pick_move_helper st true |> pick_best_move letters_rack st

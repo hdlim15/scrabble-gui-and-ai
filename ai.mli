@@ -47,13 +47,14 @@ val get_all_adj_words : State.cell -> State.state -> string list
 (* [get_hint st] is the first valid move that AI can find based on the
  * current state of the game.
  * Uses a much smaller dictionary for move generation.
- * Used for the 'hint' command, and also by the Easy AI.
+ * Used for the 'hint' command,
+ * and also used by the Easy AI for move generation.
  *)
 val get_hint : State.state -> Command.command
 
 (* [best_move st] is the AI's best choice of a move based on the
  * current state of the game.
  * Uses the full Scrabble dictionary for move generation.
- * Used by the Hard AI.
+ * Used by the Hard AI for move generation.
  *)
 val best_move : State.state -> Command.command
