@@ -26,6 +26,7 @@ type box_config =
    b2_col : Graphics.color;
    b_col : Graphics.color}
 
+(* [GuiExn] are passed to main, where the string is outputted to the user. *)
 exception GuiExn of string
 
 (* [get_chars s] splits [s] into a list of its characters. *)
@@ -292,6 +293,7 @@ let draw_rack cp r_array =
   Array.iter draw_box r_array;
   draw_rack_helper (List.rev cp.rack) 0
 
+(* [erase_toggle_button ()] erases the toggle button. *)
 let erase_toggle_button () =
   Graphics.set_color Graphics.white;
   Graphics.fill_rect 632 120 60 60;
@@ -363,6 +365,7 @@ let draw_buttons is_rack_hidden =
   draw_string "Place" 924 153 true;
   draw_string "Word" 927 135 true
 
+(* [dark_gray_place ()] changes the color of the place button to dark gray. *)
 let dark_gray_place () =
   let b_place = {x = 908; y = 120; w = 60; h = 60; bw = 2;
                  b1_col = dark_gray1; b2_col = dark_gray3;
@@ -442,6 +445,7 @@ let draw_logo () =
   draw_string " |___/  \\___| |_|    \\__,_| |_.__/  |_.__/  |_|  \\___|" 625 (575 - 4 * bar_height) true;
   draw_string " ________________________________________________________" 625 (575 - 5 * bar_height) true
 
+(* [draw_io_box ()] draws the input / output box. *)
 let draw_io_box () =
   draw_rect 620 210 360 100
 
@@ -479,7 +483,6 @@ let erase_turn () =
   Graphics.set_color Graphics.white;
   Graphics.fill_rect 770 470 200 25;
   Graphics.set_color Graphics.black
-
 
 (* [update_gui st] takes the current state [st] and updates the GUI after each
  * move is made. *)
@@ -1164,7 +1167,9 @@ let rec place_helper st np_tiles acc =
         let letter, is_blank = (color_tile_get_letter st rack_index colors) in
         (second_click_helper st (letter, is_blank) rack_index np_tiles acc)
 
-(* helper function that calls functions based on the second click *)
+(* [second_click_helper st (letter, is_blank) rack_index np_tiles acc] receives
+ * the user's second click, and calls additional functions based on the
+ * location of the click. *)
 and second_click_helper st (letter, is_blank) rack_index np_tiles acc =
   let s' = wait_next_event [Button_down] in
   (* if click is on the board *)
@@ -1181,7 +1186,10 @@ and second_click_helper st (letter, is_blank) rack_index np_tiles acc =
       (second_click_helper st (letter, is_blank) rack_index np_tiles acc)
 
 (* [second_click_on_board st s' (letter, is_blank) rack_index np_tiles acc]
- * accounts for the case when the second click occurs on the board.  *)
+ * accounts for the case when the second place click occurs on the board. If
+ * there is an oldly placed tile, nothing happens. Else, the tile is placed at
+ * that location. Additionally, if there is a newly placed tile, it is returned
+ * to the rack *)
 and second_click_on_board st s' (letter, is_blank) rack_index np_tiles acc =
   (* cannot place a tile on top of a tile that was played on a previous turn *)
   let cell_coord = get_board_coord s' in
@@ -1223,6 +1231,11 @@ and second_click_on_board st s' (letter, is_blank) rack_index np_tiles acc =
     (* recursively call place_helper to get the next first click *)
     (place_helper st'' (np_tiles'') (cell_index :: acc'))
 
+(* [second_click_on_rack st curr_idx new_idx np_tiles acc] accounts for the case
+ * when the second place click occurs on the rack. If [curr_idx] does not equal
+ * [new_idx], then the selected tile switches to the one at [new_idx] and a new
+ * second click is received. Else, the selected tile becomes deselected, and a
+ * new first click is received. *)
 and second_click_on_rack st curr_idx new_idx np_tiles acc =
   (* selecting a new tile in rack, highlight that one instead *)
   if curr_idx <> new_idx then

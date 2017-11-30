@@ -1,16 +1,14 @@
-
 open Command
 open Trie
 open State
 
 type direction = Left | Right | Up | Down
 
+(* These .txt files are converted into trie data structures for efficient search
+ * of words. *)
 let f_dict = Trie.initialize_dict "forward_dict.txt"
-
 let r_dict = Trie.initialize_dict "reverse_dict.txt"
-
 let simple_f_dict = Trie.initialize_dict "simple_dict.txt"
-
 let simple_r_dict = Trie.initialize_dict "simple_dict_rev.txt"
 
 (* [extends_forward str is_hard] returns true if [str] has at least 1 extension
