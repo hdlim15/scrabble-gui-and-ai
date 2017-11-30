@@ -127,6 +127,12 @@ let get_all_adj_words c st =
       | Some (word,_,_) -> word in
   [left;right;up;down]
 
+(* [cross_check_helper cell st is_h] returns the adjacent word at cell [cell]
+ * in the horizontal direction if [is_h] is true,
+ * and in the vertical direction otherwise. If there is no adjacent word,
+ * then the character in [cell] is returned, if any, or the empty string
+ * if [cell] is empty.
+ *)
 let cross_check_helper cell st is_h =
   match get_adjacent_word cell st is_h [] with
   | None ->
@@ -137,6 +143,8 @@ let cross_check_helper cell st is_h =
 
 (* [cross_check c chr st] returns true if, when placed on tile [c],
  * [chr] forms valid forms with the adjacent tiles on the board in state [st].
+ * If [is_hard] is true, then the bigger forward and reverse dictionaries
+ * are checked, and the smaller ones are checked otherwise.
  *)
 let cross_check c chr st is_hard =
   let forw_dict = if is_hard then f_dict else simple_f_dict in
@@ -175,6 +183,8 @@ let cross_check c chr st is_hard =
 (* [anchor_chars anchor rack st] returns the new rack obtained after
  * throwing out all characters from [rack] that don't form valid words
  * with the surrounding tiles when placed on the anchor cell [anchor].
+ * If [is_hard] is true, then the bigger forward and reverse dictionaries
+ * are checked, and the smaller ones are checked otherwise.
  *)
 let anchor_chars anchor rack st is_hard =
   List.fold_left
@@ -188,6 +198,8 @@ let anchor_chars anchor rack st is_hard =
  * calculating the new rack obtained after throwing out all characters from
  * [rack] that don't form valid words with the surrounding tiles when placed on
  * that anchor cell.
+ * If [is_hard] is true, then the bigger forward and reverse dictionaries
+ * are checked, and the smaller ones are checked otherwise.
  *)
 let generate_anchor_chars anchors rack st is_hard =
   List.fold_left
@@ -196,7 +208,7 @@ let generate_anchor_chars anchors rack st is_hard =
     ) [] anchors
 
 (* [check_extension anchor_rack ext] returns [true] if [ext] can be formed
- * by some permutation of the characters in [anchor_rack], and [false] otherwise.
+ *by some permutation of the characters in [anchor_rack], and [false] otherwise.
  *)
 let check_extension anchor_rack ext =
   let check =
@@ -237,6 +249,18 @@ let concat_moves_rev str exts =
 let cut_extensions lst =
   List.filter (fun x -> String.length x < 7) lst
 
+(* [move_forward cell rack st is_h across_bool is_hard] returns [Some pair],
+ * in which the fst of [pair] is a list of all possible words that can be
+ * formed by some permutation of characters in [rack] in the horizontal
+ * direction if [is_h] is true, and in the vertical direction otherwise,
+ * going in the forward (right/down) direction starting at cell [cell]
+ * in state [st]; and the snd of [pair] is the prefix. If [across_bool] is true,
+ * then the extensions start with the adjacent word in the direction given by
+ * [is_h], otherwise the extensions starts with the character in [cell];
+ * returns [None] if [cell] is empty.
+ * If [is_hard] is true, then the bigger forward dictionary
+ * is checked, and the smaller one is checked otherwise.
+ *)
 let move_forward cell rack st is_h across_bool is_hard =
   let forw_dict = if is_hard then f_dict else simple_f_dict in
   if not across_bool then
@@ -255,6 +279,18 @@ let move_forward cell rack st is_h across_bool is_hard =
                   |> concat_moves(Char.escaped letter) in
       Some (words,(Char.escaped letter))
 
+(* [move_backward cell rack st is_h across_bool is_hard] returns [Some pair],
+ * in which the fst of [pair] is a list of all possible words that can be
+ * formed by some permutation of characters in [rack] in the horizontal
+ * direction if [is_h] is true, and in the vertical direction otherwise,
+ * going in the forward (right/down) direction starting at cell [cell]
+ * in state [st]; and the snd of [pair] is the suffix. If [across_bool] is true,
+ * then the extensions start with the adjacent word in the direction given by
+ * [is_h], otherwise the extensions starts with the character in [cell];
+ * returns [None] if [cell] is empty.
+ * If [is_hard] is true, then the bigger reverse dictionary
+ * is checked, and the smaller one is checked otherwise.
+ *)
 let move_backward cell rack st is_h across_bool is_hard =
   let rev_dict = if is_hard then r_dict else simple_r_dict in
   if not across_bool then
@@ -272,6 +308,19 @@ let move_backward cell rack st is_h across_bool is_hard =
     let words = (valid_extensions rack across_ext) in
       Some (words, Char.escaped letter)
 
+(* [make_move c rack st is_hard] returns a list of length 8, where
+ * the first element is an option list of all possible non-parallel moves
+ * in the rightward direction starting with the prefix in the cell towards
+ * the left of [cell], the second element is an option list of all possible
+ * parallel moves in the rightward direction starting with the prefix in the
+ * cell towards the left of [cell] if there is no adjacent word in left cell;
+ * and similarly for the cells to the right, above and below [cell]
+ * (in that order) for the next 6 elements.
+ * the extensions can be formed only by some permutation of the character
+ * in [rack] in state [st].
+ * If [is_hard] is true, then the bigger forward dictionary
+ * is checked, and the smaller one is checked otherwise.
+ *)
 let make_move c rack st is_hard =
   let left =
   match left_cell c with
@@ -307,13 +356,33 @@ let make_move c rack st is_hard =
       | Some c' -> move_backward c' rack st false true is_hard in
   [left;right;up;down;left_across;right_across;up_across;down_across]
 
+(* [all_moves anchors st is_hard] returns a list of pairs for all
+ * anchors in [anchors], where the the fst of each pair is an anchor,
+ * and the snd is the result of applying [make_move] to that anchor.
+ * If [is_hard] is true, then the bigger forward dictionary
+ * is checked, and the smaller one is checked otherwise.
+ *)
 let all_moves anchors st is_hard =
   List.fold_left
     (fun acc x ->
        (fst x,(make_move (fst x) (snd x) st is_hard ))::acc
     ) [] anchors
 
-let start_forward cell rack st is_hard =
+(* [move_forward_parallel cell rack st is_hard] returns [Some pair],
+ * in which the fst of [pair] is a list of all possible words that can be
+ * formed by some permutation of characters in [rack] in the horizontal
+ * direction if [is_h] is true, and in the vertical direction otherwise,
+ * going in the forward (right/down) direction starting at cell [cell]
+ * in state [st]; and the snd of [pair] is the prefix. If [across_bool] is true,
+ * then the extensions start with the adjacent word in the direction given by
+ * [is_h], otherwise the extensions starts with the character in [cell];
+ * returns [None] if [cell] is empty.
+ * This the same as [move_forward] except that the words considered here
+ * are made parallel to the direction given by [is_h].
+ * If [is_hard] is true, then the bigger forward dictionary
+ * is checked, and the smaller one is checked otherwise.
+ *)
+let move_forward_parallel cell rack st is_hard =
   let forw_dict = if is_hard then f_dict else simple_f_dict in
   if (get_cell_from_coordinate cell st |> cell_is_empty) then None
   else Some(
@@ -326,7 +395,21 @@ let start_forward cell rack st is_hard =
            (words,chr)::acc
         ) [] (List.sort_uniq compare rack))
 
-let start_backward cell rack st is_hard =
+(* [move_backward cell rack st is_h across_bool is_hard] returns [Some pair],
+ * in which the fst of [pair] is a list of all possible words that can be
+ * formed by some permutation of characters in [rack] in the horizontal
+ * direction if [is_h] is true, and in the vertical direction otherwise,
+ * going in the forward (right/down) direction starting at cell [cell]
+ * in state [st]; and the snd of [pair] is the suffix. If [across_bool] is true,
+ * then the extensions start with the adjacent word in the direction given by
+ * [is_h], otherwise the extensions starts with the character in [cell];
+ * returns [None] if [cell] is empty.
+ * This the same as [move_backward] except that the words considered here
+ * are made parallel to the direction given by [is_h].
+ * If [is_hard] is true, then the bigger reverse dictionary
+ * is checked, and the smaller one is checked otherwise.
+ *)
+let move_backward_parallel cell rack st is_hard =
   let rev_dict = if is_hard then r_dict else simple_r_dict in
   if (get_cell_from_coordinate cell st |> cell_is_empty) then None
   else Some(
@@ -338,45 +421,64 @@ let start_backward cell rack st is_hard =
            (words,chr)::acc
         ) [] (List.sort_uniq compare rack))
 
-let make_more_moves c rack st is_hard =
+(* [make_parallel_moves c rack st is_hard] returns a list of length 8, where
+ * the first element is an option list of all possible parallel moves
+ * in the rightward direction starting with the prefix in the cell towards
+ * the left of [cell] and parallel above [cell], the second element is an
+ * option list of all possible parallel moves in the rightward direction
+ * with the prefix in the cell towards the left of [cell] and
+ * parallel below [cell]; and similarly for the cells to the right, above and
+ * below [cell] (in that order) for the next 6 elements.
+ * the extensions can be formed only by some permutation of the character
+ * in [rack] in state [st].
+ * If [is_hard] is true, then the bigger forward dictionary
+ * is checked, and the smaller one is checked otherwise.
+ *)
+let make_parallel_moves c rack st is_hard =
   let left_down =
     match left_cell c with
     | None -> None
-    | Some c' -> start_forward c' rack st is_hard in
+    | Some c' -> move_forward_parallel c' rack st is_hard in
   let left_up =
     match left_cell c with
     | None -> None
-    | Some c' -> start_backward c' rack st is_hard in
+    | Some c' -> move_backward_parallel c' rack st is_hard in
   let right_down =
     match right_cell c with
     | None -> None
-    | Some c' -> start_forward c' rack st is_hard in
+    | Some c' -> move_forward_parallel c' rack st is_hard in
   let right_up =
     match right_cell c with
     | None -> None
-    | Some c' -> start_backward c' rack st is_hard in
+    | Some c' -> move_backward_parallel c' rack st is_hard in
   let up_right =
     match up_cell c with
     | None -> None
-    | Some c' -> start_forward c' rack st is_hard in
+    | Some c' -> move_forward_parallel c' rack st is_hard in
   let up_left =
     match up_cell c with
     | None -> None
-    | Some c' -> start_backward c' rack st is_hard in
+    | Some c' -> move_backward_parallel c' rack st is_hard in
   let down_right =
     match down_cell c with
     | None -> None
-    | Some c' -> start_forward c' rack st is_hard in
+    | Some c' -> move_forward_parallel c' rack st is_hard in
   let down_left =
     match down_cell c with
     | None -> None
-    | Some c' -> start_backward c' rack st is_hard in
+    | Some c' -> move_backward_parallel c' rack st is_hard in
   [left_down;left_up;right_down;right_up;up_right;up_left;down_right;down_left]
 
-let all_more_moves anchors st is_hard =
+(* [all_parallel_moves anchors st is_hard] returns a list of pairs for all
+ * anchors in [anchors], where the the fst of each pair is an anchor,
+ * and the snd is the result of applying [make_parallel_moves] to that anchor.
+ * If [is_hard] is true, then the bigger forward dictionary
+ * is checked, and the smaller one is checked otherwise.
+ *)
+let all_parallel_moves anchors st is_hard =
   List.fold_left
     (fun acc x ->
-       (fst x,(make_more_moves (fst x) (snd x) st is_hard))::acc
+       (fst x,(make_parallel_moves (fst x) (snd x) st is_hard))::acc
     ) [] anchors
 
 let make_first_move chr rack st =
@@ -412,7 +514,7 @@ let get_start_cell anchor word dir =
     let subtract = String.length (word) - 1  in
     ((fst (anchor.cell_coord ) - subtract), snd (anchor.cell_coord ))
 
-let  get_all_first_move_start_cells anchor word_lst st =
+let get_all_first_move_start_cells anchor word_lst st =
   let left =
     let pair = List.nth word_lst 0 in
       (List.fold_left
@@ -584,7 +686,8 @@ let get_points mv st =
             (fst acc  && check_word s st, snd acc + i)) (true, 0) word_score_lst
       in
       let score' =
-        if List.length new_chars = 7 then (snd valid_words + 50) else (snd valid_words) in
+        if List.length new_chars = 7 then (snd valid_words + 50)
+        else (snd valid_words) in
       if fst valid_words then score'
       else
         raise (InvalidPlace "invalid newly-formed word")
@@ -702,15 +805,15 @@ let best_move_helper st is_hard =
   let anchors = get_anchors empty_cells st in
   let anchor_pairs = generate_anchor_chars anchors letters_rack st is_hard in
   let anchor_moves = all_moves anchor_pairs st is_hard in
-  let more_moves = all_more_moves anchor_pairs st is_hard  in
+  let parallel_moves = all_parallel_moves anchor_pairs st is_hard  in
   let updated_anchors = update_all_anchor_pairs anchor_moves st in
-  let more_updates = update_all_more_anchor_pairs more_moves st in
+  let parallel_updated_anchors =
+    update_all_more_anchor_pairs parallel_moves st in
   let moves = generate_all_moves updated_anchors in
-  let new_moves = generate_all_moves more_updates in
-  moves @ new_moves
+  let parallel_moves = generate_all_moves parallel_updated_anchors in
+  moves @ parallel_moves
 
 let get_hint st =
-  (* if List.for_all (fun p -> p.score = 0) st.players then first_move st *)
   if st.is_first_move then first_move st
   else
     let letters_rack = st.current_player.rack |> get_letters_rack in

@@ -40,7 +40,7 @@ val right_cell : State.cell -> State.coordinate option
  * the word is taken to be the empty string.
  * If instead of a word, there is a single letter, then that letter
  * is taken to be the word.
-*)
+ *)
 val get_all_adj_words : State.cell -> State.state -> string list
 
 (* [get_hint st] is the AI's worst choice of a move based on the
