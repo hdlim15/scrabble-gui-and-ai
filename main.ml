@@ -87,8 +87,8 @@ let rec get_command st =
     with
     | InvalidSwap | InvalidPlace _ -> Pass
     |  _ ->
-      Graphics.close_graph();
-      Pass
+      Graphics.close_graph ();
+      exit 0
 
 (* [quit_helper st] acts as a second step of verification for a Quit command *)
 let quit_helper st =
