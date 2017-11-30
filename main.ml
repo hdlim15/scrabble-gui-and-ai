@@ -84,7 +84,11 @@ let rec get_command st =
     match diff with
     | Hard -> Ai.best_move st
     | Easy -> Ai.get_hint st
-    with _ -> Pass
+    with
+    | InvalidSwap | InvalidPlace _ -> Pass
+    |  _ ->
+      Graphics.close_graph();
+      Pass
 
 (* [quit_helper st] acts as a second step of verification for a Quit command *)
 let quit_helper st =
