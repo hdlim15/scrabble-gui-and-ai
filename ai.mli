@@ -1,6 +1,7 @@
 open Command
 open State
 
+(* The 4 possible directions of a move *)
 type direction = Left | Right | Up | Down
 
 (* [reverse_str s ] reverses [s].
@@ -43,12 +44,16 @@ val right_cell : State.cell -> State.coordinate option
  *)
 val get_all_adj_words : State.cell -> State.state -> string list
 
-(* [get_hint st] is the AI's worst choice of a move based on the
+(* [get_hint st] is the first valid move that AI can find based on the
  * current state of the game.
- * Used for the 'hint' command.
+ * Uses a much smaller dictionary for move generation.
+ * Used for the 'hint' command, and also by the Easy AI.
  *)
 val get_hint : State.state -> Command.command
 
 (* [best_move st] is the AI's best choice of a move based on the
- * current state of the game *)
+ * current state of the game.
+ * Uses the full Scrabble dictionary for move generation.
+ * Used by the Hard AI.
+ *)
 val best_move : State.state -> Command.command

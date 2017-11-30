@@ -13,10 +13,22 @@ let simple_f_dict = Trie.initialize_dict "simple_dict.txt"
 
 let simple_r_dict = Trie.initialize_dict "simple_dict_rev.txt"
 
+(* [extends_forward str is_hard] returns true if [str] has at least 1 extension
+ * in the forward dictionary given by [is_hard], where
+ * if [is_hard] is true, then the bigger forward dictionary
+ * is checked, and the smaller one is checked otherwise.
+ * If [str] has 0 extensions, then returns false.
+ *)
 let extends_forward str is_hard =
   if is_hard then List.length (get_extensions str f_dict) <> 0
   else List.length (get_extensions str simple_f_dict) <> 0
 
+(* [extends_reverse str is_hard] returns true if [str] has at least 1 extension
+ * in the reverse dictionary given by [is_hard], where
+ * if [is_hard] is true, then the bigger reversedictionary
+ * is checked, and the smaller one is checked otherwise.
+ * If [str] has 0 extensions, then returns false.
+ *)
 let extends_reverse str is_hard =
   if is_hard then List.length (get_extensions str r_dict) <> 0
   else List.length (get_extensions str simple_r_dict) <> 0
@@ -481,9 +493,11 @@ let all_parallel_moves anchors st is_hard =
        (fst x,(make_parallel_moves (fst x) (snd x) st is_hard))::acc
     ) [] anchors
 
-(* [all_parallel_moves anchors st is_hard] returns a list of pairs for all
- * anchors in [anchors], where the the fst of each pair is an anchor,
- * and the snd is the result of applying [make_parallel_moves] to that anchor.
+(* [make_first_move chr rack st is_hard] returns a list of length 2
+ * where the first element is a pair in which the fst of the pair is a list of
+ * all extensions that can be formed by some permutation of the characters
+ * in [rack] in the forward direction  and the snd is the casted string of [chr]
+ * and the second element is similar except it is in the reverse direction.
  * If [is_hard] is true, then the bigger forward dictionary
  * is checked, and the smaller one is checked otherwise.
  *)
@@ -501,12 +515,23 @@ let make_first_move chr rack st is_hard =
     (words,str) in
   [left;right]
 
+(* [all_first_moves anchor rack st is_hard] returns a list of pairs for all
+ * where the the fst of each pair is [anchor],
+ * and the snd is the result of applying [make_first_move] to [anchor] and
+ * each unique character in [rack].
+ * If [is_hard] is true, then the bigger forward dictionary
+ * is checked, and the smaller one is checked otherwise.
+ *)
 let all_first_moves anchor rack st is_hard =
   List.fold_left
     (fun acc x ->
        (anchor, (make_first_move x (remove x rack) st is_hard))::acc
     ) [] rack
 
+(* [get_start_cell anchor word dir] returns the corrected starting cell for a
+ * move given an anchor [anchor], the word [word] to be played, and
+ * the direction [dir] in which [word] is to be placed on the board.
+ *)
 let get_start_cell anchor word dir =
   match dir with
   | Left ->
@@ -522,6 +547,12 @@ let get_start_cell anchor word dir =
     let subtract = String.length (word) - 1  in
     ((fst (anchor.cell_coord ) - subtract), snd (anchor.cell_coord ))
 
+(* [get_all_first_move_start_cells anchor word_lst st] returns a list of
+ * length 2, where the first element is the list of all updated starting cells
+ * for playing the concerned word in [word_lst] in the forward
+ * direction, and the second element is similar except it is for
+ * words to be played in the revrese direction, in state [st].
+ *)
 let get_all_first_move_start_cells anchor word_lst st =
   let left =
     let pair = List.nth word_lst 0 in
@@ -540,10 +571,19 @@ let get_all_first_move_start_cells anchor word_lst st =
         ) [] (fst pair) in
   [left;right]
 
+(* [update_all_first_move_anchor_pairs anchor_pair_lst st] returns a list of
+ * of all updated starting cells for the moves in [anchor_pair_lst]
+ * in state [st].
+ *)
 let update_all_first_move_anchor_pairs anchor_pair_lst st =
   List.map (fun x -> get_all_first_move_start_cells
                (fst x) (snd x) st) anchor_pair_lst
 
+(* [get_forward_start_cell anchor str exts dir] returns the list of all
+ * corrected starting cells for the extensions in [ext] given [word], which
+ * is the word to be played in direction [dir] for an anchor cell [anchor]
+ * in the forward direction.
+ *)
 let get_forward_start_cell anchor str exts dir =
   (List.fold_left
     (fun acc x ->
@@ -551,6 +591,11 @@ let get_forward_start_cell anchor str exts dir =
        (updated_cell, x)::acc
     ) [] (exts))
 
+(* [get_backward_start_cell anchor str exts dir] returns the list of all
+ * corrected starting cells for the extensions in [ext] given [word], which
+ * is the word to be played in direction [dir] for an anchor cell [anchor]
+ * in the reverse direction.
+ *)
 let get_backward_start_cell anchor str exts dir =
   List.fold_left
     (fun acc x ->
@@ -559,6 +604,12 @@ let get_backward_start_cell anchor str exts dir =
        (updated_cell, new_word)::acc
     ) [] (exts)
 
+(* [get_all_start_cells anchor word_lst st] returns a list of length 2, where
+ * the first element is a list of all updated starting cells for the moves
+ * given by an anchor cell [anchor] and [word_lst], which is the list
+ * of all words, in the forward direction; and the second element is similar
+ * except that it is for moves in the reverse direction.
+ *)
 let get_all_start_cells anchor word_lst st =
   let left =
     match List.nth word_lst 0 with
@@ -595,10 +646,14 @@ let get_all_start_cells anchor word_lst st =
   [left @ right @ left_across @ right_across;
    up @ down @ up_across @ down_across]
 
+(* [update_all_anchor_pairs anchor_pair_lst st] returns the list of all
+ * moves after correcting the starting cells for each anchor-word pair
+ * in [anchor_pair_lst] in state [st].
+ *)
 let update_all_anchor_pairs anchor_pair_lst st =
   List.map (fun x -> get_all_start_cells (fst x) (snd x) st) anchor_pair_lst
 
-let more_start_cells_forward anchor lst =
+let parallel_start_cells_forward anchor lst =
   (List.fold_left
      (fun accu elm ->
         (List.fold_left
@@ -609,7 +664,7 @@ let more_start_cells_forward anchor lst =
            ) [] (fst elm))::accu
      ) [] lst) |> List.flatten
 
-let more_start_cells_backward anchor lst dir =
+let parallel_start_cells_backward anchor lst dir =
   (List.fold_left
      (fun accu elm ->
         (List.fold_left
@@ -624,35 +679,35 @@ let get_all_more_start_cells anchor word_lst st =
   let left_down =
     match List.nth word_lst 0 with
     | None -> []
-    | Some lst -> more_start_cells_forward anchor lst in
+    | Some lst -> parallel_start_cells_forward anchor lst in
   let left_up =
     match List.nth word_lst 1 with
     | None -> []
-    | Some lst -> more_start_cells_backward anchor lst Up in
+    | Some lst -> parallel_start_cells_backward anchor lst Up in
   let right_down =
     match List.nth word_lst 2 with
     | None -> []
-    | Some lst -> more_start_cells_forward anchor lst in
+    | Some lst -> parallel_start_cells_forward anchor lst in
   let right_up =
     match List.nth word_lst 3 with
     | None -> []
-    | Some lst -> more_start_cells_backward anchor lst Up in
+    | Some lst -> parallel_start_cells_backward anchor lst Up in
   let up_right =
     match List.nth word_lst 4 with
     | None -> []
-    | Some lst -> more_start_cells_forward anchor lst in
+    | Some lst -> parallel_start_cells_forward anchor lst in
   let up_left =
     match List.nth word_lst 5 with
     | None -> []
-    | Some lst -> more_start_cells_backward anchor lst Left in
+    | Some lst -> parallel_start_cells_backward anchor lst Left in
   let down_right =
     match List.nth word_lst 6 with
     | None -> []
-    | Some lst -> more_start_cells_forward anchor lst in
+    | Some lst -> parallel_start_cells_forward anchor lst in
   let down_left =
     match List.nth word_lst 7 with
     | None -> []
-    | Some lst -> more_start_cells_backward anchor lst Left in
+    | Some lst -> parallel_start_cells_backward anchor lst Left in
   [up_left @ up_right @ down_right @ down_left;
    left_up @ left_down @ right_up @ right_down]
 
