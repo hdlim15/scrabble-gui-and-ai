@@ -100,6 +100,7 @@ let draw_box bcf =
      Graphics.fill_rect x1 y1 bcf.w bcf.h);
   draw_box_outline bcf Graphics.black
 
+(* [earses_box bcf] erases the box with box_config [bcf]. *)
 let erase_box bcf =
   Graphics.set_color bcf.b_col;
   Graphics.fill_rect (bcf.x + bcf.bw) (bcf.y + bcf.bw)
@@ -202,19 +203,21 @@ let rec create_grid nb_col n sep b acc =
     let ny = b.y + sep + py * (b.h + sep) in
     let b' =
       if List.mem n tws_indeces then
-        {b with x = nx; y = ny; b1_col = orange1; b2_col = orange3; b_col = orange2}
+        {b with x = nx; y = ny; b1_col = orange1;
+                b2_col = orange3; b_col = orange2}
       else if List.mem n dls_indeces then
         {b with x = nx; y = ny; b1_col = blue1; b2_col = blue3; b_col = blue2}
       else if List.mem n dws_indeces then
         {b with x = nx; y = ny; b1_col = red1; b2_col = red3; b_col = red2}
       else if List.mem n tls_indeces then
-        {b with x = nx; y = ny; b1_col = green1; b2_col = green3; b_col = green2}
+        {b with x = nx; y = ny; b1_col = green1;
+                b2_col = green3; b_col = green2}
       else
         {b with x = nx; y = ny}
     in
     (create_grid nb_col (n - 1) sep b (b' :: acc))
 
-(* [vb] corresponds to the array of box_configs that represent the board grid. *)
+(* [vb] corresponds to the array of box_configs that represent the board grid *)
 let vb =
   let b = {x = 0; y = 0; w = 40; h = 40; bw = 2;
            b1_col = beige1; b2_col = beige3; b_col = beige2; r = Top} in
@@ -301,7 +304,8 @@ let toggle_rack cp =
   let r_array = rack len_rack in
   let is_rack_hidden = rack_hidden 662 0 len_rack true in
   let b_toggle_rack = {x = 632; y = 120; w = 60; h = 60; bw = 2;
-                       b1_col = gray1; b2_col = gray3; b_col = gray2; r = Top} in
+                       b1_col = gray1; b2_col = gray3;
+                       b_col = gray2; r = Top} in
   erase_toggle_button ();
   draw_box b_toggle_rack;
   if is_rack_hidden && len_rack > 0 then
@@ -361,7 +365,8 @@ let draw_buttons is_rack_hidden =
 
 let dark_gray_place () =
   let b_place = {x = 908; y = 120; w = 60; h = 60; bw = 2;
-                b1_col = dark_gray1; b2_col = dark_gray3; b_col = dark_gray2; r = Top} in
+                 b1_col = dark_gray1; b2_col = dark_gray3;
+                 b_col = dark_gray2; r = Top} in
   draw_box b_place;
   draw_string "Place" 924 153 true;
   draw_string "Word" 927 135 true
@@ -377,7 +382,8 @@ let rec update_vb b =
    let array_cell = Array.get vb array_idx in
    let array_cell' =
      if fst cell.letter <> ' ' then
-       {array_cell with b1_col = dark_beige1;b2_col = dark_beige3;b_col = dark_beige2}
+       {array_cell with
+        b1_col = dark_beige1;b2_col = dark_beige3;b_col = dark_beige2}
      else if List.mem (coord_to_array_index cell.cell_coord) tws_indeces then
        {array_cell with b1_col = orange1;b2_col = orange3;b_col = orange2}
      else if List.mem (coord_to_array_index cell.cell_coord) dls_indeces then
@@ -402,7 +408,8 @@ let update_board b =
       if fst cell.letter = ' ' && cell.cell_coord = (7,7) then
         draw_string_in_box Center "START" vb.(112) Graphics.black;
       if fst cell.letter <> ' ' then
-        (draw_string_in_box Center (String.capitalize_ascii (Char.escaped (fst cell.letter)))
+        (draw_string_in_box Center
+           (String.capitalize_ascii (Char.escaped (fst cell.letter)))
           vb.(coord_to_array_index (cell.cell_coord)) Graphics.black;
          update_board_helper t)
       else
@@ -879,8 +886,8 @@ let convert_to_move lst st =
     }
   with Failure f -> raise (GuiExn f)
 
-(* [refresh_cell c b] is an updated board with a specified cell coordinate's data
- * updated. *)
+(* [refresh_cell c b] is an updated board with a specified cell coordinate's
+ * data updated. *)
 let rec refresh_cell c b =
   match b with
   | [] -> []
@@ -907,12 +914,13 @@ let erase_io_box () =
   Graphics.fill_rect 621 211 358 98;
   Graphics.set_color Graphics.black
 
-(* [add_word_reset st] redraws the window to deal with backspaces during keyboard
- * entry in str_of_keyboard_events *)
+(* [add_word_reset st] redraws the window to deal with backspaces during
+ * keyboard entry in str_of_keyboard_events *)
 let addword_reset st =
   erase_io_box ();
   moveto 625 290;
-  Graphics.draw_string "Type the word you wish to add to the dictionary, followed";
+  Graphics.draw_string
+    "Type the word you wish to add to the dictionary, followed";
   moveto 625 275;
   Graphics.draw_string "by 'ENTER':";
   moveto 625 260;
@@ -947,9 +955,11 @@ let rec str_of_keyboard_events st io_op =
        let h' = remove_last_elt history in
        let w'' = List.fold_right
            (fun (c,w') acc ->
-              moveto w' 260; Graphics.draw_string (Char.escaped c); acc + w) h' (2*w) in
+              moveto w' 260;
+              Graphics.draw_string (Char.escaped c); acc + w) h' (2*w) in
        helper w'' h')
-    else if Char.code c < 26 || Char.code c > 126 || ((List.length history) * w > 320)then
+    else if Char.code c < 26 || Char.code c > 126 ||
+            ((List.length history) * w > 320)then
       helper w' history
     else
       (moveto (625+w') 260;
@@ -1247,7 +1257,8 @@ let help_helper st =
   let h = snd (Graphics.text_size "|") in
   let help_str_lst = str_lst_of_help () in
   let _ = List.fold_left
-      (fun acc s -> moveto 620 acc; Graphics.draw_string s; acc-h) 495 help_str_lst in
+      (fun acc s -> moveto 620 acc;
+        Graphics.draw_string s; acc-h) 495 help_str_lst in
   let rec loop () =
     let s = wait_next_event [Button_down] in
     if mem (s.mouse_x, s.mouse_y) (770, 20, 40, 40) then ()
