@@ -12,9 +12,22 @@ let board = [[upper_left;upper_right];[lower_left;lower_right]]
 
 let hard_ai = {name = "hard_ai";
                score = 0;
-               rack = [('f', 4);('a', 1);('v', 4);('l', 1);('e', 1);('i', 1);('u', 1)];
+               rack = [('o', 1);('c', 3);('d', 2);('n', 1);('e', 1);('n', 1);('n', 1)];
                player_type = AI Hard;
                order_num = 1}
+
+
+let hard_ai' = {name = "hard_ai";
+                score = 0;
+                rack = [];
+                player_type = AI Hard;
+                order_num = 1}
+
+let hard_ai'' = {name = "hard_ai";
+                 score = 0;
+                 rack = [('a',1)];
+                 player_type = AI Hard;
+                 order_num = 1}
 
 let easy_ai = {name = "easy_ai";
                score = 0;
@@ -22,13 +35,33 @@ let easy_ai = {name = "easy_ai";
                player_type = AI Easy;
                order_num = 1}
 
+let best_move1 = {word = ['c';'o';'n';'n';'e';'d'];mv_coord = (7,7); is_horizontal = true}
+
+let best_move2 = {word = ['y';'e';'a';'n'];mv_coord = (8,8); is_horizontal = true}
+
 let hard_state = {board = init_board 15;
-                        bag = [('z', 10)];
+                  bag = [('s',1); ('c',3); ('r',1); ('a',1)];
                         players = [hard_ai];
                         added_words = [];
                         current_player = hard_ai;
                         is_first_move = true;
-                        sp_consec = 0}
+                  sp_consec = 0}
+
+let hard_state' = {board = init_board 15;
+                   bag = [];
+                   players = [hard_ai'];
+                   added_words = [];
+                   current_player = hard_ai';
+                   is_first_move = true;
+                   sp_consec = 0}
+
+let hard_state'' = {board = init_board 15;
+                    bag = [('s',1); ('c',3); ('r',1); ('a',1)];
+                    players = [hard_ai''];
+                    added_words = [];
+                    current_player = hard_ai'';
+                    is_first_move = true;
+                    sp_consec = 0}
 
 let easy_state = {board = init_board 15;
                         bag = [('z', 10)];
@@ -37,8 +70,6 @@ let easy_state = {board = init_board 15;
                         current_player = easy_ai;
                         is_first_move = true;
                   sp_consec = 0}
-
-let best_move1 = {word = ['f';'a';'u';'v';'e'];mv_coord = (7,7); is_horizontal = true}
 
 let hint1 = {word = ['p';'r';'i';'z';'e'];mv_coord = (7,7); is_horizontal = true}
 
@@ -62,7 +93,10 @@ let tests = [
   "right_cell_some1" >:: (fun _ -> assert_equal (Some (0,1)) (right_cell upper_left));
   "right_cell_some2" >:: (fun _ -> assert_equal (Some (1,1)) (right_cell lower_left));
 
-
   "best_move1" >:: (fun _ -> assert_equal (PlaceWord best_move1) (best_move hard_state));
+  "best_move2" >:: (fun _ -> assert_equal (Pass) (best_move hard_state'));
+  "best_move3" >:: (fun _ -> assert_equal (Swap ['a']) (best_move hard_state''));
+
+
   "hint1" >:: (fun _ -> assert_equal (PlaceWord hint1) (get_hint easy_state));
 ]
