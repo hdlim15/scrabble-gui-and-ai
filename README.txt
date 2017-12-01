@@ -24,7 +24,8 @@ Installation:
       to keep reading this setup document.
   - to install the OCaml Graphics module, ensure you have Homebrew on your Mac.
   - Run 'brew install ocaml'
-  - If the above test still fails, try $ opam switch reinstall 4.05.0 (as the OCaml version might have been updated).
+  - If the above test still fails, try $ opam switch reinstall 4.05.0
+   (as the OCaml version might have been updated).
   - At this point, you will have successfully installed the Graphics module!
 Play Game:
 Simply type 'make play' to start up the Scrabble GUI.
