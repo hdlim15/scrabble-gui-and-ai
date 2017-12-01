@@ -29,12 +29,6 @@ let hard_ai'' = {name = "hard_ai";
                  player_type = AI Hard;
                  order_num = 1}
 
-let easy_ai = {name = "easy_ai";
-               score = 0;
-               rack = [('i', 1);('r', 1);('u', 1);('e', 1);('i', 3);('*', 0);('p', 3)];
-               player_type = AI Easy;
-               order_num = 1}
-
 let best_move1 = {word = ['c';'o';'n';'n';'e';'d'];mv_coord = (7,7); is_horizontal = true}
 
 let best_move2 = {word = ['y';'e';'a';'n'];mv_coord = (8,8); is_horizontal = true}
@@ -63,15 +57,69 @@ let hard_state'' = {board = init_board 15;
                     is_first_move = true;
                     sp_consec = 0}
 
+let hint1 = {word = ['p';'r';'i';'z';'e'];mv_coord = (7,7); is_horizontal = true}
+let hint2 = {word = ['o';'e'];mv_coord = (6,7); is_horizontal = true}
+let hint3 = {word = ['n';'o'];mv_coord = (6,11); is_horizontal = true}
+
+
+let easy_ai = {name = "easy_ai";
+               score = 0;
+               rack = [('i', 1);('r', 1);('u', 1);('e', 1);('i', 3);('*', 0);('p', 3)];
+               player_type = AI Easy;
+               order_num = 1}
+
 let easy_state = {board = init_board 15;
-                        bag = [('z', 10)];
-                        players = [easy_ai];
+                  bag = [('o', 1);('o', 1);('n', 1);('e', 1)];
+                  players = [easy_ai];
+                  added_words = [];
+                  current_player = easy_ai;
+                  is_first_move = true;
+                  sp_consec = 0}
+
+let easy_state' = do' (PlaceWord hint1) easy_state
+let easy_state'' = do' (PlaceWord hint2) easy_state'
+
+let easy_ai_pass = {name = "easy_ai_pass";
+               score = 0;
+               rack = [];
+               player_type = AI Easy;
+               order_num = 1}
+
+let easy_state_pass = {board = init_board 15;
+                   bag = [];
+                   players = [easy_ai_pass];
+                   added_words = [];
+                   current_player = easy_ai_pass;
+                   is_first_move = true;
+                   sp_consec = 0}
+
+let easy_ai_swap = {name = "easy_ai_swap";
+               score = 0;
+               rack = [('z',10)];
+               player_type = AI Easy;
+               order_num = 1}
+
+let easy_state_swap = {board = init_board 15;
+                        bag = [('x',8)];
+                        players = [easy_ai_swap];
                         added_words = [];
-                        current_player = easy_ai;
+                        current_player = easy_ai_swap;
                         is_first_move = true;
                   sp_consec = 0}
 
-let hint1 = {word = ['p';'r';'i';'z';'e'];mv_coord = (7,7); is_horizontal = true}
+
+(* let cl2s cl = String.concat "" (List.map (String.make 1) cl);;
+
+let () =
+match (get_hint easy_state'') with
+| PlaceWord p ->
+    print_endline (cl2s p.word);
+    let (x,y) = p.mv_coord in
+    print_endline (string_of_int x);
+    print_endline (string_of_int y);
+    print_endline (string_of_bool p.is_horizontal);
+| _ -> print_endline "not ??" *)
+
 
 let tests = [
   "reverse_empty" >:: (fun _ -> assert_equal "" (reverse_str ""));
@@ -99,4 +147,8 @@ let tests = [
 
 
   "hint1" >:: (fun _ -> assert_equal (PlaceWord hint1) (get_hint easy_state));
+  "hint2" >:: (fun _ -> assert_equal (PlaceWord hint2) (get_hint easy_state'));
+  "hint3" >:: (fun _ -> assert_equal (PlaceWord hint3) (get_hint easy_state''));
+  "hint_pass" >:: (fun _ -> assert_equal (Pass) (get_hint easy_state_pass));
+  "hint_swap" >:: (fun _ -> assert_equal (Swap ['z']) (get_hint easy_state_swap));
 ]
