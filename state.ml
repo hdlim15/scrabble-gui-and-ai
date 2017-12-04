@@ -169,7 +169,10 @@ let update_rack_and_bag chars_from_rack rack bag =
       (r, b)
     else
       begin
-        Random.self_init ();
+
+        (* Random.self_init (); *)
+        Random.init 35;
+
         let i = Random.int (List.length b) in
         let letter_from_bag = List.nth b i in
         let updated_bag = List.remove_assoc (fst letter_from_bag) b in
