@@ -28,6 +28,6 @@ let fake_words = [
 
 let tests = [
   "forward_dict" >:: (fun _ -> assert_equal f_list (List.filter (is_word f_dict) f_list));
-  "forward_dict" >:: (fun _ -> assert_equal r_list (List.filter (is_word r_dict) r_list));
+  "reverse_dict" >:: (fun _ -> assert_equal r_list (List.filter (is_word r_dict) r_list));
   "fake_words" >:: (fun _ -> assert_equal [] (List.filter (is_word f_dict) fake_words));
 ]

@@ -1153,6 +1153,8 @@ and second_click_helper st (letter, is_blank) rack_index np_tiles acc =
     let new_rack_index = (get_rack_index s' rack_coords) in
     if (new_rack_index <> -1) then
       (second_click_on_rack st rack_index new_rack_index np_tiles acc)
+    else if mem (s'.mouse_x, s'.mouse_y) place_btn then
+      acc
     else
       (second_click_helper st (letter, is_blank) rack_index np_tiles acc)
 

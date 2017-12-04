@@ -37,8 +37,6 @@ let rec get_subtree_string s dict =
  * [acc'] is a list of all possible extensions;
  * [str'] is only used internally to implement the function recursively
  * and is not useful as an output.
- * requires: [str] is ""
- *           [acc] is []
  *)
 let rec get_extensions_helper dict str acc =
   match dict with
@@ -103,7 +101,6 @@ let insert dict w =
   let char_list = explode (String.lowercase_ascii w) in
   helper char_list dict
 
-
 let is_word dict w =
   (* [helper lst acc] is a recursive helper function to [is_word] that
    * utilizes a char list instead of a string. *)
@@ -124,13 +121,6 @@ let is_word dict w =
   in
   let char_list = explode (String.lowercase_ascii w) in
   helper dict char_list
-
-(* [insert_word_list lst] is the dictionary that results from adding all the
- * words in [lst] to the empty dictionary. *)
-let insert_word_list lst =
-  (* [+] used to represent the head of the trie *)
-  let root = Node ('+', [], false) in
-  List.fold_left insert root lst
 
 let initialize_dict file =
   (* [helper channel dict] is a helper function to [intialize_dict] that
