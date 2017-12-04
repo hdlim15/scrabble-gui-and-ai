@@ -147,9 +147,9 @@ let rec play_game st =
      erase_toggle_button ();
      let b_toggle_rack = {x = 632; y = 120; w = 60; h = 60; bw = 2;
                           b1_col = gray1; b2_col = gray3;
-                          b_col = gray2; r = Top} in
+                          b_col = gray2} in
      draw_box b_toggle_rack;
-     draw_string_in_box Center "Show rack" b_toggle_rack Graphics.black);
+     draw_string_in_box "Show rack" b_toggle_rack Graphics.black);
   let num_players = List.length st.players in
   if no_empty_rack new_state && new_state.sp_consec < (2*num_players) then
     play_game new_state

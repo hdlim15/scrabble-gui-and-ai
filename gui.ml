@@ -5,13 +5,6 @@ open Ai
 open Trie
 open Str
 
-(* [relief] represents a particular area of a scrabble board tile. Different
- * areas are shaded differently to provide a 3D effect. *)
-type relief =
-  | Top
-  | Bot
-  | Flat
-
 (* [box_config] represents a configuration for a box drawn on the gui. It holds
  * all of the necessary information to draw a cell of the scrabble grid on the
  * gui. *)
@@ -21,7 +14,6 @@ type box_config =
    w : int;
    h : int;
    bw : int;
-   mutable r : relief;
    b1_col : Graphics.color;
    b2_col : Graphics.color;
    b_col : Graphics.color}
@@ -88,17 +80,9 @@ let draw_box bcf =
       [|(x1, y1); (ix1, iy1); (ix1, iy2); (ix2, iy2); (x2, y2); (x1, y2)|]
   in
   Graphics.set_color bcf.b_col;
-  (match bcf.r with
-   | Top ->
-    Graphics.fill_rect ix1 iy1 (ix2 - ix1) (iy2 - iy1);
-    border1 bcf.b1_col;
-    border2 bcf.b2_col;
-   | Bot ->
-     Graphics.fill_rect ix1 iy1 (ix2 - ix1) (iy2 - iy1);
-     border1 bcf.b2_col;
-     border2 bcf.b1_col;
-   | Flat ->
-     Graphics.fill_rect x1 y1 bcf.w bcf.h);
+  Graphics.fill_rect ix1 iy1 (ix2 - ix1) (iy2 - iy1);
+  border1 bcf.b1_col;
+  border2 bcf.b2_col;
   draw_box_outline bcf Graphics.black
 
 (* [earses_box bcf] erases the box with box_config [bcf]. *)
@@ -107,24 +91,12 @@ let erase_box bcf =
   Graphics.fill_rect (bcf.x + bcf.bw) (bcf.y + bcf.bw)
     (bcf.w - (2 * bcf.bw)) (bcf.h - (2 * bcf.bw))
 
-(* [position] represents the starting position for displaying a drawing, such as
- * a string, in a cell box. This determines whether the drawing is placed in
- * the left, center, or right side. *)
-type position =
-  | Left
-  | Center
-  | Right
-
-(* [draw_string_in_box pos str bcf col] draws string [str] with color [col]
- * placed at position [pos] in a box with box_config [bcf]. *)
-let draw_string_in_box pos str bcf col =
+(* [draw_string_in_box str bcf col] draws string [str] with color [col]
+ * in the center of a box with box_config [bcf]. *)
+let draw_string_in_box str bcf col =
   let (w, h) = Graphics.text_size str in
   let ty = bcf.y + (bcf.h - h) / 2 in
-  (match pos with
-   | Center -> Graphics.moveto (bcf.x + (bcf.w - w)/2) ty
-   | Right -> let tx = bcf.x + bcf.w - w - bcf.bw - 1 in
-     Graphics.moveto tx ty
-   | Left -> let tx = bcf.x + bcf.bw + 1 in Graphics.moveto tx ty);
+  Graphics.moveto (bcf.x + (bcf.w - w)/2) ty;
   Graphics.set_color col;
   Graphics.draw_string str
 
@@ -221,7 +193,7 @@ let rec create_grid nb_col n sep b acc =
 (* [vb] corresponds to the array of box_configs that represent the board grid *)
 let vb =
   let b = {x = 0; y = 0; w = 40; h = 40; bw = 2;
-           b1_col = beige1; b2_col = beige3; b_col = beige2; r = Top} in
+           b1_col = beige1; b2_col = beige3; b_col = beige2} in
   Array.of_list (create_grid 15 224 0 b [])
 
 (* [board_to_graph_row n] returns the graph row coordinate given the board
@@ -251,7 +223,7 @@ let rec create_rack n b acc =
  * player's rack. There are [n] letters in the rack. *)
 let rack n =
   let b = {x = 620; y = 350; w = 40; h = 40; bw = 2;
-           b1_col = beige1; b2_col = beige3; b_col = beige2; r = Top} in
+           b1_col = beige1; b2_col = beige3; b_col = beige2} in
   Array.of_list (create_rack (n - 1) b [])
 
 (* [erase_rack ()] effectively erases the current player's rack from the GUI by
@@ -283,7 +255,7 @@ let draw_rack cp r_array =
           let tile_str =
             String.capitalize_ascii (Char.escaped l) ^ " : " ^ (string_of_int p)
           in
-          draw_string_in_box Center tile_str r_array.(i) Graphics.black;
+          draw_string_in_box tile_str r_array.(i) Graphics.black;
           draw_rack_helper t (i + 1)
         else
           draw_rack_helper t (i + 1)
@@ -307,17 +279,17 @@ let toggle_rack cp =
   let is_rack_hidden = rack_hidden 662 0 len_rack true in
   let b_toggle_rack = {x = 632; y = 120; w = 60; h = 60; bw = 2;
                        b1_col = gray1; b2_col = gray3;
-                       b_col = gray2; r = Top} in
+                       b_col = gray2} in
   erase_toggle_button ();
   draw_box b_toggle_rack;
   if is_rack_hidden && len_rack > 0 then
     begin
-      draw_string_in_box Center "Hide rack" b_toggle_rack Graphics.black;
+      draw_string_in_box "Hide rack" b_toggle_rack Graphics.black;
       draw_rack cp r_array;
     end
   else
     begin
-      draw_string_in_box Center "Show rack" b_toggle_rack Graphics.black;
+      draw_string_in_box "Show rack" b_toggle_rack Graphics.black;
       erase_rack ()
     end
 
@@ -326,41 +298,41 @@ let toggle_rack cp =
 * whether or not the rack is displayed on the GUI. *)
 let draw_buttons is_rack_hidden =
   let b_pass = {x = 632; y = 30; w = 60; h = 60; bw = 2;
-                b1_col = gray1; b2_col = gray3; b_col = gray2; r = Top} in
+                b1_col = gray1; b2_col = gray3; b_col = gray2} in
   draw_box b_pass;
-  draw_string_in_box Center "Pass Turn" b_pass Graphics.black;
+  draw_string_in_box "Pass Turn" b_pass Graphics.black;
   let b_help = {x = 724; y = 30; w = 60; h = 60; bw = 2;
-                b1_col = gray1; b2_col = gray3; b_col = gray2; r = Top} in
+                b1_col = gray1; b2_col = gray3; b_col = gray2} in
   draw_box b_help;
-  draw_string_in_box Center "Help" b_help Graphics.black;
+  draw_string_in_box "Help" b_help Graphics.black;
   let b_hint = {x = 816; y = 30; w = 60; h = 60; bw = 2;
-                b1_col = gray1; b2_col = gray3; b_col = gray2; r = Top} in
+                b1_col = gray1; b2_col = gray3; b_col = gray2} in
   draw_box b_hint;
-  draw_string_in_box Center "Hint" b_hint Graphics.black;
+  draw_string_in_box "Hint" b_hint Graphics.black;
   let b_quit = {x = 908; y = 30; w = 60; h = 60; bw = 2;
-                b1_col = gray1; b2_col = gray3; b_col = gray2; r = Top} in
+                b1_col = gray1; b2_col = gray3; b_col = gray2} in
   draw_box b_quit;
   draw_string "Quit" 927 63 true;
   draw_string "Game" 927 45 true;
   let b_toggle_rack = {x = 632; y = 120; w = 60; h = 60; bw = 2;
-                b1_col = gray1; b2_col = gray3; b_col = gray2; r = Top} in
+                b1_col = gray1; b2_col = gray3; b_col = gray2} in
   draw_box b_toggle_rack;
   if is_rack_hidden then
-    draw_string_in_box Center "Show Rack" b_toggle_rack Graphics.black
+    draw_string_in_box "Show Rack" b_toggle_rack Graphics.black
   else
-    draw_string_in_box Center "Hide Rack" b_toggle_rack Graphics.black;
+    draw_string_in_box "Hide Rack" b_toggle_rack Graphics.black;
   let b_add_word = {x = 724; y = 120; w = 60; h = 60; bw = 2;
-                b1_col = gray1; b2_col = gray3; b_col = gray2; r = Top} in
+                b1_col = gray1; b2_col = gray3; b_col = gray2} in
   draw_box b_add_word;
   draw_string "Add To" 737 153 true;
   draw_string "Dict" 743 135 true;
   let b_swap = {x = 816; y = 120; w = 60; h = 60; bw = 2;
-                b1_col = gray1; b2_col = gray3; b_col = gray2; r = Top} in
+                b1_col = gray1; b2_col = gray3; b_col = gray2} in
   draw_box b_swap;
   draw_string "Swap" 835 153 true;
   draw_string "Tiles" 832 135 true;
   let b_place = {x = 908; y = 120; w = 60; h = 60; bw = 2;
-                b1_col = gray1; b2_col = gray3; b_col = gray2; r = Top} in
+                b1_col = gray1; b2_col = gray3; b_col = gray2} in
   draw_box b_place;
   draw_string "Place" 924 153 true;
   draw_string "Word" 927 135 true
@@ -368,8 +340,7 @@ let draw_buttons is_rack_hidden =
 (* [dark_gray_place ()] changes the color of the place button to dark gray. *)
 let dark_gray_place () =
   let b_place = {x = 908; y = 120; w = 60; h = 60; bw = 2;
-                 b1_col = dark_gray1; b2_col = dark_gray3;
-                 b_col = dark_gray2; r = Top} in
+                 b1_col = dark_gray1; b2_col = dark_gray3; b_col = dark_gray2} in
   draw_box b_place;
   draw_string "Place" 924 153 true;
   draw_string "Word" 927 135 true
@@ -409,11 +380,11 @@ let update_board b =
     | [] -> ()
     | cell::t ->
       if fst cell.letter = ' ' && cell.cell_coord = (7,7) then
-        draw_string_in_box Center "START" vb.(112) Graphics.black;
+        draw_string_in_box "START" vb.(112) Graphics.black;
       if fst cell.letter <> ' ' then
-        (draw_string_in_box Center
+        (draw_string_in_box
            (String.capitalize_ascii (Char.escaped (fst cell.letter)))
-          vb.(coord_to_array_index (cell.cell_coord)) Graphics.black;
+           vb.(coord_to_array_index (cell.cell_coord)) Graphics.black;
          update_board_helper t)
       else
         let str_mult =
@@ -427,7 +398,7 @@ let update_board b =
             | _ -> failwith "impossible"
           else ""
         in
-        draw_string_in_box Center (String.capitalize_ascii str_mult)
+        draw_string_in_box (String.capitalize_ascii str_mult)
           vb.(coord_to_array_index (cell.cell_coord)) Graphics.black;
         update_board_helper t
   in
@@ -1084,7 +1055,7 @@ let shade_np_tiles pc =
       update_tile_color vb coord (darker_beige1,darker_beige3,darker_beige2);
     let capital_string = (String.capitalize_ascii (Char.escaped letter)) in
     draw_box vb.(coord);
-    draw_string_in_box Center capital_string vb.(coord) Graphics.black;
+    draw_string_in_box capital_string vb.(coord) Graphics.black;
   in
   (List.iter shade_placed_tile pc)
 
@@ -1264,9 +1235,9 @@ let help_helper st =
   set_color black;
   draw_logo ();
   let done_btn = {x = 770; y = 20; w = 40; h = 40; bw = 2;
-                b1_col = gray1; b2_col = gray3; b_col = gray2; r = Top} in
+                b1_col = gray1; b2_col = gray3; b_col = gray2} in
   draw_box done_btn;
-  draw_string_in_box Center "Done" done_btn Graphics.black;
+  draw_string_in_box "Done" done_btn Graphics.black;
   let h = snd (Graphics.text_size "|") in
   let help_str_lst = str_lst_of_help () in
   let _ = List.fold_left
@@ -1305,7 +1276,7 @@ let rec gui_cmd st =
   else if mem (x, y) swap_btn then
     let () = show_if_hidden st in
       let b_swap = {x = 816; y = 120; w = 60; h = 60; bw = 2;
-        b1_col = dark_gray1; b2_col = dark_gray3; b_col = dark_gray2; r = Top}
+        b1_col = dark_gray1; b2_col = dark_gray3; b_col = dark_gray2}
       in
       draw_box b_swap;
       draw_string "Swap" 835 153 true;
@@ -1328,7 +1299,7 @@ let init_gui st =
     Array.iter draw_box vb;
     update_scores (st.players);
     update_board (List.flatten st.board);
-    draw_string_in_box Center "START" vb.(112) Graphics.black;
+    draw_string_in_box "START" vb.(112) Graphics.black;
     draw_logo ();
     draw_buttons true;
     draw_string (st.current_player.name ^ "'s turn.") 770 470 true;
